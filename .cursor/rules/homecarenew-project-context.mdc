@@ -1,0 +1,31 @@
+---
+description: 
+alwaysApply: true
+---
+
+# HomeCareNew Project Context
+
+- Stack: React 19 + Vite + Zustand + Tailwind CSS v4; JavaScript/JSX only (no TypeScript).
+- Entry flow: `index.html` -> `src/main.jsx` -> `src/App.jsx`.
+- Navigation is view-state based (no URL router): `currentView` in `src/store/useStore.js`.
+- Main UI domains live in `src/components/{auth,home,services,cart,booking,admin,layout,common}`.
+- Global app state is centralized in `src/store/useStore.js` (auth, admin lock, views, services, bookings, cart, UI overlays, toast).
+- App data comes from local mocks in `src/data/*`; there is no backend/API data layer yet.
+- Session and data are in-memory only; browser refresh resets runtime state.
+
+## Rules For Future Changes
+
+- Preserve the current view contract (`home`, `services`, `booking`, `admin`) unless the task explicitly asks for routing redesign.
+- Prefer Zustand selectors (`useStore(s => s.x)`) and keep state updates within the existing store model.
+- Reuse existing shared primitives before adding new dependencies: `Modal`, `Toast`, `Reveal`, `CartDrawer`, `DetailSheet`.
+- Keep visual consistency with Tailwind utility patterns and theme tokens defined in `src/index.css`.
+- When editing auth/admin/booking flows, treat current PIN/OTP/login behavior as demo-only and client-side.
+- If adding real backend/auth/payment integrations, place them in isolated service modules and preserve mock-friendly behavior unless asked otherwise.
+- Match existing code style: semicolon-less JS, single quotes, functional React components.
+- Validate changes with `npm run lint`; use `npm run dev`/`npm run build` for behavior and build checks.
+
+## Known Non-Production Assumptions
+
+- Security is intentionally weak right now (client-side auth and admin gating).
+- Payment behavior is simulated in booking flow.
+- `README.md` may be outdated (still close to default Vite template).
