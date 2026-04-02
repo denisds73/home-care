@@ -21,8 +21,7 @@ export default function CategoryGrid() {
               <button key={cat.id} onClick={() => navigate(`/services/${cat.id}`)}
                 className="category-card bg-white rounded-2xl border border-gray-100 overflow-hidden text-center p-3 sm:p-4"
                 style={{ boxShadow: '0 2px 8px rgba(0,0,0,.04)' }}>
-                <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-2 sm:mb-3 rounded-2xl flex items-center justify-center p-2"
-                  style={{ background: cat.color + '10' }}
+                <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-2 sm:mb-3 rounded-2xl flex items-center justify-center p-2 bg-brand-soft"
                   dangerouslySetInnerHTML={{ __html: CATEGORY_SVGS[cat.id] || '' }} />
                 <h3 className="font-bold text-xs sm:text-sm" style={{ color: 'var(--color-secondary)' }}>{cat.name}</h3>
                 <p className="text-xs text-muted mt-0.5">{count} services</p>
