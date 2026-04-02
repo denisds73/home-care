@@ -39,7 +39,7 @@ function HomePage() {
 }
 
 export default function App() {
-  const { currentView } = useStore()
+  const currentView = useStore(s => s.currentView)
 
   return (
     <div className="pb-16 sm:pb-0">

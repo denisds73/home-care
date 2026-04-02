@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, type KeyboardEvent } from 'react'
 import useStore from '../../store/useStore'
 import Reveal from '../common/Reveal'
+import type { CategoryId } from '../../types/domain'
 import acImg from '../../assets/images/ac-service.jpg'
 import tvImg from '../../assets/images/tv-service.jpg'
 import purifierImg from '../../assets/images/purifier-service.jpg'
 
-const offers = [
+const offers: { bg: string; tag: string; tagColor: string; title: string; desc: string; cta: string; cat: CategoryId; img: string }[] = [
   { bg: 'linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%)', tag: 'Limited Time', tagColor: '#6D28D9', title: '20% Off AC Services', desc: 'Deep cleaning, gas refill & installation', cta: 'Book Now', cat: 'ac', img: acImg },
   { bg: 'linear-gradient(135deg, #111827 0%, #4C1D95 100%)', tag: 'New User', tagColor: '#111827', title: 'Flat ₹200 Off TV Repair', desc: 'First booking only. Use code: TVNEW200', cta: 'Claim Offer', cat: 'tv', img: tvImg },
   { bg: 'linear-gradient(135deg, #4C1D95 0%, #6D28D9 62%, #A16207 130%)', tag: 'Combo Deal', tagColor: '#A16207', title: 'Purifier + Fridge Combo', desc: 'Save ₹500 when you book both together', cta: 'Book Combo', cat: 'water_purifier', img: purifierImg },
@@ -14,16 +15,16 @@ const offers = [
 export default function OffersCarousel() {
   const [current, setCurrent] = useState(0)
   const setView = useStore(s => s.setView)
-  const timerRef = useRef(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const resetTimer = () => {
-    clearInterval(timerRef.current)
+    if (timerRef.current) clearInterval(timerRef.current)
     timerRef.current = setInterval(() => setCurrent(c => (c + 1) % offers.length), 5000)
   }
 
-  useEffect(() => { resetTimer(); return () => clearInterval(timerRef.current) }, [])
+  useEffect(() => { resetTimer(); return () => { if (timerRef.current) clearInterval(timerRef.current) } }, [])
 
-  const go = (dir) => { setCurrent(c => { const n = c + dir; return n < 0 ? offers.length - 1 : n >= offers.length ? 0 : n }); resetTimer() }
+  const go = (dir: number) => { setCurrent(c => { const n = c + dir; return n < 0 ? offers.length - 1 : n >= offers.length ? 0 : n }); resetTimer() }
 
   return (
     <div id="offersSection" className="py-12 sm:py-16 bg-surface">
@@ -45,7 +46,7 @@ export default function OffersCarousel() {
                     className="offer-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     style={{ background: offer.bg, color: '#fff', padding: '28px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                     onClick={() => setView('services', offer.cat)}
-                    onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setView('services', offer.cat)}
+                    onKeyDown={(e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') setView('services', offer.cat) }}
                     role="button"
                     tabIndex={0}
                   >

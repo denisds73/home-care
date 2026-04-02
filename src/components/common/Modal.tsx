@@ -1,6 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 
-export default function Modal({ isOpen, onClose, children, maxWidth = 'max-w-lg' }) {
+interface ModalProps {
+  isOpen: boolean
+  onClose: () => void
+  children: ReactNode
+  maxWidth?: string
+}
+
+export default function Modal({ isOpen, onClose, children, maxWidth = 'max-w-lg' }: ModalProps) {
   useEffect(() => {
     if (isOpen) document.body.style.overflow = 'hidden'
     else document.body.style.overflow = ''
@@ -8,7 +15,7 @@ export default function Modal({ isOpen, onClose, children, maxWidth = 'max-w-lg'
   }, [isOpen])
 
   useEffect(() => {
-    const handler = (e) => { if (e.key === 'Escape') onClose() }
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     if (isOpen) window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [isOpen, onClose])

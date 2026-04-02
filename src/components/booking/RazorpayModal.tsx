@@ -1,7 +1,15 @@
 import { useState } from 'react'
 
-export default function RazorpayModal({ amount, onSuccess, onClose }) {
-  const [state, setState] = useState('methods') // methods | processing | success | failed
+type PayState = 'methods' | 'processing' | 'success' | 'failed'
+
+interface RazorpayModalProps {
+  amount: number
+  onSuccess: () => void
+  onClose: () => void
+}
+
+export default function RazorpayModal({ amount, onSuccess, onClose }: RazorpayModalProps) {
+  const [state, setState] = useState<PayState>('methods')
   const [selected, setSelected] = useState(0)
   const [orderId, setOrderId] = useState('')
 
@@ -20,7 +28,6 @@ export default function RazorpayModal({ amount, onSuccess, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-[1px]">
       <div className="bg-card border border-default rounded-2xl shadow-xl w-full max-w-sm overflow-hidden scale-in">
-        {/* Header */}
         <div className="px-5 py-4 text-white rzp-header">
           <div className="flex items-center justify-between">
             <div><p className="text-xs opacity-80">HomeCare Services</p><h3 className="text-lg font-bold">Payment</h3></div>
@@ -35,14 +42,14 @@ export default function RazorpayModal({ amount, onSuccess, onClose }) {
               <p className="text-sm font-medium text-secondary mb-3">Select Payment Method</p>
               <div className="space-y-2 mb-5">
                 {methods.map((m, i) => (
-                  <button key={i} onClick={() => setSelected(i)}
+                  <button key={i} type="button" onClick={() => setSelected(i)}
                     className={`w-full rounded-lg p-3 flex items-center gap-3 border-2 transition text-left ${i === selected ? 'border-brand bg-brand-soft' : 'border-gray-200 hover:border-brand hover:bg-brand-soft'}`}>
                     <div className="w-8 h-8 bg-brand-soft rounded-full flex items-center justify-center text-sm">{m.icon}</div>
                     <div><p className="font-medium text-sm">{m.name}</p><p className="text-xs text-muted">{m.desc}</p></div>
                   </button>
                 ))}
               </div>
-              <button onClick={simulatePayment} className="btn-base btn-primary w-full py-3 rounded-xl font-semibold text-sm text-white">Pay Securely</button>
+              <button type="button" onClick={simulatePayment} className="btn-base btn-primary w-full py-3 rounded-xl font-semibold text-sm text-white">Pay Securely</button>
             </>
           )}
 
@@ -61,7 +68,7 @@ export default function RazorpayModal({ amount, onSuccess, onClose }) {
               </div>
               <p className="font-bold text-lg text-success">Payment Successful!</p>
               <p className="text-xs text-muted mt-1 font-mono">Order: {orderId}</p>
-              <button onClick={onSuccess} className="btn-base btn-success text-white w-full py-3 rounded-xl font-semibold text-sm mt-4">Continue</button>
+              <button type="button" onClick={onSuccess} className="btn-base btn-success text-white w-full py-3 rounded-xl font-semibold text-sm mt-4">Continue</button>
             </div>
           )}
 
@@ -73,8 +80,8 @@ export default function RazorpayModal({ amount, onSuccess, onClose }) {
               <p className="font-bold text-lg text-error">Payment Failed</p>
               <p className="text-sm text-secondary mt-1">Transaction could not be completed.</p>
               <div className="space-y-2 mt-5">
-                <button onClick={() => setState('methods')} className="btn-base btn-primary w-full py-3 rounded-xl font-semibold text-sm text-white">Retry Payment</button>
-                <button onClick={onClose} className="btn-base btn-secondary w-full py-2.5 rounded-xl font-semibold text-sm border-2 border-brand text-brand hover:bg-muted transition">Pay After Service</button>
+                <button type="button" onClick={() => setState('methods')} className="btn-base btn-primary w-full py-3 rounded-xl font-semibold text-sm text-white">Retry Payment</button>
+                <button type="button" onClick={onClose} className="btn-base btn-secondary w-full py-2.5 rounded-xl font-semibold text-sm border-2 border-brand text-brand hover:bg-muted transition">Pay After Service</button>
               </div>
             </div>
           )}

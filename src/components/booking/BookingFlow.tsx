@@ -1,13 +1,24 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type Dispatch, type SetStateAction, type KeyboardEvent } from 'react'
 import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
 import { CONVENIENCE_FEE, GST_RATE } from '../../data/services'
+import type { PaymentMode, PaymentStatus, TimeSlot } from '../../types/domain'
 import RazorpayModal from './RazorpayModal'
 import LoginScreen from '../auth/LoginScreen'
 
 const stepLabels = ['Details', 'Verify', 'Payment', 'Done']
 
-function StepIndicator({ current }) {
+interface BookingDraft {
+  name?: string
+  phone?: string
+  address?: string
+  date?: string
+  time_slot?: string
+}
+
+type PendingAction = { type: 'payNow'; amount: number } | { type: 'payAfter' }
+
+function StepIndicator({ current }: { current: number }) {
   return (
     <div className="flex items-center justify-center mb-10">
       <div className="flex items-center">
@@ -32,15 +43,23 @@ function StepIndicator({ current }) {
   )
 }
 
-function Step1({ onNext, booking, setBooking }) {
+function Step1({
+  onNext,
+  booking,
+  setBooking,
+}: {
+  onNext: () => void
+  booking: BookingDraft
+  setBooking: Dispatch<SetStateAction<BookingDraft>>
+}) {
   const cart = useStore(s => s.cart)
   const getCartTotal = useStore(s => s.getCartTotal)
   const getCartCount = useStore(s => s.getCartCount)
-  const [errors, setErrors] = useState({})
+  const [errors, setErrors] = useState<Record<string, string | undefined>>({})
   const [selectedSlot, setSelectedSlot] = useState(booking.time_slot || '')
 
   const validate = () => {
-    const e = {}
+    const e: Record<string, string | undefined> = {}
     if (!booking.name?.trim() || booking.name.trim().length < 2) e.name = 'Full name is required (min 2 chars)'
     if (!booking.phone?.trim() || !/^[6-9]\d{9}$/.test(booking.phone.trim())) e.phone = 'Enter a valid 10-digit Indian mobile number'
     if (!booking.address?.trim()) e.address = 'Address is required'
@@ -61,7 +80,7 @@ function Step1({ onNext, booking, setBooking }) {
   tomorrow.setDate(tomorrow.getDate() + 1)
   const minDate = tomorrow.toISOString().split('T')[0]
 
-  const slots = [
+  const slots: { value: TimeSlot; time: string; end: string; tag: string; tagColor: string }[] = [
     { value: '9AM-12PM', time: '9:00 AM', end: 'to 12:00 PM', tag: 'Fastest', tagColor: '#6D28D9' },
     { value: '12PM-3PM', time: '12:00 PM', end: 'to 3:00 PM', tag: 'Available', tagColor: '#16A34A' },
     { value: '3PM-6PM', time: '3:00 PM', end: 'to 6:00 PM', tag: 'Available', tagColor: '#16A34A' },
@@ -72,7 +91,6 @@ function Step1({ onNext, booking, setBooking }) {
       <h3 className="text-xl font-bold mb-1 text-primary">Booking Details</h3>
       <p className="text-secondary text-sm mb-4">Fill in your details to book the selected services</p>
 
-      {/* Cart summary */}
       <div className="border-2 border-brand rounded-xl p-4 mb-6 bg-muted space-y-2">
         {cart.map(c => (
           <div key={c.service.id} className="flex items-center justify-between">
@@ -99,14 +117,14 @@ function Step1({ onNext, booking, setBooking }) {
         </div>
         <div>
           <label className="block text-sm font-medium text-secondary mb-1">Phone Number <span className="text-error">*</span></label>
-          <input type="tel" maxLength="10" value={booking.phone || ''} onChange={e => setBooking(b => ({ ...b, phone: e.target.value }))}
+          <input type="tel" maxLength={10} value={booking.phone || ''} onChange={e => setBooking(b => ({ ...b, phone: e.target.value }))}
             className={`input-base w-full px-4 py-2.5 text-sm ${errors.phone ? 'border-red-400 ring-2 ring-red-100' : ''}`}
             placeholder="10-digit mobile number" inputMode="numeric" />
           {errors.phone && <p className="text-xs text-error mt-1">{errors.phone}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-secondary mb-1">Address <span className="text-error">*</span></label>
-          <textarea rows="2" value={booking.address || ''} onChange={e => setBooking(b => ({ ...b, address: e.target.value }))}
+          <textarea rows={2} value={booking.address || ''} onChange={e => setBooking(b => ({ ...b, address: e.target.value }))}
             className={`input-base w-full px-4 py-2.5 text-sm ${errors.address ? 'border-red-400 ring-2 ring-red-100' : ''}`}
             placeholder="Enter your complete address" />
           {errors.address && <p className="text-xs text-error mt-1">{errors.address}</p>}
@@ -121,7 +139,7 @@ function Step1({ onNext, booking, setBooking }) {
           <label className="block text-sm font-medium text-secondary mb-2">Time Slot <span className="text-error">*</span></label>
           <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
             {slots.map(slot => (
-              <button key={slot.value} onClick={() => { setSelectedSlot(slot.value); setErrors(e => ({ ...e, slot: undefined })) }}
+              <button key={slot.value} type="button" onClick={() => { setSelectedSlot(slot.value); setErrors(er => ({ ...er, slot: undefined })) }}
                 className={`p-2 sm:p-3 border-2 rounded-xl text-center transition ${selectedSlot === slot.value ? 'border-brand bg-muted shadow-[0_0_0_3px_rgba(109,40,217,.16)]' : 'border-gray-200 hover:border-brand hover:bg-muted'}`}>
                 <div className="text-[.8rem] font-bold text-primary">{slot.time}</div>
                 <div className="text-[.65rem] text-muted">{slot.end}</div>
@@ -132,25 +150,25 @@ function Step1({ onNext, booking, setBooking }) {
           {errors.slot && <p className="text-xs text-error mt-1">{errors.slot}</p>}
         </div>
       </div>
-      <button onClick={handleSubmit} className="btn-base btn-primary w-full py-3 font-semibold mt-6 text-sm">Continue to Verify Phone</button>
+      <button type="button" onClick={handleSubmit} className="btn-base btn-primary w-full py-3 font-semibold mt-6 text-sm">Continue to Verify Phone</button>
     </div>
   )
 }
 
-function Step2({ onNext, phone }) {
+function Step2({ onNext, phone }: { onNext: () => void; phone?: string }) {
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [error, setError] = useState('')
   const [timer, setTimer] = useState(300)
-  const refs = useRef([])
+  const refs = useRef<(HTMLInputElement | null)[]>([])
   const showToast = useStore(s => s.showToast)
 
   useEffect(() => {
     refs.current[0]?.focus()
-    const interval = setInterval(() => setTimer(t => t > 0 ? t - 1 : 0), 1000)
+    const interval = setInterval(() => setTimer(t => (t > 0 ? t - 1 : 0)), 1000)
     return () => clearInterval(interval)
   }, [])
 
-  const handleChange = (idx, val) => {
+  const handleChange = (idx: number, val: string) => {
     if (!/^\d?$/.test(val)) return
     const next = [...otp]
     next[idx] = val
@@ -159,7 +177,7 @@ function Step2({ onNext, phone }) {
     if (val && idx < 5) refs.current[idx + 1]?.focus()
   }
 
-  const handleKey = (idx, e) => {
+  const handleKey = (idx: number, e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !otp[idx] && idx > 0) refs.current[idx - 1]?.focus()
   }
 
@@ -180,7 +198,7 @@ function Step2({ onNext, phone }) {
       <p className="text-secondary text-sm mb-6">Enter the 6-digit OTP sent to {phone}</p>
       <div className="flex justify-center mb-3 gap-1.5 sm:gap-2">
         {otp.map((d, i) => (
-          <input key={i} ref={el => refs.current[i] = el} type="text" inputMode="numeric" maxLength="1" value={d}
+          <input key={i} ref={el => { refs.current[i] = el }} type="text" inputMode="numeric" maxLength={1} value={d}
             onChange={e => handleChange(i, e.target.value)} onKeyDown={e => handleKey(i, e)}
             className="w-10 h-12 sm:w-12 sm:h-14 border-2 border-gray-300 rounded-lg text-center text-lg sm:text-xl font-bold focus:outline-none focus:border-brand" />
         ))}
@@ -191,22 +209,30 @@ function Step2({ onNext, phone }) {
       </div>
       <p className={`text-center font-mono text-lg font-bold mb-3 ${timer <= 30 ? 'text-error' : 'text-brand'}`}>{mm}:{ss}</p>
       {error && <p className="text-error text-sm text-center mb-3">{error}</p>}
-      <button onClick={verify} disabled={timer === 0} className="btn-base btn-primary w-full py-3 font-semibold text-sm disabled:bg-gray-300 disabled:cursor-not-allowed">Verify OTP</button>
-      <button onClick={() => { setTimer(300); setOtp(['','','','','','']); showToast('OTP resent', 'info') }} disabled={timer > 0}
+      <button type="button" onClick={verify} disabled={timer === 0} className="btn-base btn-primary w-full py-3 font-semibold text-sm disabled:bg-gray-300 disabled:cursor-not-allowed">Verify OTP</button>
+      <button type="button" onClick={() => { setTimer(300); setOtp(['', '', '', '', '', '']); showToast('OTP resent', 'info') }} disabled={timer > 0}
         className={`w-full py-2 text-sm mt-2 ${timer > 0 ? 'text-muted cursor-not-allowed' : 'text-brand font-medium cursor-pointer hover:text-brand-dark'}`}>Resend OTP</button>
     </div>
   )
 }
 
-function Step3({ booking, onPayNow, onPayAfter }) {
+function Step3({
+  booking,
+  onPayNow,
+  onPayAfter,
+}: {
+  booking: BookingDraft
+  onPayNow: (amount: number) => void
+  onPayAfter: () => void
+}) {
   const cart = useStore(s => s.cart)
   const getCartTotal = useStore(s => s.getCartTotal)
   const subtotal = getCartTotal()
   const gst = Math.round(subtotal * GST_RATE)
   const total = subtotal + CONVENIENCE_FEE + gst
 
-  const formatDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
-  const formatSlot = (s) => s === '9AM-12PM' ? '9:00 AM – 12:00 PM' : s === '12PM-3PM' ? '12:00 PM – 3:00 PM' : '3:00 PM – 6:00 PM'
+  const formatDate = (d: string | undefined) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
+  const formatSlot = (s: string | undefined) => s === '9AM-12PM' ? '9:00 AM – 12:00 PM' : s === '12PM-3PM' ? '12:00 PM – 3:00 PM' : '3:00 PM – 6:00 PM'
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6 md:p-8 slide-up">
@@ -244,20 +270,20 @@ function Step3({ booking, onPayNow, onPayAfter }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <button onClick={() => onPayNow(total)} className="btn-base btn-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+        <button type="button" onClick={() => onPayNow(total)} className="btn-base btn-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
           Pay Now
         </button>
-        <button onClick={onPayAfter} className="btn-base btn-secondary py-3 rounded-xl font-semibold text-sm">Pay After Service</button>
+        <button type="button" onClick={onPayAfter} className="btn-base btn-secondary py-3 rounded-xl font-semibold text-sm">Pay After Service</button>
       </div>
     </div>
   )
 }
 
-function Step4({ bookingId, booking }) {
+function Step4({ bookingId, booking }: { bookingId: string; booking: BookingDraft }) {
   const setView = useStore(s => s.setView)
   const clearCart = useStore(s => s.clearCart)
-  const formatDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
+  const formatDate = (d: string | undefined) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6 md:p-8 slide-up text-center">
@@ -272,21 +298,23 @@ function Step4({ bookingId, booking }) {
         <div className="flex justify-between"><span className="text-secondary text-sm">Date</span><span className="font-semibold text-sm">{formatDate(booking.date)}</span></div>
         <div className="flex justify-between"><span className="text-secondary text-sm">Address</span><span className="font-semibold text-sm text-right max-w-xs">{booking.address}</span></div>
       </div>
-      <button onClick={() => { clearCart(); setView('home') }} className="btn-base btn-primary px-8 py-3 font-semibold text-sm">Back to Home</button>
+      <button type="button" onClick={() => { clearCart(); setView('home') }} className="btn-base btn-primary px-8 py-3 font-semibold text-sm">Back to Home</button>
     </div>
   )
 }
 
 export default function BookingFlow() {
-  const { setView, addBooking, cart } = useStore()
+  const setView = useStore(s => s.setView)
+  const addBooking = useStore(s => s.addBooking)
+  const cart = useStore(s => s.cart)
   const isLoggedIn = useStore(s => s.isLoggedIn)
   const [step, setStep] = useState(1)
-  const [booking, setBooking] = useState({})
+  const [booking, setBooking] = useState<BookingDraft>({})
   const [showRazorpay, setShowRazorpay] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
   const [payAmount, setPayAmount] = useState(0)
   const [confirmedId, setConfirmedId] = useState('')
-  const [pendingAction, setPendingAction] = useState(null)
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
   const showToast = useStore(s => s.showToast)
 
   const goBack = () => {
@@ -294,21 +322,22 @@ export default function BookingFlow() {
     else setStep(s => Math.max(1, s - 1))
   }
 
-  const createBooking = (paymentMode, paymentStatus) => {
+  const createBooking = (paymentMode: PaymentMode, paymentStatus: PaymentStatus) => {
     const id = addBooking({
-      customer_name: booking.name,
-      phone: booking.phone,
-      address: booking.address,
+      customer_name: booking.name ?? '',
+      phone: booking.phone ?? '',
+      address: booking.address ?? '',
       lat: 12.9716, lng: 77.5946,
-      category: cart[0]?.service.category || '',
+      category: cart[0]?.service.category ?? '',
       service_id: cart[0]?.service.id,
       service_name: cart.map(c => c.service.service_name).join(', '),
       price: useStore.getState().getCartTotal(),
       services_list: cart.map(c => ({ id: c.service.id, name: c.service.service_name, price: c.service.price, qty: c.qty })),
-      preferred_date: booking.date,
-      time_slot: booking.time_slot,
+      preferred_date: booking.date ?? '',
+      time_slot: booking.time_slot ?? '',
       payment_mode: paymentMode,
       payment_status: paymentStatus,
+      razorpay_order_id: null,
       booking_status: 'Pending',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -317,7 +346,7 @@ export default function BookingFlow() {
     return id
   }
 
-  const handlePayNow = (amount) => {
+  const handlePayNow = (amount: number) => {
     if (!isLoggedIn) {
       setPendingAction({ type: 'payNow', amount })
       setShowAuth(true)
@@ -365,7 +394,7 @@ export default function BookingFlow() {
   return (
     <div className="fade-in">
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <button onClick={goBack} className="btn-base btn-secondary inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm mb-6">
+        <button type="button" onClick={goBack} className="btn-base btn-secondary inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm mb-6">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
           Back
         </button>

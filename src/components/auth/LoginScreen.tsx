@@ -1,8 +1,13 @@
 import { useState } from 'react'
 import useStore from '../../store/useStore'
 
-export default function LoginScreen({ onAuthSuccess, onClose }) {
-  const [tab, setTab] = useState('login')
+interface LoginScreenProps {
+  onAuthSuccess?: () => void
+  onClose?: () => void
+}
+
+export default function LoginScreen({ onAuthSuccess, onClose }: LoginScreenProps) {
+  const [tab, setTab] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
   const login = useStore(s => s.login)
   const showToast = useStore(s => s.showToast)
@@ -26,7 +31,6 @@ export default function LoginScreen({ onAuthSuccess, onClose }) {
           </svg>
         </button>
       )}
-      {/* Hero */}
       <div className="text-white text-center py-12 px-6 relative overflow-hidden" style={{ background: 'linear-gradient(140deg, #0B1220 0%, #4C1D95 52%, #6D28D9 120%)' }}>
         <div className="absolute -right-15 -top-15 w-50 h-50 rounded-full" style={{ background: 'rgba(109,40,217,.16)' }} />
         <div className="relative z-10">
@@ -39,7 +43,6 @@ export default function LoginScreen({ onAuthSuccess, onClose }) {
         </div>
       </div>
 
-      {/* Form Card */}
       <div className="flex-1 -mt-8 relative z-10 px-5 pb-10">
         <div className="bg-white rounded-2xl shadow-xl max-w-md mx-auto p-7">
           <div className="flex gap-6 mb-6 border-b border-gray-100">
@@ -78,7 +81,7 @@ export default function LoginScreen({ onAuthSuccess, onClose }) {
             <div className="space-y-3">
               <input type="text" className="input-base w-full py-3 px-4 text-sm" placeholder="Full name" />
               <input type="email" className="input-base w-full py-3 px-4 text-sm" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} />
-              <input type="tel" inputMode="numeric" maxLength="10" className="input-base w-full py-3 px-4 text-sm" placeholder="Phone number" />
+              <input type="tel" inputMode="numeric" maxLength={10} className="input-base w-full py-3 px-4 text-sm" placeholder="Phone number" />
               <input type="password" className="input-base w-full py-3 px-4 text-sm" placeholder="Create password" />
               <label className="flex items-start gap-2 text-xs text-secondary cursor-pointer"><input type="checkbox" className="accent-orange-500 mt-0.5" /> I agree to the <span className="font-semibold text-brand">Terms & Conditions</span></label>
               <button onClick={handleSubmit} className="btn-base btn-primary w-full py-3 font-bold text-sm">Create Account</button>

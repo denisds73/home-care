@@ -3,21 +3,22 @@ import { CATEGORIES, STORYSET_IMGS } from '../../data/categories'
 import ServiceCard from './ServiceCard'
 
 export default function ServiceListing() {
-  const { selectedCategory, services, setView } = useStore()
+  const selectedCategory = useStore(s => s.selectedCategory)
+  const services = useStore(s => s.services)
+  const setView = useStore(s => s.setView)
   const cat = CATEGORIES.find(c => c.id === selectedCategory)
-  if (!cat) return null
+  if (!cat || !selectedCategory) return null
 
   const list = services.filter(s => s.category === selectedCategory && s.is_active).sort((a, b) => (b.is_basic ? 1 : 0) - (a.is_basic ? 1 : 0))
 
   return (
     <div className="fade-in">
       <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8 pb-[100px]">
-        <button onClick={() => setView('home')} className="btn-base btn-secondary inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium mb-5">
+        <button type="button" onClick={() => setView('home')} className="btn-base btn-secondary inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium mb-5">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
           All Categories
         </button>
 
-        {/* Banner with Storyset illustration */}
         <div className="rounded-2xl overflow-hidden mb-8" style={{ background: cat.color + '10' }}>
           <div className="flex items-center p-5 sm:p-8 gap-4">
             <div className="flex-1">

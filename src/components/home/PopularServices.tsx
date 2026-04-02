@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import useStore from '../../store/useStore'
 import Reveal from '../common/Reveal'
+import type { CategoryId } from '../../types/domain'
 import popAc from '../../assets/images/popular-ac.jpg'
 import popTv from '../../assets/images/popular-tv.jpg'
 import popFridge from '../../assets/images/popular-fridge.jpg'
@@ -8,7 +9,7 @@ import popPurifier from '../../assets/images/popular-purifier.jpg'
 import microwaveImg from '../../assets/images/microwave-service.jpg'
 import acImg from '../../assets/images/ac-service.jpg'
 
-const items = [
+const items: { name: string; desc: string; cat: CategoryId; img: string; rating: string; reviews: string; price: number; badge?: string }[] = [
   { name: 'AC Deep Jet Wash', desc: 'Complete cleaning with high-pressure wash', cat: 'ac', img: popAc, rating: '4.9', reviews: '2.1K', price: 899, badge: '#1 Most Booked' },
   { name: 'TV Wall Mounting', desc: 'Professional mounting with concealed wiring', cat: 'tv', img: popTv, rating: '4.7', reviews: '980', price: 599 },
   { name: 'Fridge Gas Refill', desc: 'Leak detection & complete gas charging', cat: 'refrigerator', img: popFridge, rating: '4.8', reviews: '1.5K', price: 1399 },
@@ -32,15 +33,15 @@ export default function PopularServices() {
   const [current, setCurrent] = useState(0)
   const perView = usePerView()
   const maxIdx = Math.max(0, items.length - perView)
-  const timerRef = useRef(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const resetTimer = useCallback(() => {
-    clearInterval(timerRef.current)
+    if (timerRef.current) clearInterval(timerRef.current)
     timerRef.current = setInterval(() => setCurrent(c => c >= maxIdx ? 0 : c + 1), 4000)
   }, [maxIdx])
-  useEffect(() => { resetTimer(); return () => clearInterval(timerRef.current) }, [resetTimer])
+  useEffect(() => { resetTimer(); return () => { if (timerRef.current) clearInterval(timerRef.current) } }, [resetTimer])
 
-  const go = (dir) => { setCurrent(c => Math.max(0, Math.min(maxIdx, c + dir))); resetTimer() }
+  const go = (dir: number) => { setCurrent(c => Math.max(0, Math.min(maxIdx, c + dir))); resetTimer() }
 
   return (
     <div className="py-12 sm:py-16 bg-card">

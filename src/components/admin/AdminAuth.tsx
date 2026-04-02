@@ -28,8 +28,8 @@ export default function AdminAuth() {
         <svg className="w-10 h-10 mx-auto mb-3 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
         <h3 className="text-lg font-bold mb-1 text-primary">Admin Access</h3>
         <p className="text-muted text-xs mb-4">Enter PIN to access the admin panel</p>
-        <input type="password" inputMode="numeric" maxLength="4" value={pin} onChange={e => { setPin(e.target.value); setError(false) }}
-          onKeyDown={e => e.key === 'Enter' && verify()}
+        <input type="password" inputMode="numeric" maxLength={4} value={pin} onChange={e => { setPin(e.target.value); setError(false) }}
+          onKeyDown={e => { if (e.key === 'Enter') verify() }}
           className="input-base w-full px-4 py-3 text-center text-lg font-bold tracking-[.3em] mb-2"
           placeholder="Enter 4-digit PIN" autoFocus />
         <p className="text-xs text-muted mb-4">Demo PIN: <strong>1234</strong></p>

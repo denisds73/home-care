@@ -1,8 +1,17 @@
+import type { MouseEvent, KeyboardEvent } from 'react'
 import useStore from '../../store/useStore'
 import { SERVICE_IMAGES } from '../../data/categories'
+import type { Service } from '../../types/domain'
 
-export default function ServiceCard({ service: s }) {
-  const { addToCart, removeFromCart, openDetailSheet, showToast } = useStore()
+interface ServiceCardProps {
+  service: Service
+}
+
+export default function ServiceCard({ service: s }: ServiceCardProps) {
+  const addToCart = useStore(st => st.addToCart)
+  const removeFromCart = useStore(st => st.removeFromCart)
+  const openDetailSheet = useStore(st => st.openDetailSheet)
+  const showToast = useStore(st => st.showToast)
   const qty = useStore(state => state.cart.find(c => c.service.id === s.id)?.qty || 0)
   const img = SERVICE_IMAGES[s.category] || ''
   const origPrice = Math.round(s.price * 1.2)
@@ -10,18 +19,20 @@ export default function ServiceCard({ service: s }) {
   const seed = ((s.id * 2654435761) >>> 0) / 4294967296
   const rating = (4.5 + seed * 0.5).toFixed(1)
   const reviews = Math.floor(seed * 2000) + 200
-  const reviewsK = reviews >= 1000 ? (reviews/1000).toFixed(1)+'K' : reviews
+  const reviewsK = reviews >= 1000 ? (reviews / 1000).toFixed(1) + 'K' : String(reviews)
 
-  const handleAdd = (e) => {
+  const handleAdd = (e: MouseEvent) => {
     e.stopPropagation()
     addToCart(s.id)
     showToast(`${s.service_name} added to cart`, 'success')
   }
 
+  const openSheet = () => openDetailSheet(s.id)
+
   return (
     <div
-      onClick={() => openDetailSheet(s.id)}
-      onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && openDetailSheet(s.id)}
+      onClick={openSheet}
+      onKeyDown={(e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') openSheet() }}
       role="button"
       tabIndex={0}
       className={`bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,.04)] overflow-hidden relative cursor-pointer transition hover:shadow-lg active:scale-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${s.is_basic ? 'border-2 border-brand' : 'border border-gray-100'}`}
@@ -43,12 +54,12 @@ export default function ServiceCard({ service: s }) {
             <span className="text-[.55rem] sm:text-[.65rem] font-bold text-green-700 bg-green-50 px-1.5 py-0.5 rounded">{discount}% off</span>
           </div>
           {qty === 0 ? (
-            <button onClick={handleAdd} className="bg-brand text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[.7rem] sm:text-sm font-medium hover:bg-brand-dark transition active:scale-95">Add</button>
+            <button type="button" onClick={handleAdd} className="bg-brand text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[.7rem] sm:text-sm font-medium hover:bg-brand-dark transition active:scale-95">Add</button>
           ) : (
             <div className="inline-flex items-center border-2 border-brand rounded-lg overflow-hidden" onClick={e => e.stopPropagation()}>
-              <button onClick={() => removeFromCart(s.id)} className="w-7 h-7 sm:w-8 sm:h-8 bg-brand text-white flex items-center justify-center font-bold">−</button>
+              <button type="button" onClick={() => removeFromCart(s.id)} className="w-7 h-7 sm:w-8 sm:h-8 bg-brand text-white flex items-center justify-center font-bold">−</button>
               <span className="w-8 sm:w-9 text-center font-bold text-sm text-brand-dark">{qty}</span>
-              <button onClick={handleAdd} className="w-7 h-7 sm:w-8 sm:h-8 bg-brand text-white flex items-center justify-center font-bold">+</button>
+              <button type="button" onClick={handleAdd} className="w-7 h-7 sm:w-8 sm:h-8 bg-brand text-white flex items-center justify-center font-bold">+</button>
             </div>
           )}
         </div>

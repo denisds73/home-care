@@ -3,7 +3,8 @@ import { CATEGORIES, CATEGORY_SVGS } from '../../data/categories'
 import Reveal from '../common/Reveal'
 
 export default function CategoryGrid() {
-  const { services, setView } = useStore()
+  const services = useStore(s => s.services)
+  const setView = useStore(s => s.setView)
 
   return (
     <div id="categorySection" className="max-w-7xl mx-auto px-4 py-10 sm:py-14" style={{ scrollMarginTop: '120px' }}>

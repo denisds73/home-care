@@ -3,22 +3,48 @@ import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
 import { getCategoryName, formatDate, formatDateTime, formatTimeSlot, formatPaymentMode, formatPaymentStatus, statusClass, paymentBadgeClass, getValidTransitions } from '../../data/helpers'
 import Modal from '../common/Modal'
+import type { Booking, BookingStatus, CategoryId, Service } from '../../types/domain'
+
+type AdminTab = 'dashboard' | 'catalog'
+
+interface AdminFilters {
+  dateFrom: string
+  dateTo: string
+  category: string
+  status: string
+  search: string
+}
+
+interface SvcFormState {
+  category: CategoryId
+  service_name: string
+  description: string
+  price: string | number
+  is_basic: boolean
+  is_active: boolean
+}
 
 export default function AdminPanel() {
-  const { setView, services, bookings, updateBookingStatus, addService, updateService, deleteService, toggleServiceActive, showToast } = useStore()
-  const [tab, setTab] = useState('dashboard')
+  const setView = useStore(s => s.setView)
+  const services = useStore(s => s.services)
+  const bookings = useStore(s => s.bookings)
+  const updateBookingStatus = useStore(s => s.updateBookingStatus)
+  const addService = useStore(s => s.addService)
+  const updateService = useStore(s => s.updateService)
+  const deleteService = useStore(s => s.deleteService)
+  const toggleServiceActive = useStore(s => s.toggleServiceActive)
+  const showToast = useStore(s => s.showToast)
+  const [tab, setTab] = useState<AdminTab>('dashboard')
 
-  // Dashboard state
-  const [filters, setFilters] = useState({ dateFrom: '', dateTo: '', category: '', status: '', search: '' })
-  const [sortField, setSortField] = useState('created_at')
+  const [filters, setFilters] = useState<AdminFilters>({ dateFrom: '', dateTo: '', category: '', status: '', search: '' })
+  const [sortField, setSortField] = useState<keyof Booking>('created_at')
   const [sortAsc, setSortAsc] = useState(false)
-  const [selectedBooking, setSelectedBooking] = useState(null)
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [newStatus, setNewStatus] = useState('')
 
-  // Catalog state
-  const [serviceModal, setServiceModal] = useState(null) // null | 'add' | service object
-  const [deleteModal, setDeleteModal] = useState(null)
-  const [svcForm, setSvcForm] = useState({ category: 'ac', service_name: '', description: '', price: '', is_basic: false, is_active: true })
+  const [serviceModal, setServiceModal] = useState<'add' | Service | null>(null)
+  const [deleteModal, setDeleteModal] = useState<number | null>(null)
+  const [svcForm, setSvcForm] = useState<SvcFormState>({ category: 'ac', service_name: '', description: '', price: '', is_basic: false, is_active: true })
   const [svcError, setSvcError] = useState('')
 
   // Stats
@@ -41,9 +67,11 @@ export default function AdminPanel() {
       list = list.filter(b => b.booking_id.toLowerCase().includes(q) || b.customer_name.toLowerCase().includes(q) || b.phone.includes(q))
     }
     list.sort((a, b) => {
-      let va = a[sortField], vb = b[sortField]
+      let va: string | number | undefined = a[sortField] as string | number | undefined
+      let vb: string | number | undefined = b[sortField] as string | number | undefined
       if (typeof va === 'string') va = va.toLowerCase()
       if (typeof vb === 'string') vb = vb.toLowerCase()
+      if (va === undefined || vb === undefined) return 0
       if (va < vb) return sortAsc ? -1 : 1
       if (va > vb) return sortAsc ? 1 : -1
       return 0
@@ -51,20 +79,20 @@ export default function AdminPanel() {
     return list
   }, [bookings, filters, sortField, sortAsc])
 
-  const handleSort = (field) => {
+  const handleSort = (field: keyof Booking) => {
     if (sortField === field) setSortAsc(!sortAsc)
     else { setSortField(field); setSortAsc(true) }
   }
 
   const handleSaveStatus = () => {
     if (selectedBooking && newStatus) {
-      updateBookingStatus(selectedBooking.booking_id, newStatus)
+      updateBookingStatus(selectedBooking.booking_id, newStatus as BookingStatus)
       showToast('Status updated to ' + newStatus, 'success')
       setSelectedBooking(null)
     }
   }
 
-  const openEditService = (svc) => {
+  const openEditService = (svc: Service) => {
     setSvcForm({ category: svc.category, service_name: svc.service_name, description: svc.description, price: svc.price, is_basic: svc.is_basic, is_active: svc.is_active })
     setServiceModal(svc)
     setSvcError('')
@@ -77,16 +105,17 @@ export default function AdminPanel() {
   }
 
   const handleSaveService = () => {
-    if (!svcForm.service_name.trim() || !svcForm.price || svcForm.price <= 0) {
+    const priceNum = typeof svcForm.price === 'string' ? parseInt(svcForm.price, 10) : svcForm.price
+    if (!svcForm.service_name.trim() || !priceNum || priceNum <= 0) {
       setSvcError('Name and valid price required.')
       return
     }
     const now = new Date().toISOString()
     if (serviceModal === 'add') {
-      addService({ ...svcForm, price: parseInt(svcForm.price), created_at: now, updated_at: now })
+      addService({ ...svcForm, price: priceNum, created_at: now, updated_at: now })
       showToast('Service added', 'success')
-    } else {
-      updateService(serviceModal.id, { ...svcForm, price: parseInt(svcForm.price), updated_at: now })
+    } else if (serviceModal) {
+      updateService(serviceModal.id, { ...svcForm, price: priceNum, updated_at: now })
       showToast('Service updated', 'success')
     }
     setServiceModal(null)
@@ -242,7 +271,11 @@ export default function AdminPanel() {
       <Modal isOpen={!!selectedBooking} onClose={() => setSelectedBooking(null)}>
         {selectedBooking && (() => {
           const b = selectedBooking
-          const svcs = b.services_list || [{ id: b.service_id, name: b.service_name, price: b.price, qty: 1 }]
+          const svcs = b.services_list.length
+            ? b.services_list
+            : b.service_id != null
+              ? [{ id: b.service_id, name: b.service_name, price: b.price, qty: 1 }]
+              : []
           return (
             <>
               <div className="flex items-center justify-between p-5 border-b">
@@ -307,7 +340,7 @@ export default function AdminPanel() {
         <div className="p-5 space-y-4">
           <div>
             <label className="block text-sm font-medium text-secondary mb-1">Category *</label>
-            <select value={svcForm.category} onChange={e => setSvcForm(f => ({ ...f, category: e.target.value }))} className="input-base w-full px-3 py-2.5 text-sm">
+            <select value={svcForm.category} onChange={e => setSvcForm(f => ({ ...f, category: e.target.value as CategoryId }))} className="input-base w-full px-3 py-2.5 text-sm">
               {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
@@ -317,11 +350,11 @@ export default function AdminPanel() {
           </div>
           <div>
             <label className="block text-sm font-medium text-secondary mb-1">Description</label>
-            <textarea rows="2" value={svcForm.description} onChange={e => setSvcForm(f => ({ ...f, description: e.target.value }))} className="input-base w-full px-3 py-2.5 text-sm" placeholder="Brief description" />
+            <textarea rows={2} value={svcForm.description} onChange={e => setSvcForm(f => ({ ...f, description: e.target.value }))} className="input-base w-full px-3 py-2.5 text-sm" placeholder="Brief description" />
           </div>
           <div>
             <label className="block text-sm font-medium text-secondary mb-1">Price (INR) *</label>
-            <input type="number" min="0" value={svcForm.price} onChange={e => setSvcForm(f => ({ ...f, price: e.target.value }))} className="input-base w-full px-3 py-2.5 text-sm" placeholder="499" />
+            <input type="number" min={0} value={svcForm.price === '' ? '' : svcForm.price} onChange={e => setSvcForm(f => ({ ...f, price: e.target.value }))} className="input-base w-full px-3 py-2.5 text-sm" placeholder="499" />
           </div>
           <div className="flex items-center gap-6">
             <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={svcForm.is_basic} onChange={e => setSvcForm(f => ({ ...f, is_basic: e.target.checked }))} className="w-4 h-4 accent-orange-500" /> Recommended</label>
@@ -342,7 +375,7 @@ export default function AdminPanel() {
           <p className="text-secondary text-sm mb-6">This action cannot be undone.</p>
           <div className="flex gap-3">
             <button onClick={() => setDeleteModal(null)} className="flex-1 btn-base btn-secondary py-2.5 rounded-xl text-sm font-medium">Cancel</button>
-            <button onClick={() => { deleteService(deleteModal); setDeleteModal(null); showToast('Service deleted', 'success') }} className="flex-1 btn-base btn-danger py-2.5 rounded-xl text-sm font-medium">Delete</button>
+            <button type="button" onClick={() => { if (deleteModal != null) deleteService(deleteModal); setDeleteModal(null); showToast('Service deleted', 'success') }} className="flex-1 btn-base btn-danger py-2.5 rounded-xl text-sm font-medium">Delete</button>
           </div>
         </div>
       </Modal>

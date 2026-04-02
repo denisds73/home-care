@@ -3,7 +3,15 @@ import { SERVICE_IMAGES, CATEGORIES } from '../../data/categories'
 import { CONVENIENCE_FEE, GST_RATE } from '../../data/services'
 
 export default function CartDrawer() {
-  const { cartDrawerOpen, toggleCartDrawer, cart, addToCart, removeFromCart, removeItemFromCart, clearCart, setView, showToast } = useStore()
+  const cartDrawerOpen = useStore(s => s.cartDrawerOpen)
+  const toggleCartDrawer = useStore(s => s.toggleCartDrawer)
+  const cart = useStore(s => s.cart)
+  const addToCart = useStore(s => s.addToCart)
+  const removeFromCart = useStore(s => s.removeFromCart)
+  const removeItemFromCart = useStore(s => s.removeItemFromCart)
+  const clearCart = useStore(s => s.clearCart)
+  const setView = useStore(s => s.setView)
+  const showToast = useStore(s => s.showToast)
   const total = useStore(s => s.getCartTotal())
   const count = useStore(s => s.getCartCount())
   const gst = Math.round(total * GST_RATE)
@@ -17,12 +25,12 @@ export default function CartDrawer() {
 
   return (
     <>
-      {cartDrawerOpen && <div className="fixed inset-0 z-[54] bg-black/40 transition-opacity" onClick={toggleCartDrawer} />}
+      {cartDrawerOpen && <div className="fixed inset-0 z-[54] bg-black/40 transition-opacity" onClick={toggleCartDrawer} role="presentation" />}
       <div className={`fixed top-0 right-0 bottom-0 w-full max-w-[420px] z-[55] bg-white shadow-[-8px_0_30px_rgba(0,0,0,.15)] transition-transform duration-300 ${cartDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-4 border-b">
             <h3 className="text-lg font-bold text-primary">Your Cart</h3>
-            <button onClick={toggleCartDrawer} className="p-1 rounded-lg hover:bg-gray-100" aria-label="Close cart"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            <button type="button" onClick={toggleCartDrawer} className="p-1 rounded-lg hover:bg-gray-100" aria-label="Close cart"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
           </div>
 
           {cart.length === 0 ? (
@@ -45,11 +53,11 @@ export default function CartDrawer() {
                     </div>
                     <div className="flex flex-col items-center gap-1 shrink-0">
                       <div className="inline-flex items-center border-2 border-brand rounded-lg overflow-hidden">
-                        <button onClick={() => removeFromCart(c.service.id)} className="w-7 h-7 bg-brand text-white flex items-center justify-center font-bold text-sm">−</button>
+                        <button type="button" onClick={() => removeFromCart(c.service.id)} className="w-7 h-7 bg-brand text-white flex items-center justify-center font-bold text-sm">−</button>
                         <span className="w-8 text-center font-bold text-sm text-brand-dark">{c.qty}</span>
-                        <button onClick={() => addToCart(c.service.id)} className="w-7 h-7 bg-brand text-white flex items-center justify-center font-bold text-sm">+</button>
+                        <button type="button" onClick={() => addToCart(c.service.id)} className="w-7 h-7 bg-brand text-white flex items-center justify-center font-bold text-sm">+</button>
                       </div>
-                      <button onClick={() => removeItemFromCart(c.service.id)} className="text-xs text-red-400 hover:text-red-600 mt-1">Remove</button>
+                      <button type="button" onClick={() => removeItemFromCart(c.service.id)} className="text-xs text-red-400 hover:text-red-600 mt-1">Remove</button>
                     </div>
                   </div>
                 )
@@ -65,8 +73,8 @@ export default function CartDrawer() {
                 <div className="flex justify-between text-sm"><span className="text-muted">GST (18%)</span><span className="text-secondary">₹{gst}</span></div>
                 <div className="flex justify-between text-sm font-bold pt-2 border-t mt-1 text-primary"><span>Total</span><span className="text-brand-dark">₹{grandTotal}</span></div>
               </div>
-              <button onClick={proceedToBooking} className="btn-base btn-primary w-full py-3 rounded-xl font-semibold text-sm">Proceed to Book</button>
-              <button onClick={clearCart} className="w-full py-2 text-xs text-muted hover:text-red-500 mt-1 transition">Clear Cart</button>
+              <button type="button" onClick={proceedToBooking} className="btn-base btn-primary w-full py-3 rounded-xl font-semibold text-sm">Proceed to Book</button>
+              <button type="button" onClick={clearCart} className="w-full py-2 text-xs text-muted hover:text-red-500 mt-1 transition">Clear Cart</button>
             </div>
           )}
         </div>

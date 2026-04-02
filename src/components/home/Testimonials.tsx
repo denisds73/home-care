@@ -26,15 +26,15 @@ export default function Testimonials() {
   const [current, setCurrent] = useState(0)
   const perView = usePerView()
   const maxIdx = Math.max(0, reviews.length - perView)
-  const timerRef = useRef(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const resetTimer = useCallback(() => {
-    clearInterval(timerRef.current)
+    if (timerRef.current) clearInterval(timerRef.current)
     timerRef.current = setInterval(() => setCurrent(c => c >= maxIdx ? 0 : c + 1), 4000)
   }, [maxIdx])
-  useEffect(() => { resetTimer(); return () => clearInterval(timerRef.current) }, [resetTimer])
+  useEffect(() => { resetTimer(); return () => { if (timerRef.current) clearInterval(timerRef.current) } }, [resetTimer])
 
-  const go = (dir) => { setCurrent(c => Math.max(0, Math.min(maxIdx, c + dir))); resetTimer() }
+  const go = (dir: number) => { setCurrent(c => Math.max(0, Math.min(maxIdx, c + dir))); resetTimer() }
 
   return (
     <div className="py-12 sm:py-16 bg-surface">

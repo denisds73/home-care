@@ -1,7 +1,9 @@
 import useStore from '../../store/useStore'
 
 export default function CartBar() {
-  const { currentView, toggleCartDrawer, setView } = useStore()
+  const currentView = useStore(s => s.currentView)
+  const toggleCartDrawer = useStore(s => s.toggleCartDrawer)
+  const setView = useStore(s => s.setView)
   const count = useStore(s => s.getCartCount())
   const total = useStore(s => s.getCartTotal())
 
@@ -18,8 +20,8 @@ export default function CartBar() {
           </div>
         </div>
         <div className="flex gap-2">
-          <button onClick={toggleCartDrawer} className="btn-base btn-secondary border-2 border-brand text-brand px-4 py-2 rounded-lg text-sm font-semibold">View Cart</button>
-          <button onClick={() => { toggleCartDrawer(); setTimeout(() => setView('booking'), 100) }} className="btn-base btn-primary bg-brand text-white px-5 py-2 rounded-lg text-sm font-semibold">Book Now</button>
+          <button type="button" onClick={toggleCartDrawer} className="btn-base btn-secondary border-2 border-brand text-brand px-4 py-2 rounded-lg text-sm font-semibold">View Cart</button>
+          <button type="button" onClick={() => { toggleCartDrawer(); setTimeout(() => setView('booking'), 100) }} className="btn-base btn-primary bg-brand text-white px-5 py-2 rounded-lg text-sm font-semibold">Book Now</button>
         </div>
       </div>
     </div>
