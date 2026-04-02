@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import Modal from '../common/Modal'
 
@@ -6,7 +7,8 @@ export default function AdminAuth() {
   const [pin, setPin] = useState('')
   const [error, setError] = useState(false)
   const adminAuthOpen = useStore(s => s.adminAuthOpen)
-  const { unlockAdmin, setView, showToast } = useStore()
+  const { unlockAdmin, showToast } = useStore()
+  const navigate = useNavigate()
 
   const verify = () => {
     if (pin === '1234') {
@@ -14,7 +16,7 @@ export default function AdminAuth() {
       useStore.setState({ adminAuthOpen: false })
       setPin('')
       setError(false)
-      setView('admin')
+      navigate('/admin')
       showToast('Admin access granted', 'success')
     } else {
       setError(true)

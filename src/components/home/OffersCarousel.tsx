@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, type KeyboardEvent } from 'react'
-import useStore from '../../store/useStore'
+import { useNavigate } from 'react-router-dom'
 import Reveal from '../common/Reveal'
 import type { CategoryId } from '../../types/domain'
 import acImg from '../../assets/images/ac-service.jpg'
@@ -14,7 +14,7 @@ const offers: { bg: string; tag: string; tagColor: string; title: string; desc: 
 
 export default function OffersCarousel() {
   const [current, setCurrent] = useState(0)
-  const setView = useStore(s => s.setView)
+  const navigate = useNavigate()
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const resetTimer = () => {
@@ -45,8 +45,8 @@ export default function OffersCarousel() {
                   <div
                     className="offer-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     style={{ background: offer.bg, color: '#fff', padding: '28px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                    onClick={() => setView('services', offer.cat)}
-                    onKeyDown={(e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') setView('services', offer.cat) }}
+                    onClick={() => navigate(`/services/${offer.cat}`)}
+                    onKeyDown={(e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/services/${offer.cat}`) }}
                     role="button"
                     tabIndex={0}
                   >

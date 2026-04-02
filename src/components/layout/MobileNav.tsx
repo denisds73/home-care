@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import useStore from '../../store/useStore'
 
 interface TabItem {
@@ -9,8 +10,8 @@ interface TabItem {
 }
 
 export default function MobileNav() {
-  const currentView = useStore(s => s.currentView)
-  const setView = useStore(s => s.setView)
+  const navigate = useNavigate()
+  const location = useLocation()
   const toggleCartDrawer = useStore(s => s.toggleCartDrawer)
   const cartCount = useStore(s => s.getCartCount())
 
@@ -24,15 +25,23 @@ export default function MobileNav() {
 
   const handleClick = (tab: TabItem) => {
     if (tab.id === 'cart') { toggleCartDrawer(); return }
-    if (tab.id === 'home') { setView('home'); return }
-    if (tab.id === 'services') { setView('home'); setTimeout(() => document.getElementById('categorySection')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return }
-    if (tab.id === 'offers') { setView('home'); setTimeout(() => document.getElementById('offersSection')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200); return }
+    if (tab.id === 'home') { navigate('/'); return }
+    if (tab.id === 'services') {
+      navigate('/')
+      setTimeout(() => document.getElementById('categorySection')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200)
+      return
+    }
+    if (tab.id === 'offers') {
+      navigate('/')
+      setTimeout(() => document.getElementById('offersSection')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200)
+      return
+    }
     if (tab.id === 'account') { useStore.setState({ accountSheetOpen: true }); return }
   }
 
   const isActive = (id: string) => {
-    if (id === 'home' && currentView === 'home') return true
-    if (id === 'services' && currentView === 'services') return true
+    if (id === 'home' && location.pathname === '/') return true
+    if (id === 'services' && location.pathname.startsWith('/services')) return true
     return false
   }
 

@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import { SERVICE_IMAGES, CATEGORIES } from '../../data/categories'
 import { CONVENIENCE_FEE, GST_RATE } from '../../data/services'
@@ -10,17 +11,17 @@ export default function CartDrawer() {
   const removeFromCart = useStore(s => s.removeFromCart)
   const removeItemFromCart = useStore(s => s.removeItemFromCart)
   const clearCart = useStore(s => s.clearCart)
-  const setView = useStore(s => s.setView)
   const showToast = useStore(s => s.showToast)
   const total = useStore(s => s.getCartTotal())
   const count = useStore(s => s.getCartCount())
   const gst = Math.round(total * GST_RATE)
   const grandTotal = total > 0 ? total + CONVENIENCE_FEE + gst : 0
+  const navigate = useNavigate()
 
   const proceedToBooking = () => {
     if (cart.length === 0) { showToast('Add services to your cart first', 'warning'); return }
     toggleCartDrawer()
-    setView('booking')
+    navigate('/booking')
   }
 
   return (

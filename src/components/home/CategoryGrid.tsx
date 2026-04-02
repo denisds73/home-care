@@ -1,10 +1,11 @@
+import { useNavigate } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import { CATEGORIES, CATEGORY_SVGS } from '../../data/categories'
 import Reveal from '../common/Reveal'
 
 export default function CategoryGrid() {
   const services = useStore(s => s.services)
-  const setView = useStore(s => s.setView)
+  const navigate = useNavigate()
 
   return (
     <div id="categorySection" className="max-w-7xl mx-auto px-4 py-10 sm:py-14" style={{ scrollMarginTop: '120px' }}>
@@ -17,7 +18,7 @@ export default function CategoryGrid() {
             const prices = services.filter(s => s.category === cat.id && s.is_active).map(s => s.price)
             const minPrice = prices.length ? Math.min(...prices) : 0
             return (
-              <button key={cat.id} onClick={() => setView('services', cat.id)}
+              <button key={cat.id} onClick={() => navigate(`/services/${cat.id}`)}
                 className="category-card bg-white rounded-2xl border border-gray-100 overflow-hidden text-center p-3 sm:p-4"
                 style={{ boxShadow: '0 2px 8px rgba(0,0,0,.04)' }}>
                 <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-2 sm:mb-3 rounded-2xl flex items-center justify-center p-2"

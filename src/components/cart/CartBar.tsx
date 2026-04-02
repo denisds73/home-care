@@ -1,13 +1,16 @@
+import { useNavigate, useLocation } from 'react-router-dom'
 import useStore from '../../store/useStore'
 
 export default function CartBar() {
-  const currentView = useStore(s => s.currentView)
+  const location = useLocation()
+  const navigate = useNavigate()
   const toggleCartDrawer = useStore(s => s.toggleCartDrawer)
-  const setView = useStore(s => s.setView)
   const count = useStore(s => s.getCartCount())
   const total = useStore(s => s.getCartTotal())
 
-  if (count === 0 || currentView !== 'services') return null
+  // Only show on category/service pages
+  const isServicePage = location.pathname.startsWith('/services')
+  if (count === 0 || !isServicePage) return null
 
   return (
     <div className="fixed left-0 right-0 z-40 bg-white/75 backdrop-blur-xl border-t border-white/40 shadow-[0_-4px_20px_rgba(0,0,0,.08)] bottom-14 sm:bottom-0">
@@ -21,7 +24,7 @@ export default function CartBar() {
         </div>
         <div className="flex gap-2">
           <button type="button" onClick={toggleCartDrawer} className="btn-base btn-secondary border-2 border-brand text-brand px-4 py-2 rounded-lg text-sm font-semibold">View Cart</button>
-          <button type="button" onClick={() => { toggleCartDrawer(); setTimeout(() => setView('booking'), 100) }} className="btn-base btn-primary bg-brand text-white px-5 py-2 rounded-lg text-sm font-semibold">Book Now</button>
+          <button type="button" onClick={() => navigate('/booking')} className="btn-base btn-primary bg-brand text-white px-5 py-2 rounded-lg text-sm font-semibold">Book Now</button>
         </div>
       </div>
     </div>

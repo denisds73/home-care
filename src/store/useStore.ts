@@ -6,14 +6,12 @@ import type {
   Booking,
   BookingStatus,
   CartLine,
-  CategoryId,
   CategoryMeta,
   NewBookingPayload,
   Service,
   ToastState,
   ToastType,
   User,
-  View,
 } from '../types/domain'
 
 export type ServiceDraft = Omit<Service, 'id'> & { created_at?: string; updated_at?: string }
@@ -26,9 +24,7 @@ interface Store {
   adminUnlocked: boolean
   adminAuthOpen: boolean
   unlockAdmin: () => void
-  currentView: View
-  selectedCategory: CategoryId | null
-  setView: (view: View, category?: CategoryId | null) => void
+
   services: Service[]
   categories: CategoryMeta[]
   nextServiceId: number
@@ -70,12 +66,6 @@ const useStore = create<Store>()((set, get) => ({
   adminAuthOpen: false,
   unlockAdmin: () => set({ adminUnlocked: true }),
 
-  currentView: 'home',
-  selectedCategory: null,
-  setView: (view, category) => {
-    set({ currentView: view, selectedCategory: category || get().selectedCategory })
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  },
 
   services: initialServices,
   categories: CATEGORIES,

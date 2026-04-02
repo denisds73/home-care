@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
 import { getCategoryName, formatDate, formatDateTime, formatTimeSlot, formatPaymentMode, formatPaymentStatus, statusClass, paymentBadgeClass, getValidTransitions } from '../../data/helpers'
@@ -25,7 +26,7 @@ interface SvcFormState {
 }
 
 export default function AdminPanel() {
-  const setView = useStore(s => s.setView)
+  const navigate = useNavigate()
   const services = useStore(s => s.services)
   const bookings = useStore(s => s.bookings)
   const updateBookingStatus = useStore(s => s.updateBookingStatus)
@@ -129,7 +130,7 @@ export default function AdminPanel() {
           <button onClick={() => setTab('dashboard')} className={`px-4 sm:px-5 py-3.5 text-sm font-medium transition whitespace-nowrap ${tab === 'dashboard' ? 'border-b-[3px] border-brand text-brand' : 'text-secondary hover:text-gray-800'}`}>Dashboard</button>
           <button onClick={() => setTab('catalog')} className={`px-4 sm:px-5 py-3.5 text-sm font-medium transition whitespace-nowrap ${tab === 'catalog' ? 'border-b-[3px] border-brand text-brand' : 'text-secondary hover:text-gray-800'}`}>Service Catalog</button>
           <div className="flex-1" />
-          <button onClick={() => setView('home')} className="px-4 py-2 my-2 text-xs font-medium rounded-full border border-gray-200 hover:bg-gray-50 transition text-secondary">← Back to App</button>
+          <button onClick={() => navigate('/')} className="px-4 py-2 my-2 text-xs font-medium rounded-full border border-gray-200 hover:bg-gray-50 transition text-secondary">← Back to App</button>
         </div>
       </div>
 

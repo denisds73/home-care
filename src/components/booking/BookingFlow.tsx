@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, type Dispatch, type SetStateAction, type KeyboardEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
 import { CONVENIENCE_FEE, GST_RATE } from '../../data/services'
@@ -281,7 +282,7 @@ function Step3({
 }
 
 function Step4({ bookingId, booking }: { bookingId: string; booking: BookingDraft }) {
-  const setView = useStore(s => s.setView)
+  const navigate = useNavigate()
   const clearCart = useStore(s => s.clearCart)
   const formatDate = (d: string | undefined) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
 
@@ -298,13 +299,13 @@ function Step4({ bookingId, booking }: { bookingId: string; booking: BookingDraf
         <div className="flex justify-between"><span className="text-secondary text-sm">Date</span><span className="font-semibold text-sm">{formatDate(booking.date)}</span></div>
         <div className="flex justify-between"><span className="text-secondary text-sm">Address</span><span className="font-semibold text-sm text-right max-w-xs">{booking.address}</span></div>
       </div>
-      <button type="button" onClick={() => { clearCart(); setView('home') }} className="btn-base btn-primary px-8 py-3 font-semibold text-sm">Back to Home</button>
+      <button type="button" onClick={() => { clearCart(); navigate('/') }} className="btn-base btn-primary px-8 py-3 font-semibold text-sm">Back to Home</button>
     </div>
   )
 }
 
 export default function BookingFlow() {
-  const setView = useStore(s => s.setView)
+  const navigate = useNavigate()
   const addBooking = useStore(s => s.addBooking)
   const cart = useStore(s => s.cart)
   const isLoggedIn = useStore(s => s.isLoggedIn)
@@ -318,7 +319,7 @@ export default function BookingFlow() {
   const showToast = useStore(s => s.showToast)
 
   const goBack = () => {
-    if (step <= 1) setView('home')
+    if (step <= 1) navigate('/')
     else setStep(s => Math.max(1, s - 1))
   }
 
