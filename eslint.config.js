@@ -1,4 +1,5 @@
 import js from '@eslint/js'
+import eslintConfigPrettier from 'eslint-config-prettier'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
@@ -28,4 +29,6 @@ export default defineConfig([
       '@typescript-eslint/no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  // Must be last: turns off ESLint rules that disagree with Prettier
+  eslintConfigPrettier,
 ])
