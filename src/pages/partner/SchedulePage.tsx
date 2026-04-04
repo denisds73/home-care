@@ -26,8 +26,13 @@ export default function SchedulePage() {
   }
 
   return (
-    <div>
-      <div className="glass-card p-5 mb-6">
+    <div className="fade-in space-y-6">
+      <div>
+        <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">Schedule</h1>
+        <p className="text-muted text-sm mt-1">Set your working hours and availability.</p>
+      </div>
+
+      <div className="glass-card p-5">
         <h2 className="text-sm font-semibold text-primary mb-4">Weekly Availability</h2>
 
         <div className="hidden md:block overflow-x-auto">

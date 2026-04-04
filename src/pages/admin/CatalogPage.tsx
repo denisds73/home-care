@@ -90,8 +90,8 @@ export default function CatalogPage() {
   }
 
   return (
-    <div>
-      <div className="flex flex-wrap items-center gap-3 mb-6">
+    <div className="fade-in space-y-6">
+      <div className="flex flex-wrap items-center gap-3">
         <select
           className="input-base py-2 px-3 text-sm"
           value={categoryFilter}

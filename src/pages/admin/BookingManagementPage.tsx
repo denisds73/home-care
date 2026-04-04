@@ -33,8 +33,13 @@ export default function BookingManagementPage() {
   }
 
   return (
-    <div>
-      <div className="glass-card p-4 mb-6">
+    <div className="fade-in space-y-6">
+      <div>
+        <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">Booking Management</h1>
+        <p className="text-muted text-sm mt-1">View, filter, and manage all bookings.</p>
+      </div>
+
+      <div className="glass-card p-4">
         <div className="flex flex-wrap gap-3">
           <input
             type="text"

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import useStore from '../../store/useStore'
+import { formatDate } from '../../data/helpers'
 
 interface MockUser {
   id: string
@@ -38,8 +39,13 @@ export default function UserManagementPage() {
   }
 
   return (
-    <div>
-      <div className="mb-6">
+    <div className="fade-in space-y-6">
+      <div>
+        <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">User Management</h1>
+        <p className="text-muted text-sm mt-1">View and manage registered customers.</p>
+      </div>
+
+      <div>
         <input
           type="text"
           className="input-base py-2 px-4 text-sm w-full max-w-md"
@@ -67,7 +73,7 @@ export default function UserManagementPage() {
                 <td className="p-3 font-medium">{u.name}</td>
                 <td className="p-3 text-secondary">{u.email}</td>
                 <td className="p-3">{u.bookings}</td>
-                <td className="p-3 text-muted">{u.joinedAt}</td>
+                <td className="p-3 text-muted">{formatDate(u.joinedAt)}</td>
                 <td className="p-3">
                   <span className={`text-xs font-semibold ${u.active ? 'text-success' : 'text-error'}`}>
                     {u.active ? 'Active' : 'Suspended'}

@@ -17,8 +17,13 @@ export default function EarningsPage() {
   const maxEarning = Math.max(...weeklyEarnings.map(d => d.amount))
 
   return (
-    <div>
-      <div className="flex flex-wrap gap-2 mb-6">
+    <div className="fade-in space-y-6">
+      <div>
+        <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">Earnings</h1>
+        <p className="text-muted text-sm mt-1">Track your income and request payouts.</p>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
         {(['daily', 'weekly', 'monthly'] as Period[]).map(p => (
           <button
             key={p}
@@ -34,14 +39,14 @@ export default function EarningsPage() {
       </div>
 
       <div
-        className="glass-card p-6 mb-6 text-white rounded-2xl"
+        className="glass-card p-6 text-white rounded-2xl"
         style={{ background: 'linear-gradient(135deg, var(--color-primary-dark), var(--color-primary))' }}
       >
         <p className="text-sm opacity-80">{PERIOD_DATA[period].label}</p>
         <p className="text-3xl font-bold mt-1">₹{PERIOD_DATA[period].total.toLocaleString()}</p>
       </div>
 
-      <div className="glass-card p-5 mb-6">
+      <div className="glass-card p-5">
         <h2 className="text-sm font-semibold text-primary mb-4">Weekly Breakdown</h2>
         <div className="flex items-end gap-3 h-40">
           {weeklyEarnings.map(d => (
@@ -73,7 +78,7 @@ export default function EarningsPage() {
             <span className="text-secondary">Platform Fee (20%)</span>
             <span className="font-semibold text-primary">-₹29,000</span>
           </div>
-          <div className="h-px bg-gray-100" />
+          <div className="h-px bg-muted" />
           <div className="flex justify-between text-sm">
             <span className="font-semibold text-primary">Net Payout</span>
             <span className="font-bold text-brand">₹1,16,000</span>

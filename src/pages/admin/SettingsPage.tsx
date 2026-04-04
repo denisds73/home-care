@@ -14,8 +14,13 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-2xl">
-      <div className="glass-card p-5 mb-6">
+    <div className="fade-in space-y-6 max-w-2xl">
+      <div>
+        <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">Settings</h1>
+        <p className="text-muted text-sm mt-1">Configure platform rates and preferences.</p>
+      </div>
+
+      <div className="glass-card p-5">
         <h2 className="text-sm font-semibold text-primary mb-4">Commission & Fees</h2>
         <div className="space-y-4">
           <div>
@@ -62,7 +67,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="glass-card p-5 mb-6">
+      <div className="glass-card p-5">
         <h2 className="text-sm font-semibold text-primary mb-4">Platform Settings</h2>
         <div className="space-y-4">
           <label className="flex items-center justify-between gap-4">

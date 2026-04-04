@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { monthlyRevenue, mockPayoutRequests } from '../../data/mockData'
+import { formatDate } from '../../data/helpers'
 import useStore from '../../store/useStore'
 import type { PayoutRequest } from '../../types/domain'
 
@@ -21,23 +22,28 @@ export default function FinancePage() {
   }
 
   return (
-    <div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="stat-card">
+    <div className="fade-in space-y-6">
+      <div>
+        <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">Finance & Payouts</h1>
+        <p className="text-muted text-sm mt-1">Revenue, commissions, and partner payout management.</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="stat-card stat-border-primary">
           <p className="text-xs text-secondary font-medium">Total Revenue (6mo)</p>
           <p className="text-2xl font-bold text-primary mt-1">₹{(totalRevenue / 1000).toFixed(0)}k</p>
         </div>
-        <div className="stat-card">
+        <div className="stat-card stat-border-warning">
           <p className="text-xs text-secondary font-medium">Total Payouts</p>
           <p className="text-2xl font-bold text-primary mt-1">₹{(totalPayouts / 1000).toFixed(0)}k</p>
         </div>
-        <div className="stat-card">
+        <div className="stat-card stat-border-success">
           <p className="text-xs text-secondary font-medium">Commission (20%)</p>
           <p className="text-2xl font-bold text-success mt-1">₹{((totalRevenue - totalPayouts) / 1000).toFixed(0)}k</p>
         </div>
       </div>
 
-      <div className="glass-card p-5 mb-6">
+      <div className="glass-card p-5">
         <h2 className="text-sm font-semibold text-primary mb-4">Revenue vs Payouts</h2>
         <div className="flex items-end gap-4 h-40">
           {monthlyRevenue.map(m => (
@@ -96,15 +102,15 @@ export default function FinancePage() {
                 <tr key={p.id} className="border-t border-gray-50">
                   <td className="py-2.5 pr-4 font-medium">{p.partnerName}</td>
                   <td className="py-2.5 pr-4">₹{p.amount.toLocaleString()}</td>
-                  <td className="py-2.5 pr-4 text-muted">{p.requestedAt}</td>
+                  <td className="py-2.5 pr-4 text-muted">{formatDate(p.requestedAt)}</td>
                   <td className="py-2.5 pr-4">
                     <span
-                      className={`text-xs font-semibold ${
+                      className={`badge ${
                         p.status === 'processed'
-                          ? 'text-success'
+                          ? 'badge-confirmed'
                           : p.status === 'pending'
-                            ? 'text-amber-600'
-                            : 'text-error'
+                            ? 'badge-pending'
+                            : 'badge-cancelled'
                       }`}
                     >
                       {p.status.charAt(0).toUpperCase() + p.status.slice(1)}

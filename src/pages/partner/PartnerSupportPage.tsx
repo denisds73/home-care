@@ -37,8 +37,13 @@ export default function PartnerSupportPage() {
   }
 
   return (
-    <div>
-      <section className="mb-8">
+    <div className="fade-in space-y-6">
+      <div>
+        <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">Support</h1>
+        <p className="text-muted text-sm mt-1">Find answers or contact our team.</p>
+      </div>
+
+      <section>
         <h2 className="text-base font-semibold text-primary mb-3">FAQ</h2>
         <div className="space-y-2">
           {FAQ_ITEMS.map((faq, i) => (

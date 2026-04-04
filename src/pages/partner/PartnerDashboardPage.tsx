@@ -65,28 +65,24 @@ export default function PartnerDashboardPage() {
       value: todaysJobs.length,
       sub: 'Scheduled today',
       borderCls: 'stat-border-primary',
-      icon: '📋',
     },
     {
       label: 'Week Earnings',
       value: formatCurrency(weekTotal),
       sub: 'This week',
       borderCls: 'stat-border-success',
-      icon: '💰',
     },
     {
       label: 'Rating',
-      value: '4.8 ★',
+      value: '4.8',
       sub: 'Average rating',
       borderCls: 'stat-border-warning',
-      icon: '⭐',
     },
     {
       label: 'Completion Rate',
       value: `${completionRate}%`,
       sub: 'Jobs completed',
       borderCls: 'stat-border-info',
-      icon: '✅',
     },
   ]
 
@@ -95,7 +91,7 @@ export default function PartnerDashboardPage() {
       {/* Greeting */}
       <div>
         <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">
-          Good morning, {user?.name ?? 'Partner'} 👋
+          Welcome back, {user?.name ?? 'Partner'}
         </h1>
         <p className="text-muted text-sm mt-1">
           Here's your performance overview for today.
@@ -106,16 +102,11 @@ export default function PartnerDashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
           <div key={s.label} className={`stat-card ${s.borderCls}`}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-muted text-xs font-medium">{s.label}</p>
-                <p className="font-brand text-xl font-bold text-primary mt-1">
-                  {s.value}
-                </p>
-                <p className="text-muted text-xs mt-1">{s.sub}</p>
-              </div>
-              <span className="text-2xl">{s.icon}</span>
-            </div>
+            <p className="text-muted text-xs font-medium">{s.label}</p>
+            <p className="font-brand text-xl font-bold text-primary mt-1">
+              {s.value}
+            </p>
+            <p className="text-muted text-xs mt-1">{s.sub}</p>
           </div>
         ))}
       </div>

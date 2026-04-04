@@ -22,8 +22,13 @@ export default function PartnerManagementPage() {
   const getCategoryName = (id: string) => CATEGORIES.find(c => c.id === id)?.name || id
 
   return (
-    <div>
-      <div className="flex gap-3 mb-6">
+    <div className="fade-in space-y-6">
+      <div>
+        <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">Partner Management</h1>
+        <p className="text-muted text-sm mt-1">Approve, monitor, and manage service partners.</p>
+      </div>
+
+      <div className="flex gap-3">
         <select
           className="input-base py-2 px-3 text-sm"
           value={statusFilter}
@@ -52,12 +57,12 @@ export default function PartnerManagementPage() {
                 </div>
               </div>
               <span
-                className={`text-xs font-semibold px-2 py-1 rounded-full shrink-0 ${
+                className={`badge shrink-0 ${
                   p.status === 'approved'
-                    ? 'bg-green-50 text-success'
+                    ? 'badge-confirmed'
                     : p.status === 'pending'
-                      ? 'bg-amber-50 text-amber-600'
-                      : 'bg-red-50 text-error'
+                      ? 'badge-pending'
+                      : 'badge-cancelled'
                 }`}
               >
                 {p.status.charAt(0).toUpperCase() + p.status.slice(1)}

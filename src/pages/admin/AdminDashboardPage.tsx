@@ -20,7 +20,7 @@ export default function AdminDashboardPage() {
   ]
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="fade-in space-y-6">
       <div>
         <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">Dashboard Overview</h1>
         <p className="text-muted text-sm mt-1">Welcome back, Admin</p>

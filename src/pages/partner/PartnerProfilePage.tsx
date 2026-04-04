@@ -19,8 +19,13 @@ export default function PartnerProfilePage() {
   }
 
   return (
-    <div>
-      <div className="glass-card p-6 mb-6">
+    <div className="fade-in space-y-6">
+      <div>
+        <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">Profile</h1>
+        <p className="text-muted text-sm mt-1">Manage your skills and service details.</p>
+      </div>
+
+      <div className="glass-card p-6">
         <div className="flex items-center gap-4 mb-4">
           <div className="w-16 h-16 rounded-full bg-brand-soft flex items-center justify-center text-2xl font-bold text-brand">
             {user?.name?.charAt(0).toUpperCase() || 'P'}
@@ -46,7 +51,7 @@ export default function PartnerProfilePage() {
         </div>
       </div>
 
-      <div className="glass-card p-5 mb-6">
+      <div className="glass-card p-5">
         <h2 className="text-sm font-semibold text-primary mb-3">Service Categories</h2>
         <div className="grid grid-cols-2 gap-2">
           {CATEGORIES.map(cat => (
@@ -66,7 +71,7 @@ export default function PartnerProfilePage() {
         </div>
       </div>
 
-      <div className="glass-card p-5 mb-6">
+      <div className="glass-card p-5">
         <h2 className="text-sm font-semibold text-primary mb-3">Service Area</h2>
         <input
           type="text"
