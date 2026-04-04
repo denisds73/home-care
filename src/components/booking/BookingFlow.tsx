@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type Dispatch, type SetStateAction, type KeyboardEvent } from 'react'
+import { useState, useRef, useEffect, type Dispatch, type SetStateAction } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import { useAuthStore } from '../../store/useAuthStore'
@@ -182,7 +182,7 @@ function Step2({ onNext, phone }: { onNext: () => void; phone?: string }) {
     if (val && idx < 5) refs.current[idx + 1]?.focus()
   }
 
-  const handleKey = (idx: number, e: KeyboardEvent<HTMLInputElement>) => {
+  const handleKey = (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !otp[idx] && idx > 0) refs.current[idx - 1]?.focus()
   }
 
@@ -221,222 +221,40 @@ function Step2({ onNext, phone }: { onNext: () => void; phone?: string }) {
   )
 }
 
-type AuthMode = 'choose' | 'login' | 'register'
-
-function InlineAuthForm({
-  mode,
-  onBack,
-}: {
-  mode: 'login' | 'register'
-  onBack: () => void
-}) {
-  const login = useAuthStore(s => s.login)
-  const signup = useAuthStore(s => s.signup)
-  const isLoading = useAuthStore(s => s.isLoading)
-  const authError = useAuthStore(s => s.error)
-  const clearError = useAuthStore(s => s.clearError)
-
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [touched, setTouched] = useState<Record<string, boolean>>({})
-
-  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-  const passwordValid = password.length >= 6
-  const nameValid = name.trim().length >= 2
-
-  const canSubmit =
-    mode === 'login'
-      ? emailValid && password.length > 0
-      : emailValid && passwordValid && nameValid
-
-  const handleSubmit = async () => {
-    clearError()
-    setTouched({ name: true, email: true, password: true })
-    if (!canSubmit) return
-
-    try {
-      if (mode === 'login') {
-        await login(email, password)
-      } else {
-        await signup({ name: name.trim(), email, password })
-      }
-      // On success, isAuthenticated flips to true via the store,
-      // Step3 re-renders and shows payment buttons automatically.
-    } catch {
-      // Error is already set in the auth store
-    }
-  }
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleSubmit()
-  }
-
-  useEffect(() => {
-    clearError()
-  }, [clearError])
-
-  return (
-    <div className="fade-in">
-      <button
-        type="button"
-        onClick={onBack}
-        className="flex items-center gap-1 text-sm text-brand font-medium mb-4 hover:text-brand-dark transition-colors"
-        aria-label="Back to auth options"
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-        Back
-      </button>
-
-      <h4 className="text-base font-bold text-primary mb-3">
-        {mode === 'login' ? 'Login to your account' : 'Create an account'}
-      </h4>
-
-      <div className="space-y-3">
-        {mode === 'register' && (
-          <div>
-            <label htmlFor="auth-inline-name" className="block text-sm font-medium text-secondary mb-1">
-              Full Name
-            </label>
-            <input
-              id="auth-inline-name"
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              onBlur={() => setTouched(t => ({ ...t, name: true }))}
-              onKeyDown={handleKeyDown}
-              className={`input-base w-full px-4 py-2.5 text-sm ${touched.name && !nameValid ? 'field-invalid' : ''}`}
-              placeholder="Enter your full name"
-            />
-            {touched.name && !nameValid && (
-              <p className="text-xs text-error mt-1 fade-in">Name must be at least 2 characters</p>
-            )}
-          </div>
-        )}
-
-        <div>
-          <label htmlFor="auth-inline-email" className="block text-sm font-medium text-secondary mb-1">
-            Email
-          </label>
-          <input
-            id="auth-inline-email"
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            onBlur={() => setTouched(t => ({ ...t, email: true }))}
-            onKeyDown={handleKeyDown}
-            className={`input-base w-full px-4 py-2.5 text-sm ${touched.email && !emailValid ? 'field-invalid' : ''}`}
-            placeholder="you@example.com"
-          />
-          {touched.email && !emailValid && (
-            <p className="text-xs text-error mt-1 fade-in">Enter a valid email address</p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="auth-inline-password" className="block text-sm font-medium text-secondary mb-1">
-            Password
-          </label>
-          <input
-            id="auth-inline-password"
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            onBlur={() => setTouched(t => ({ ...t, password: true }))}
-            onKeyDown={handleKeyDown}
-            className={`input-base w-full px-4 py-2.5 text-sm ${touched.password && !passwordValid && mode === 'register' ? 'field-invalid' : ''}`}
-            placeholder={mode === 'register' ? 'Min 6 characters' : 'Enter your password'}
-          />
-          {touched.password && !passwordValid && mode === 'register' && (
-            <p className="text-xs text-error mt-1 fade-in">Password must be at least 6 characters</p>
-          )}
-        </div>
-      </div>
-
-      {authError && (
-        <p className="text-sm text-error mt-3 fade-in">{authError}</p>
-      )}
-
-      <button
-        type="button"
-        onClick={handleSubmit}
-        disabled={isLoading || !canSubmit}
-        className="btn-base btn-primary w-full py-3 font-semibold text-sm mt-4 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-      >
-        {isLoading ? (
-          <>
-            <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            {mode === 'login' ? 'Logging in...' : 'Creating account...'}
-          </>
-        ) : (
-          mode === 'login' ? 'Login & Continue' : 'Create Account & Continue'
-        )}
-      </button>
-    </div>
-  )
-}
-
-function Step3AuthGate() {
+function Step3AuthGate({ booking }: { booking: BookingDraft }) {
   const navigate = useNavigate()
-  const [authMode, setAuthMode] = useState<AuthMode>('choose')
 
-  if (authMode === 'login' || authMode === 'register') {
-    return (
-      <div className="glass-card p-5 mb-6">
-        <InlineAuthForm mode={authMode} onBack={() => setAuthMode('choose')} />
-      </div>
-    )
+  const handleLoginRedirect = () => {
+    // Persist booking state so it survives the auth redirect
+    sessionStorage.setItem('booking_draft', JSON.stringify(booking))
+    navigate(`${LOGIN_ROUTES.customer}?returnTo=${encodeURIComponent('/app/booking')}`)
   }
 
   return (
-    <div className="glass-card p-5 mb-6 slide-up">
+    <div className="glass-card p-5 slide-up">
       <div className="flex items-center gap-2 mb-4">
         <svg className="w-5 h-5 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
         <h4 className="text-base font-bold text-primary">Sign in to complete booking</h4>
       </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-        <button
-          type="button"
-          onClick={() => setAuthMode('login')}
-          className="btn-base btn-primary py-3 rounded-xl font-semibold text-sm"
-          aria-label="Login and pay"
-        >
-          Login & Pay
-        </button>
-        <button
-          type="button"
-          onClick={() => setAuthMode('register')}
-          className="btn-base btn-secondary py-3 rounded-xl font-semibold text-sm"
-          aria-label="Register and pay"
-        >
-          Register & Pay
-        </button>
-      </div>
-
-      <div className="flex items-center gap-3 my-4">
-        <div className="flex-1 h-px bg-gray-200" />
-        <span className="text-xs text-muted font-medium">or</span>
-        <div className="flex-1 h-px bg-gray-200" />
-      </div>
-
+      <p className="text-sm text-secondary mb-4">
+        Log in or create an account to proceed with payment. Your booking details will be preserved.
+      </p>
       <button
         type="button"
-        onClick={() => {
-          navigate(`${LOGIN_ROUTES.customer}?returnTo=${encodeURIComponent('/app/booking')}`)
-        }}
-        className="w-full text-sm text-brand font-medium hover:text-brand-dark transition-colors py-2"
-        aria-label="Continue as guest and pay after service"
+        onClick={handleLoginRedirect}
+        className="btn-base btn-primary w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
       >
-        Continue as Guest &rarr; Pay After Service
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+        </svg>
+        Login &amp; Pay
       </button>
     </div>
   )
 }
+
 
 function Step3({
   booking,
@@ -495,7 +313,7 @@ function Step3({
       </div>
 
       {!isAuthenticated ? (
-        <Step3AuthGate />
+        <Step3AuthGate booking={booking} />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button type="button" onClick={() => onPayNow(total)} disabled={submitting} className="btn-base btn-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
@@ -544,13 +362,23 @@ export default function BookingFlow() {
   const cart = useStore(s => s.cart)
   const [step, setStep] = useState(1)
   const user = useAuthStore(s => s.user)
-  const [booking, setBooking] = useState<BookingDraft>(() => ({
-    name: user?.name ?? '',
-    phone: user?.phone ?? '',
-    address: '',
-    date: '',
-    time_slot: '',
-  }))
+  const authLoading = useAuthStore(s => s.isLoading)
+
+  // Restore booking draft from sessionStorage if returning from auth redirect
+  const [booking, setBooking] = useState<BookingDraft>(() => {
+    const saved = sessionStorage.getItem('booking_draft')
+    if (saved) {
+      sessionStorage.removeItem('booking_draft')
+      try { return JSON.parse(saved) as BookingDraft } catch { /* fall through */ }
+    }
+    return {
+      name: user?.name ?? '',
+      phone: user?.phone ?? '',
+      address: '',
+      date: '',
+      time_slot: '',
+    }
+  })
   const [showRazorpay, setShowRazorpay] = useState(false)
   const [payAmount, setPayAmount] = useState(0)
   const [confirmedId, setConfirmedId] = useState('')
@@ -639,6 +467,24 @@ export default function BookingFlow() {
     const id = await createBooking('PAY_AFTER_SERVICE', 'PENDING')
     setStep(4)
     showToast(`Booking ${id} created!`, 'success')
+  }
+
+  // Show skeleton while auth is restoring so form never flashes empty then prefills
+  if (authLoading && step === 1) {
+    return (
+      <div className="fade-in">
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6 md:p-8 animate-pulse">
+            <div className="h-6 bg-gray-200 rounded w-48 mb-4" />
+            <div className="space-y-4">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i}><div className="h-4 bg-gray-200 rounded w-24 mb-1" /><div className="h-10 bg-gray-100 rounded-lg" /></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -44,10 +44,12 @@ export const DatePicker = memo(function DatePicker({
   const todayISO = new Date().toISOString().split('T')[0]
   const initial = value ? parseISO(value) : parseISO(todayISO)
   const [isOpen, setIsOpen] = useState(false)
+  const [openUp, setOpenUp] = useState(false)
   const [viewMonth, setViewMonth] = useState(initial.month)
   const [viewYear, setViewYear] = useState(initial.year)
   const [focusedISO, setFocusedISO] = useState<string>(value ?? todayISO)
   const containerRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const disabledSet = new Set(disabledDates ?? [])
 
   const isDateDisabled = useCallback((iso: string): boolean => {
@@ -141,8 +143,14 @@ export const DatePicker = memo(function DatePicker({
         </label>
       )}
       <button
+        ref={triggerRef}
         id={id} type="button"
         onClick={() => {
+          if (!isOpen && triggerRef.current) {
+            const rect = triggerRef.current.getBoundingClientRect()
+            const spaceBelow = window.innerHeight - rect.bottom
+            setOpenUp(spaceBelow < 360)
+          }
           setIsOpen(prev => !prev)
           if (value) { const p = parseISO(value); setViewMonth(p.month); setViewYear(p.year); setFocusedISO(value) }
         }}
@@ -157,7 +165,7 @@ export const DatePicker = memo(function DatePicker({
       {error && <p className="text-xs text-error mt-1">{error}</p>}
 
       {isOpen && (
-        <div role="dialog" aria-label="Choose date" className="absolute left-0 right-0 z-50 mt-1 glass-card p-3 fade-in">
+        <div role="dialog" aria-label="Choose date" className={`absolute left-0 right-0 z-50 glass-card p-3 fade-in ${openUp ? 'bottom-full mb-1' : 'mt-1'}`}>
           <div className="flex items-center justify-between mb-2">
             <button type="button" onClick={() => navigateMonth(-1)} className="btn-base w-9 h-9 rounded-lg hover:bg-brand-soft" aria-label="Previous month">
               <svg className="w-4 h-4 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
