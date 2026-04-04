@@ -24,7 +24,7 @@ export default function CartBar() {
         </div>
         <div className="flex gap-2">
           <button type="button" onClick={toggleCartDrawer} className="btn-base btn-secondary border-2 border-brand text-brand px-4 py-2 rounded-lg text-sm font-semibold">View Cart</button>
-          <button type="button" onClick={() => navigate('/booking')} className="btn-base btn-primary bg-brand text-white px-5 py-2 rounded-lg text-sm font-semibold">Book Now</button>
+          <button type="button" onClick={() => navigate('/app/booking')} className="btn-base btn-primary bg-brand text-white px-5 py-2 rounded-lg text-sm font-semibold">Book Now</button>
         </div>
       </div>
     </div>

@@ -21,7 +21,7 @@ export default function CartDrawer() {
   const proceedToBooking = () => {
     if (cart.length === 0) { showToast('Add services to your cart first', 'warning'); return }
     toggleCartDrawer()
-    navigate('/booking')
+    navigate('/app/booking')
   }
 
   return (

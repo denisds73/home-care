@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import useStore from '../../store/useStore'
+import { useAuthStore } from '../../store/useAuthStore'
 
 interface LoginScreenProps {
   onAuthSuccess?: () => void
@@ -9,11 +10,11 @@ interface LoginScreenProps {
 export default function LoginScreen({ onAuthSuccess, onClose }: LoginScreenProps) {
   const [tab, setTab] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
-  const login = useStore(s => s.login)
+  const login = useAuthStore(s => s.login)
   const showToast = useStore(s => s.showToast)
 
   const handleSubmit = () => {
-    login(email)
+    login(email || 'user@demo.com', 'customer')
     showToast('Welcome to HomeCare!', 'success')
     onAuthSuccess?.()
   }

@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import useStore from '../../store/useStore'
+import { useAuthStore } from '../../store/useAuthStore'
 import { CATEGORIES, CATEGORY_IMAGES } from '../../data/categories'
 
 export default function Navbar() {
   const navigate = useNavigate()
   const location = useLocation()
+  const role = useAuthStore(s => s.role)
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
   const toggleCartDrawer = useStore(s => s.toggleCartDrawer)
   const showToast = useStore(s => s.showToast)
   const services = useStore(s => s.services)
@@ -24,22 +27,22 @@ export default function Navbar() {
     const q = searchQuery.trim().toLowerCase()
     if (!q) return
     const cat = CATEGORIES.find(c => c.name.toLowerCase().includes(q) || c.id.includes(q))
-    if (cat) { navigate(`/services/${cat.id}`); setSearchQuery(''); return }
+    if (cat) { navigate(`/app/services/${cat.id}`); setSearchQuery(''); return }
     const svc = services.find(s => s.service_name.toLowerCase().includes(q) && s.is_active)
-    if (svc) { navigate(`/services/${svc.category}`); setSearchQuery(''); return }
+    if (svc) { navigate(`/app/services/${svc.category}`); setSearchQuery(''); return }
     showToast('No matching service found', 'warning')
   }
 
-  const isHome = location.pathname === '/'
-  const currentCategoryPath = location.pathname.startsWith('/services/')
-    ? location.pathname.split('/')[2]
+  const isHome = location.pathname === '/app' || location.pathname === '/app/'
+  const currentCategoryPath = location.pathname.startsWith('/app/services/')
+    ? location.pathname.split('/')[3]
     : null
 
   return (
     <nav className="sticky top-0 z-50 bg-white transition-shadow" role="navigation" aria-label="Main navigation" style={{ boxShadow: scrolled ? '0 4px 16px rgba(0,0,0,.1)' : '0 2px 4px rgba(0,0,0,.06)' }}>
       <div className="border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 flex items-center gap-3 sm:gap-4">
-          <Link to="/" className="flex items-center gap-2 shrink-0" aria-label="HomeCare home">
+          <Link to="/app" className="flex items-center gap-2 shrink-0" aria-label="HomeCare home">
             <svg className="w-7 h-7 shrink-0 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/></svg>
             <span className="text-base sm:text-lg font-bold font-brand text-primary">Home<span className="text-brand">Care</span></span>
           </Link>
@@ -68,24 +71,29 @@ export default function Navbar() {
                 <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[.6rem] font-extrabold w-[18px] h-[18px] rounded-full flex items-center justify-center border-2 border-white">{cartCount}</span>
               </button>
             )}
-            <Link to="/" className="hidden sm:inline-flex btn-base btn-secondary px-3 py-1.5 text-xs">Customer</Link>
-            <button type="button" onClick={() => {
-              const st = useStore.getState()
-              if (st.adminUnlocked) navigate('/admin')
-              else navigate('/admin/auth')
-            }} className="hidden sm:inline-flex btn-base btn-secondary px-3 py-1.5 text-xs">Admin</button>
+            <Link to="/app" className="hidden sm:inline-flex btn-base btn-secondary px-3 py-1.5 text-xs">Customer</Link>
+            <button
+              type="button"
+              onClick={() => {
+                if (isAuthenticated && role === 'admin') navigate('/admin')
+                else navigate('/admin/login')
+              }}
+              className="hidden sm:inline-flex btn-base btn-secondary px-3 py-1.5 text-xs"
+            >
+              Admin
+            </button>
           </div>
         </div>
       </div>
 
       <div className="hidden sm:block border-b border-gray-100 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 flex">
-          <Link to="/" className={`flex items-center gap-1.5 px-4 py-2.5 text-[.8rem] font-semibold whitespace-nowrap border-b-[2.5px] transition ${isHome ? 'text-brand border-brand' : 'text-secondary border-transparent hover:text-primary hover:bg-gray-50'}`}>
+          <Link to="/app" className={`flex items-center gap-1.5 px-4 py-2.5 text-[.8rem] font-semibold whitespace-nowrap border-b-[2.5px] transition ${isHome ? 'text-brand border-brand' : 'text-secondary border-transparent hover:text-primary hover:bg-gray-50'}`}>
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/></svg>
             All
           </Link>
           {CATEGORIES.map(cat => (
-            <Link key={cat.id} to={`/services/${cat.id}`} className={`flex items-center gap-1.5 px-4 py-2.5 text-[.8rem] font-semibold whitespace-nowrap border-b-[2.5px] transition ${currentCategoryPath === cat.id || selectedCategory === cat.id && currentCategoryPath ? 'text-brand border-brand' : 'text-secondary border-transparent hover:text-primary hover:bg-gray-50'}`}>
+            <Link key={cat.id} to={`/app/services/${cat.id}`} className={`flex items-center gap-1.5 px-4 py-2.5 text-[.8rem] font-semibold whitespace-nowrap border-b-[2.5px] transition ${currentCategoryPath === cat.id || selectedCategory === cat.id && currentCategoryPath ? 'text-brand border-brand' : 'text-secondary border-transparent hover:text-primary hover:bg-gray-50'}`}>
               <img src={CATEGORY_IMAGES[cat.id]} alt={cat.name} className="w-6 h-6 rounded-md object-cover" />
               {cat.name}
             </Link>

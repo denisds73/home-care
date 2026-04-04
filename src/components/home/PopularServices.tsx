@@ -55,7 +55,7 @@ export default function PopularServices() {
               <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${current * (100 / perView)}%)` }}>
                 {items.map((item, i) => (
                   <div key={i} style={{ flex: `0 0 ${100 / perView}%`, padding: '0 8px' }}>
-                    <div className="popular-card glass-card rounded-2xl overflow-hidden cursor-pointer h-full" onClick={() => navigate(`/services/${item.cat}`)}>
+                    <div className="popular-card glass-card rounded-2xl overflow-hidden cursor-pointer h-full" onClick={() => navigate(`/app/services/${item.cat}`)}>
                       <div className="relative h-44 overflow-hidden">
                         <img src={item.img} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
                         {item.badge && <div className="absolute top-3 left-3"><span className="px-2.5 py-1 rounded-full text-xs font-bold shadow text-white" style={{ background: 'rgba(0,0,0,.7)' }}>{item.badge}</span></div>}

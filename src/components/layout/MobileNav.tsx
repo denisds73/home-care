@@ -25,14 +25,14 @@ export default function MobileNav() {
 
   const handleClick = (tab: TabItem) => {
     if (tab.id === 'cart') { toggleCartDrawer(); return }
-    if (tab.id === 'home') { navigate('/'); return }
+    if (tab.id === 'home') { navigate('/app'); return }
     if (tab.id === 'services') {
-      navigate('/')
+      navigate('/app')
       setTimeout(() => document.getElementById('categorySection')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200)
       return
     }
     if (tab.id === 'offers') {
-      navigate('/')
+      navigate('/app')
       setTimeout(() => document.getElementById('offersSection')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200)
       return
     }
@@ -40,8 +40,8 @@ export default function MobileNav() {
   }
 
   const isActive = (id: string) => {
-    if (id === 'home' && location.pathname === '/') return true
-    if (id === 'services' && location.pathname.startsWith('/services')) return true
+    if (id === 'home' && (location.pathname === '/app' || location.pathname === '/app/')) return true
+    if (id === 'services' && location.pathname.startsWith('/app/services')) return true
     return false
   }
 

@@ -6,6 +6,7 @@ import type {
   Booking,
   BookingStatus,
   CartLine,
+  CategoryId,
   CategoryMeta,
   NewBookingPayload,
   Service,
@@ -18,6 +19,8 @@ export type ServiceDraft = Omit<Service, 'id'> & { created_at?: string; updated_
 interface Store {
   services: Service[]
   categories: CategoryMeta[]
+  /** Tracks highlighted category in navbar (synced from CategoryPage). */
+  selectedCategory: CategoryId | null
   nextServiceId: number
   addService: (svc: ServiceDraft) => void
   updateService: (id: number, data: Partial<Service> & { created_at?: string; updated_at?: string }) => void
@@ -50,6 +53,7 @@ interface Store {
 const useStore = create<Store>()((set, get) => ({
   services: initialServices,
   categories: CATEGORIES,
+  selectedCategory: null,
   nextServiceId: 31,
   addService: (svc) => {
     const id = get().nextServiceId

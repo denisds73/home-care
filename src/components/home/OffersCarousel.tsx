@@ -68,8 +68,8 @@ export default function OffersCarousel() {
                     key={i}
                     className="w-full shrink-0 rounded-2xl overflow-hidden cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     style={{ background: offer.bg }}
-                    onClick={() => navigate(`/services/${offer.cat}`)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/services/${offer.cat}`) }}
+                    onClick={() => navigate(`/app/services/${offer.cat}`)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/app/services/${offer.cat}`) }}
                     role="link"
                     tabIndex={current === i ? 0 : -1}
                   >

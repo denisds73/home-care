@@ -1,5 +1,6 @@
 import { ENV } from '../config/env'
 import useStore from '../store/useStore'
+import { useAuthStore } from '../store/useAuthStore'
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -31,9 +32,8 @@ async function fetchClient<T>(endpoint: string, options: RequestInit = {}): Prom
     const response = await fetch(url, config)
 
     if (response.status === 401) {
-      // Auto-logout on unauthorized
-      useStore.getState().logout()
-      useStore.getState().showToast('Session expired. Please log in again.', 'error')
+      useAuthStore.getState().logout()
+      useStore.getState().showToast('Session expired. Please log in again.', 'danger')
       throw new ApiError(401, 'Unauthorized')
     }
 
@@ -51,9 +51,12 @@ async function fetchClient<T>(endpoint: string, options: RequestInit = {}): Prom
 
 export const api = {
   get: <T>(endpoint: string, options?: RequestInit) => fetchClient<T>(endpoint, { ...options, method: 'GET' }),
-  post: <T>(endpoint: string, data: any, options?: RequestInit) => fetchClient<T>(endpoint, { ...options, method: 'POST', body: JSON.stringify(data) }),
-  put: <T>(endpoint: string, data: any, options?: RequestInit) => fetchClient<T>(endpoint, { ...options, method: 'PUT', body: JSON.stringify(data) }),
-  patch: <T>(endpoint: string, data: any, options?: RequestInit) => fetchClient<T>(endpoint, { ...options, method: 'PATCH', body: JSON.stringify(data) }),
+  post: <T>(endpoint: string, data: unknown, options?: RequestInit) =>
+    fetchClient<T>(endpoint, { ...options, method: 'POST', body: JSON.stringify(data) }),
+  put: <T>(endpoint: string, data: unknown, options?: RequestInit) =>
+    fetchClient<T>(endpoint, { ...options, method: 'PUT', body: JSON.stringify(data) }),
+  patch: <T>(endpoint: string, data: unknown, options?: RequestInit) =>
+    fetchClient<T>(endpoint, { ...options, method: 'PATCH', body: JSON.stringify(data) }),
   delete: <T>(endpoint: string, options?: RequestInit) => fetchClient<T>(endpoint, { ...options, method: 'DELETE' }),
 }
 

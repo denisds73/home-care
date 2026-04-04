@@ -18,7 +18,7 @@ export default function CategoryGrid() {
             const prices = services.filter(s => s.category === cat.id && s.is_active).map(s => s.price)
             const minPrice = prices.length ? Math.min(...prices) : 0
             return (
-              <button key={cat.id} onClick={() => navigate(`/services/${cat.id}`)}
+              <button key={cat.id} onClick={() => navigate(`/app/services/${cat.id}`)}
                 className="category-card bg-white rounded-2xl border border-gray-100 overflow-hidden text-center p-3 sm:p-4"
                 style={{ boxShadow: '0 2px 8px rgba(0,0,0,.04)' }}>
                 <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-2 sm:mb-3 rounded-2xl flex items-center justify-center p-2 bg-brand-soft"

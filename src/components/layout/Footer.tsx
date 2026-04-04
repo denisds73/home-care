@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-10">
           <div className="col-span-2 sm:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-3" aria-label="HomeCare home">
+            <Link to="/app" className="flex items-center gap-2 mb-3" aria-label="HomeCare home">
               <svg className="w-7 h-7 shrink-0" fill="none" viewBox="0 0 24 24" stroke="#7C3AED" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/></svg>
               <span className="text-lg font-bold font-brand text-white">Home<span style={{ color: '#7C3AED' }}>Care</span></span>
             </Link>
@@ -27,12 +27,12 @@ export default function Footer() {
             <h4 className="text-sm font-bold text-white mb-4 font-brand">Services</h4>
             <ul className="space-y-2.5 text-xs">
               {[
-                { name: 'AC Services', to: '/services/ac' },
-                { name: 'TV Repair', to: '/services/tv' },
-                { name: 'Refrigerator', to: '/services/refrigerator' },
-                { name: 'Microwave', to: '/services/microwave' },
-                { name: 'Water Purifier', to: '/services/water_purifier' },
-                { name: 'Washing Machine', to: '/services/washing_machine' },
+                { name: 'AC Services', to: '/app/services/ac' },
+                { name: 'TV Repair', to: '/app/services/tv' },
+                { name: 'Refrigerator', to: '/app/services/refrigerator' },
+                { name: 'Microwave', to: '/app/services/microwave' },
+                { name: 'Water Purifier', to: '/app/services/water_purifier' },
+                { name: 'Washing Machine', to: '/app/services/washing_machine' },
               ].map(link => (
                 <li key={link.to}><Link to={link.to} className="hover:text-white transition">{link.name}</Link></li>
               ))}

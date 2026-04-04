@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { Booking, NewBookingPayload, BookingStatus } from '../types/domain'
+import type { Booking, NewBookingPayload } from '../types/domain'
 
 export const bookingService = {
   createBooking: (data: NewBookingPayload) => api.post<{ data: Booking }>('/bookings', data),

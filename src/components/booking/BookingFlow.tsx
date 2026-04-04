@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, type Dispatch, type SetStateAction, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../../store/useStore'
+import { useAuthStore } from '../../store/useAuthStore'
 import { CATEGORIES } from '../../data/categories'
 import { CONVENIENCE_FEE, GST_RATE } from '../../data/services'
 import type { PaymentMode, PaymentStatus, TimeSlot } from '../../types/domain'
@@ -299,7 +300,7 @@ function Step4({ bookingId, booking }: { bookingId: string; booking: BookingDraf
         <div className="flex justify-between"><span className="text-secondary text-sm">Date</span><span className="font-semibold text-sm">{formatDate(booking.date)}</span></div>
         <div className="flex justify-between"><span className="text-secondary text-sm">Address</span><span className="font-semibold text-sm text-right max-w-xs">{booking.address}</span></div>
       </div>
-      <button type="button" onClick={() => { clearCart(); navigate('/') }} className="btn-base btn-primary px-8 py-3 font-semibold text-sm">Back to Home</button>
+      <button type="button" onClick={() => { clearCart(); navigate('/app') }} className="btn-base btn-primary px-8 py-3 font-semibold text-sm">Back to Home</button>
     </div>
   )
 }
@@ -308,9 +309,12 @@ export default function BookingFlow() {
   const navigate = useNavigate()
   const addBooking = useStore(s => s.addBooking)
   const cart = useStore(s => s.cart)
-  const isLoggedIn = useStore(s => s.isLoggedIn)
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
   const [step, setStep] = useState(1)
-  const [booking, setBooking] = useState<BookingDraft>({})
+  const [booking, setBooking] = useState<BookingDraft>(() => {
+    const u = useAuthStore.getState().user
+    return u?.name ? { name: u.name } : {}
+  })
   const [showRazorpay, setShowRazorpay] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
   const [payAmount, setPayAmount] = useState(0)
@@ -319,7 +323,7 @@ export default function BookingFlow() {
   const showToast = useStore(s => s.showToast)
 
   const goBack = () => {
-    if (step <= 1) navigate('/')
+    if (step <= 1) navigate('/app')
     else setStep(s => Math.max(1, s - 1))
   }
 
@@ -348,7 +352,7 @@ export default function BookingFlow() {
   }
 
   const handlePayNow = (amount: number) => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       setPendingAction({ type: 'payNow', amount })
       setShowAuth(true)
       showToast('Log in or sign up to continue payment', 'info')
@@ -366,7 +370,7 @@ export default function BookingFlow() {
   }
 
   const handlePayAfter = () => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       setPendingAction({ type: 'payAfter' })
       setShowAuth(true)
       showToast('Log in or sign up to place booking', 'info')
@@ -379,6 +383,8 @@ export default function BookingFlow() {
 
   const handleAuthSuccess = () => {
     setShowAuth(false)
+    const u = useAuthStore.getState().user
+    if (u?.name) setBooking(b => (b.name ? b : { ...b, name: u.name }))
     const action = pendingAction
     setPendingAction(null)
     if (!action) return
