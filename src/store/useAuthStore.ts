@@ -1,28 +1,37 @@
 import { create } from 'zustand'
-import type { User } from '../types/domain'
+import type { Role, User } from '../types/domain'
 
-interface AuthStore {
-  isLoggedIn: boolean
+interface AuthState {
   user: User | null
-  adminUnlocked: boolean
-  
-  // Actions
-  login: (email?: string) => void
+  role: Role | null
+  isAuthenticated: boolean
+  login: (email: string, role: Role) => void
   logout: () => void
-  unlockAdmin: () => void
-  setAuth: (user: User | null) => void
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
-  isLoggedIn: false,
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  adminUnlocked: false,
-  
-  login: (email) => set({ 
-    isLoggedIn: true, 
-    user: { name: email?.split('@')[0] || 'User', email: email || 'user@demo.com' } 
-  }),
-  logout: () => set({ isLoggedIn: false, user: null, adminUnlocked: false }),
-  unlockAdmin: () => set({ adminUnlocked: true }),
-  setAuth: (user) => set({ user, isLoggedIn: !!user }),
+  role: null,
+  isAuthenticated: false,
+
+  login: (email, role) => {
+    const name = email.split('@')[0] || 'User'
+    set({
+      isAuthenticated: true,
+      role,
+      user: {
+        id: crypto.randomUUID(),
+        name,
+        email,
+        role,
+      },
+    })
+  },
+
+  logout: () =>
+    set({
+      user: null,
+      role: null,
+      isAuthenticated: false,
+    }),
 }))

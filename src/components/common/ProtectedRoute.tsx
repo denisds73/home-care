@@ -1,22 +1,44 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import useStore from '../../store/useStore'
+import { useAuthStore } from '../../store/useAuthStore'
+import type { Role } from '../../types/domain'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
-  requireAdmin?: boolean
+  requiredRole: Role
 }
 
-export default function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const isLoggedIn = useStore(s => s.isLoggedIn)
-  const adminUnlocked = useStore(s => s.adminUnlocked)
+const LOGIN_ROUTES: Record<Role, string> = {
+  customer: '/login',
+  partner: '/partner/login',
+  admin: '/admin/login',
+}
+
+const DASHBOARD_ROUTES: Record<Role, string> = {
+  customer: '/app',
+  partner: '/partner',
+  admin: '/admin',
+}
+
+export default function ProtectedRoute({
+  children,
+  requiredRole,
+}: ProtectedRouteProps) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const role = useAuthStore((s) => s.role)
   const location = useLocation()
 
-  if (!isLoggedIn) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+  if (!isAuthenticated) {
+    return (
+      <Navigate
+        to={LOGIN_ROUTES[requiredRole]}
+        state={{ from: location }}
+        replace
+      />
+    )
   }
 
-  if (requireAdmin && !adminUnlocked) {
-    return <Navigate to="/admin/auth" state={{ from: location }} replace />
+  if (role !== requiredRole) {
+    return <Navigate to={DASHBOARD_ROUTES[role!]} replace />
   }
 
   return <>{children}</>

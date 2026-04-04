@@ -11,20 +11,11 @@ import type {
   Service,
   ToastState,
   ToastType,
-  User,
 } from '../types/domain'
 
 export type ServiceDraft = Omit<Service, 'id'> & { created_at?: string; updated_at?: string }
 
 interface Store {
-  isLoggedIn: boolean
-  user: User | null
-  login: (email?: string) => void
-  logout: () => void
-  adminUnlocked: boolean
-  adminAuthOpen: boolean
-  unlockAdmin: () => void
-
   services: Service[]
   categories: CategoryMeta[]
   nextServiceId: number
@@ -57,16 +48,6 @@ interface Store {
 }
 
 const useStore = create<Store>()((set, get) => ({
-  isLoggedIn: false,
-  user: null,
-  login: (email) => set({ isLoggedIn: true, user: { name: email?.split('@')[0] || 'User', email: email || 'user@demo.com' } }),
-  logout: () => set({ isLoggedIn: false, user: null, adminUnlocked: false }),
-
-  adminUnlocked: false,
-  adminAuthOpen: false,
-  unlockAdmin: () => set({ adminUnlocked: true }),
-
-
   services: initialServices,
   categories: CATEGORIES,
   nextServiceId: 31,

@@ -6,48 +6,37 @@ import Toast from '../components/common/Toast'
 import ScrollToTop from '../components/common/ScrollToTop'
 import {
   GridIcon,
-  ClipboardIcon,
-  PackageIcon,
-  UsersIcon,
-  WrenchIcon,
-  WalletIcon,
-  SettingsIcon,
+  BriefcaseIcon,
+  DollarIcon,
+  CalendarIcon,
+  UserIcon,
+  HelpIcon,
 } from '../components/common/Icons'
 import type { NavGroup } from './DashboardSidebar'
 
-const ADMIN_NAV: NavGroup[] = [
+const PARTNER_NAV: NavGroup[] = [
   {
-    items: [{ icon: <GridIcon />, label: 'Dashboard', to: '/admin' }],
-  },
-  {
-    section: 'Operations',
     items: [
-      { icon: <ClipboardIcon />, label: 'Bookings', to: '/admin/bookings' },
-      { icon: <PackageIcon />, label: 'Catalog', to: '/admin/catalog' },
-    ],
-  },
-  {
-    section: 'Management',
-    items: [
-      { icon: <UsersIcon />, label: 'Users', to: '/admin/users' },
-      { icon: <WrenchIcon />, label: 'Partners', to: '/admin/partners' },
-      { icon: <WalletIcon />, label: 'Finance', to: '/admin/finance' },
+      { icon: <GridIcon />, label: 'Dashboard', to: '/partner' },
+      { icon: <BriefcaseIcon />, label: 'My Jobs', to: '/partner/jobs' },
+      { icon: <DollarIcon />, label: 'Earnings', to: '/partner/earnings' },
+      { icon: <CalendarIcon />, label: 'Schedule', to: '/partner/schedule' },
+      { icon: <UserIcon />, label: 'Profile', to: '/partner/profile' },
     ],
   },
 ]
 
-const ADMIN_BOTTOM = [
-  { icon: <SettingsIcon />, label: 'Settings', to: '/admin/settings' },
+const PARTNER_BOTTOM = [
+  { icon: <HelpIcon />, label: 'Support', to: '/partner/support' },
 ]
 
 const PAGE_TITLES: Record<string, string> = {
-  '/admin': 'Dashboard',
-  '/admin/bookings': 'Booking Management',
-  '/admin/catalog': 'Service Catalog',
-  '/admin/users': 'User Management',
-  '/admin/partners': 'Partner Management',
-  '/admin/finance': 'Finance & Payouts',
-  '/admin/settings': 'Settings',
+  '/partner': 'Dashboard',
+  '/partner/jobs': 'My Jobs',
+  '/partner/earnings': 'Earnings',
+  '/partner/schedule': 'Schedule',
+  '/partner/profile': 'Profile',
+  '/partner/support': 'Support',
 }
 
 const logo = (
@@ -56,7 +45,7 @@ const logo = (
       className="w-7 h-7 flex-shrink-0"
       fill="none"
       viewBox="0 0 24 24"
-      stroke="#6366F1"
+      stroke="#14B8A6"
       strokeWidth={2}
     >
       <path
@@ -66,23 +55,24 @@ const logo = (
       />
     </svg>
     <span className="sidebar-label text-white text-sm font-bold">
-      HomeCare <span className="text-xs font-normal opacity-60">Admin</span>
+      HomeCare <span className="text-xs font-normal opacity-60">Partner</span>
     </span>
   </>
 )
 
-export default function AdminLayout() {
+export default function PartnerLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isOnline, setIsOnline] = useState(true)
   const location = useLocation()
-  const title = PAGE_TITLES[location.pathname] || 'Admin'
+  const title = PAGE_TITLES[location.pathname] || 'Partner'
 
   return (
-    <div className="theme-admin">
+    <div className="theme-partner">
       <ScrollToTop />
       <DashboardSidebar
-        groups={ADMIN_NAV}
+        groups={PARTNER_NAV}
         logo={logo}
-        bottomItems={ADMIN_BOTTOM}
+        bottomItems={PARTNER_BOTTOM}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
       />
@@ -90,6 +80,10 @@ export default function AdminLayout() {
         <DashboardTopBar
           title={title}
           onMenuClick={() => setMobileOpen(true)}
+          availabilityToggle={{
+            isOnline,
+            onToggle: () => setIsOnline((v) => !v),
+          }}
         />
         <main className="p-4 md:p-6">
           <Outlet />
