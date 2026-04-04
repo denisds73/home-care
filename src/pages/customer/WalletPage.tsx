@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { mockTransactions } from '../../data/mockData'
+import { useState, useEffect } from 'react'
+import useStore from '../../store/useStore'
+import { walletService } from '../../services/walletService'
 import { formatDate } from '../../data/helpers'
 import type { Transaction, TransactionType } from '../../types/domain'
 
@@ -10,12 +11,6 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: 'credit', label: 'Credits' },
   { key: 'debit', label: 'Debits' },
 ]
-
-function computeBalance(transactions: Transaction[]): number {
-  return transactions.reduce((acc, t) => {
-    return t.type === 'credit' ? acc + t.amount : acc - t.amount
-  }, 0)
-}
 
 interface TransactionRowProps {
   transaction: Transaction
@@ -59,11 +54,77 @@ function TransactionRow({ transaction }: TransactionRowProps) {
 
 export default function WalletPage() {
   const [filter, setFilter] = useState<Filter>('all')
+  const [balance, setBalance] = useState<number>(0)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const showToast = useStore(state => state.showToast)
 
-  const balance = computeBalance(mockTransactions)
+  const fetchWalletData = async () => {
+    try {
+      setError(null)
+      const [balanceResult, txResult] = await Promise.all([
+        walletService.getBalance(),
+        walletService.getTransactions(),
+      ])
+      setBalance(balanceResult.data.balance)
+      setTransactions(txResult.data.data)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load wallet data'
+      setError(message)
+      showToast(message, 'danger')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchWalletData()
+  }, [])
+
   const filtered = filter === 'all'
-    ? mockTransactions
-    : mockTransactions.filter(t => t.type === filter)
+    ? transactions
+    : transactions.filter(t => t.type === filter)
+
+  if (isLoading) {
+    return (
+      <main className="min-h-screen bg-surface">
+        <div className="max-w-xl mx-auto px-4 py-6 md:py-8">
+          <header className="mb-6">
+            <h1 className="font-brand text-2xl md:text-3xl font-bold text-primary">Wallet</h1>
+            <p className="text-muted text-sm mt-1">Your balance and transaction history</p>
+          </header>
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="w-8 h-8 border-3 border-muted border-t-brand rounded-full animate-spin" />
+            <p className="text-muted text-sm mt-3">Loading wallet...</p>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-surface">
+        <div className="max-w-xl mx-auto px-4 py-6 md:py-8">
+          <header className="mb-6">
+            <h1 className="font-brand text-2xl md:text-3xl font-bold text-primary">Wallet</h1>
+            <p className="text-muted text-sm mt-1">Your balance and transaction history</p>
+          </header>
+          <div className="flex flex-col items-center justify-center py-16 text-center fade-in">
+            <p className="text-error text-sm font-medium">{error}</p>
+            <button
+              className="btn-base btn-secondary px-4 py-2 text-sm mt-4"
+              onClick={() => { setIsLoading(true); fetchWalletData() }}
+              aria-label="Retry loading wallet"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-screen bg-surface">
@@ -87,7 +148,7 @@ export default function WalletPage() {
           <p className="font-brand text-4xl font-bold tracking-tight">
             ₹{balance.toLocaleString('en-IN')}
           </p>
-          <p className="text-xs opacity-60 mt-3">Based on {mockTransactions.length} transactions</p>
+          <p className="text-xs opacity-60 mt-3">Based on {transactions.length} transactions</p>
         </div>
 
         {/* Filter tabs */}

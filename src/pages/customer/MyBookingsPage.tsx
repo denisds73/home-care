@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import useStore from '../../store/useStore'
-import { useAuthStore } from '../../store/useAuthStore'
+import { bookingService } from '../../services/bookingService'
 import { formatDate } from '../../data/helpers'
 import { statusClass } from '../../data/helpers'
 import type { Booking, BookingStatus } from '../../types/domain'
@@ -22,9 +22,10 @@ interface BookingCardProps {
   tab: Tab
   onCancel: (id: string) => void
   onReschedule: (id: string) => void
+  isCancelling: boolean
 }
 
-function BookingCard({ booking, tab, onCancel, onReschedule }: BookingCardProps) {
+function BookingCard({ booking, tab, onCancel, onReschedule, isCancelling }: BookingCardProps) {
   return (
     <div className="glass-card p-4 md:p-5 fade-in">
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -64,9 +65,10 @@ function BookingCard({ booking, tab, onCancel, onReschedule }: BookingCardProps)
             <button
               className="btn-base btn-danger px-3 py-1.5 text-sm"
               onClick={() => onCancel(booking.booking_id)}
+              disabled={isCancelling}
               aria-label={`Cancel booking ${booking.booking_id}`}
             >
-              Cancel
+              {isCancelling ? 'Cancelling...' : 'Cancel'}
             </button>
           </div>
         )}
@@ -99,21 +101,43 @@ const TABS: { key: Tab; label: string }[] = [
 
 export default function MyBookingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('upcoming')
-  const bookings = useStore(state => state.bookings)
-  const updateBookingStatus = useStore(state => state.updateBookingStatus)
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
   const showToast = useStore(state => state.showToast)
-  const user = useAuthStore(state => state.user)
 
-  // Filter bookings belonging to the logged-in user (by name match as mock has no user_id)
-  const userBookings = user
-    ? bookings.filter(b => b.customer_name.toLowerCase() === user.name.toLowerCase() || true)
-    : bookings
+  const fetchBookings = async () => {
+    try {
+      setError(null)
+      const result = await bookingService.getMyBookings()
+      setBookings(result.data)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load bookings'
+      setError(message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-  const filtered = filterByTab(userBookings, activeTab)
+  useEffect(() => {
+    fetchBookings()
+  }, [])
 
-  function handleCancel(id: string) {
-    updateBookingStatus(id, 'Cancelled')
-    showToast('Booking cancelled successfully.', 'success')
+  const filtered = filterByTab(bookings, activeTab)
+
+  async function handleCancel(id: string) {
+    setCancellingId(id)
+    try {
+      await bookingService.cancelBooking(id)
+      showToast('Booking cancelled successfully.', 'success')
+      await fetchBookings()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to cancel booking'
+      showToast(message, 'danger')
+    } finally {
+      setCancellingId(null)
+    }
   }
 
   function handleReschedule(id: string) {
@@ -151,24 +175,43 @@ export default function MyBookingsPage() {
           ))}
         </div>
 
-        {/* Booking list */}
-        <section aria-label={`${activeTab} bookings`}>
-          {filtered.length === 0 ? (
-            <EmptyState tab={activeTab} />
-          ) : (
-            <div className="flex flex-col gap-3">
-              {filtered.map(booking => (
-                <BookingCard
-                  key={booking.booking_id}
-                  booking={booking}
-                  tab={activeTab}
-                  onCancel={handleCancel}
-                  onReschedule={handleReschedule}
-                />
-              ))}
-            </div>
-          )}
-        </section>
+        {/* Content states */}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="w-8 h-8 border-3 border-muted border-t-brand rounded-full animate-spin" />
+            <p className="text-muted text-sm mt-3">Loading bookings...</p>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center fade-in">
+            <p className="text-error text-sm font-medium">{error}</p>
+            <button
+              className="btn-base btn-secondary px-4 py-2 text-sm mt-4"
+              onClick={() => { setIsLoading(true); fetchBookings() }}
+              aria-label="Retry loading bookings"
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <section aria-label={`${activeTab} bookings`}>
+            {filtered.length === 0 ? (
+              <EmptyState tab={activeTab} />
+            ) : (
+              <div className="flex flex-col gap-3">
+                {filtered.map(booking => (
+                  <BookingCard
+                    key={booking.booking_id}
+                    booking={booking}
+                    tab={activeTab}
+                    onCancel={handleCancel}
+                    onReschedule={handleReschedule}
+                    isCancelling={cancellingId === booking.booking_id}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </div>
     </main>
   )
