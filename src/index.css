@@ -258,12 +258,14 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
 @keyframes bounceIn { 0% { transform: scale(0); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
 @keyframes badgeBounce { 0% { transform: scale(1); } 40% { transform: scale(1.4); } 70% { transform: scale(.9); } 100% { transform: scale(1); } }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); } 20%, 40%, 60%, 80% { transform: translateX(4px); } }
 
 .fade-in { animation: fadeIn .3s ease-out; }
 .slide-up { animation: slideUp .3s ease-out; }
 .scale-in { animation: scaleIn .2s ease-out; }
 .bounce-in { animation: bounceIn .3s ease-out; }
 .badge-bounce { animation: badgeBounce .4s ease; }
+.animate-shake { animation: shake .5s ease-in-out; }
 
 /* Reveal on scroll */
 .reveal { opacity: 0; transform: translateY(40px); transition: opacity .7s ease, transform .7s ease; }

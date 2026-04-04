@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type Dispatch, type SetStateAction } from 'react'
+import { useState, useEffect, type Dispatch, type SetStateAction } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import { useAuthStore } from '../../store/useAuthStore'
@@ -9,6 +9,7 @@ import type { PaymentMode, PaymentStatus, TimeSlot } from '../../types/domain'
 import RazorpayModal from './RazorpayModal'
 import { LOGIN_ROUTES } from '../../lib/auth'
 import { DatePicker } from '../common/DatePicker'
+import { PhoneVerificationFlow } from './PhoneVerificationFlow'
 
 const stepLabels = ['Details', 'Verify', 'Payment', 'Done']
 
@@ -160,66 +161,7 @@ function Step1({
   )
 }
 
-function Step2({ onNext, phone }: { onNext: () => void; phone?: string }) {
-  const [otp, setOtp] = useState(['', '', '', '', '', ''])
-  const [error, setError] = useState('')
-  const [timer, setTimer] = useState(300)
-  const refs = useRef<(HTMLInputElement | null)[]>([])
-  const showToast = useStore(s => s.showToast)
-
-  useEffect(() => {
-    refs.current[0]?.focus()
-    const interval = setInterval(() => setTimer(t => (t > 0 ? t - 1 : 0)), 1000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const handleChange = (idx: number, val: string) => {
-    if (!/^\d?$/.test(val)) return
-    const next = [...otp]
-    next[idx] = val
-    setOtp(next)
-    setError('')
-    if (val && idx < 5) refs.current[idx + 1]?.focus()
-  }
-
-  const handleKey = (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otp[idx] && idx > 0) refs.current[idx - 1]?.focus()
-  }
-
-  const verify = () => {
-    const code = otp.join('')
-    if (code.length < 6) { setError('Please enter all 6 digits'); return }
-    if (code !== '123456') { setError('Invalid OTP. Please try again.'); return }
-    showToast('Phone verified!', 'success')
-    onNext()
-  }
-
-  const mm = String(Math.floor(timer / 60)).padStart(2, '0')
-  const ss = String(timer % 60).padStart(2, '0')
-
-  return (
-    <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6 md:p-8 slide-up">
-      <h3 className="text-xl font-bold mb-1 text-primary">OTP Verification</h3>
-      <p className="text-secondary text-sm mb-6">Enter the 6-digit OTP sent to {phone}</p>
-      <div className="flex justify-center mb-3 gap-1.5 sm:gap-2">
-        {otp.map((d, i) => (
-          <input key={i} ref={el => { refs.current[i] = el }} type="text" inputMode="numeric" maxLength={1} value={d}
-            onChange={e => handleChange(i, e.target.value)} onKeyDown={e => handleKey(i, e)}
-            className="w-10 h-12 sm:w-12 sm:h-14 border-2 border-gray-300 rounded-lg text-center text-lg sm:text-xl font-bold focus:outline-none focus:border-brand" />
-        ))}
-      </div>
-      <div className="flex items-center justify-center gap-2 mb-2 px-3 py-2 rounded-lg text-xs bg-muted text-brand">
-        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        <span>Demo Mode — OTP is <strong>123456</strong></span>
-      </div>
-      <p className={`text-center font-mono text-lg font-bold mb-3 ${timer <= 30 ? 'text-error' : 'text-brand'}`}>{mm}:{ss}</p>
-      {error && <p className="text-error text-sm text-center mb-3">{error}</p>}
-      <button type="button" onClick={verify} disabled={timer === 0} className="btn-base btn-primary w-full py-3 font-semibold text-sm disabled:bg-gray-300 disabled:cursor-not-allowed">Verify OTP</button>
-      <button type="button" onClick={() => { setTimer(300); setOtp(['', '', '', '', '', '']); showToast('OTP resent', 'info') }} disabled={timer > 0}
-        className={`w-full py-2 text-sm mt-2 ${timer > 0 ? 'text-muted cursor-not-allowed' : 'text-brand font-medium cursor-pointer hover:text-brand-dark'}`}>Resend OTP</button>
-    </div>
-  )
-}
+// Step2 is now handled by PhoneVerificationFlow component
 
 function Step3AuthGate({ booking }: { booking: BookingDraft }) {
   const navigate = useNavigate()
@@ -497,8 +439,14 @@ export default function BookingFlow() {
 
         <StepIndicator current={step} />
 
-        {step === 1 && <Step1 onNext={() => { setStep(2); showToast('OTP sent to ' + booking.phone, 'info') }} booking={booking} setBooking={setBooking} />}
-        {step === 2 && <Step2 onNext={() => setStep(3)} phone={booking.phone} />}
+        {step === 1 && <Step1 onNext={() => setStep(2)} booking={booking} setBooking={setBooking} />}
+        {step === 2 && (
+          <PhoneVerificationFlow
+            phone={booking.phone ?? ''}
+            onPhoneChange={(p) => setBooking(b => ({ ...b, phone: p }))}
+            onVerified={() => { showToast('Phone verified!', 'success'); setStep(3) }}
+          />
+        )}
         {step === 3 && <Step3 booking={booking} onPayNow={handlePayNow} onPayAfter={handlePayAfter} submitting={submitting} />}
         {step === 4 && <Step4 bookingId={confirmedId} booking={booking} />}
 
