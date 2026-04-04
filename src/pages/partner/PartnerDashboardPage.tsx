@@ -1,12 +1,10 @@
-import { useMemo } from 'react'
-import { mockJobs, weeklyEarnings } from '../../data/mockData'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuthStore } from '../../store/useAuthStore'
-import type { Job } from '../../types/domain'
-
-const todayStr = '2026-04-04'
+import { partnerService } from '../../services/partnerService'
+import type { Job, Partner } from '../../types/domain'
 
 function formatCurrency(amount: number): string {
-  return '₹' + amount.toLocaleString('en-IN')
+  return '\u20B9' + amount.toLocaleString('en-IN')
 }
 
 function StatusBadge({ status }: { status: Job['status'] }) {
@@ -21,43 +19,85 @@ function StatusBadge({ status }: { status: Job['status'] }) {
   return <span className={cls}>{label}</span>
 }
 
+function StatSkeleton() {
+  return (
+    <div className="stat-card animate-pulse">
+      <div className="h-3 w-20 bg-muted rounded" />
+      <div className="h-6 w-16 bg-muted rounded mt-2" />
+      <div className="h-3 w-24 bg-muted rounded mt-2" />
+    </div>
+  )
+}
+
 export default function PartnerDashboardPage() {
   const user = useAuthStore((s) => s.user)
 
+  const [profile, setProfile] = useState<Partner | null>(null)
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [earnings, setEarnings] = useState<{
+    totalEarnings: number
+    completedJobs: number
+    averagePerJob: number
+  } | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [profileRes, jobsRes, earningsRes] = await Promise.all([
+          partnerService.getProfile(),
+          partnerService.getSchedule(),
+          partnerService.getEarnings(),
+        ])
+        setProfile(profileRes.data)
+        setJobs(jobsRes.data)
+        setEarnings(earningsRes.data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  const todayStr = new Date().toISOString().split('T')[0]
+
   const todaysJobs = useMemo(
-    () => mockJobs.filter((j) => j.preferredDate === todayStr),
-    [],
+    () => jobs.filter((j) => j.preferredDate === todayStr),
+    [jobs, todayStr],
   )
-
-  const weekTotal = useMemo(
-    () => weeklyEarnings.reduce((sum, d) => sum + d.amount, 0),
-    [],
-  )
-
-  const completedJobs = useMemo(
-    () => mockJobs.filter((j) => j.status === 'completed'),
-    [],
-  )
-
-  const completionRate = useMemo(() => {
-    const total = mockJobs.filter(
-      (j) => j.status === 'completed' || j.status === 'declined',
-    ).length
-    return total === 0 ? 0 : Math.round((completedJobs.length / total) * 100)
-  }, [completedJobs])
 
   const upcomingJobs = useMemo(
     () =>
-      mockJobs.filter((j) =>
+      jobs.filter((j) =>
         ['new', 'accepted', 'in_progress'].includes(j.status),
       ),
-    [],
+    [jobs],
   )
 
-  const maxEarning = useMemo(
-    () => Math.max(...weeklyEarnings.map((d) => d.amount)),
-    [],
-  )
+  const completionRate = useMemo(() => {
+    const completed = jobs.filter((j) => j.status === 'completed').length
+    const total = jobs.filter(
+      (j) => j.status === 'completed' || j.status === 'declined',
+    ).length
+    return total === 0 ? 0 : Math.round((completed / total) * 100)
+  }, [jobs])
+
+  if (error) {
+    return (
+      <div className="fade-in flex flex-col items-center justify-center py-20">
+        <p className="text-error text-sm mb-4">{error}</p>
+        <button
+          className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px]"
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </button>
+      </div>
+    )
+  }
 
   const stats = [
     {
@@ -67,14 +107,14 @@ export default function PartnerDashboardPage() {
       borderCls: 'stat-border-primary',
     },
     {
-      label: 'Week Earnings',
-      value: formatCurrency(weekTotal),
-      sub: 'This week',
+      label: 'Total Earnings',
+      value: earnings ? formatCurrency(earnings.totalEarnings) : '--',
+      sub: 'All time',
       borderCls: 'stat-border-success',
     },
     {
       label: 'Rating',
-      value: '4.8',
+      value: profile?.rating?.toFixed(1) ?? '--',
       sub: 'Average rating',
       borderCls: 'stat-border-warning',
     },
@@ -100,55 +140,69 @@ export default function PartnerDashboardPage() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => (
-          <div key={s.label} className={`stat-card ${s.borderCls}`}>
-            <p className="text-muted text-xs font-medium">{s.label}</p>
-            <p className="font-brand text-xl font-bold text-primary mt-1">
-              {s.value}
-            </p>
-            <p className="text-muted text-xs mt-1">{s.sub}</p>
-          </div>
-        ))}
+        {isLoading
+          ? Array.from({ length: 4 }).map((_, i) => <StatSkeleton key={i} />)
+          : stats.map((s) => (
+              <div key={s.label} className={`stat-card ${s.borderCls}`}>
+                <p className="text-muted text-xs font-medium">{s.label}</p>
+                <p className="font-brand text-xl font-bold text-primary mt-1">
+                  {s.value}
+                </p>
+                <p className="text-muted text-xs mt-1">{s.sub}</p>
+              </div>
+            ))}
       </div>
 
-      {/* Weekly Earnings Chart */}
-      <div className="glass-card p-5">
-        <h2 className="font-brand text-base font-semibold text-primary mb-4">
-          Weekly Earnings
-        </h2>
-        <div className="flex items-end gap-2 h-40">
-          {weeklyEarnings.map((d) => {
-            const heightPct = maxEarning > 0 ? (d.amount / maxEarning) * 100 : 0
-            return (
-              <div
-                key={d.day}
-                className="flex-1 flex flex-col items-center gap-1"
-              >
-                <span className="text-xs text-muted font-medium">
-                  {formatCurrency(d.amount)}
-                </span>
-                <div
-                  className="w-full rounded-t-lg bg-brand-soft"
-                  style={{ height: `${heightPct}%` }}
-                >
-                  <div
-                    className="w-full h-full rounded-t-lg bg-brand opacity-70"
-                    style={{ minHeight: '4px' }}
-                  />
-                </div>
-                <span className="text-xs text-muted">{d.day}</span>
-              </div>
-            )
-          })}
+      {/* Earnings Summary */}
+      {!isLoading && earnings && (
+        <div className="glass-card p-5">
+          <h2 className="font-brand text-base font-semibold text-primary mb-4">
+            Earnings Summary
+          </h2>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-lg font-bold text-primary">
+                {formatCurrency(earnings.totalEarnings)}
+              </p>
+              <p className="text-xs text-muted">Total Earned</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-primary">
+                {earnings.completedJobs}
+              </p>
+              <p className="text-xs text-muted">Jobs Completed</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-primary">
+                {formatCurrency(earnings.averagePerJob)}
+              </p>
+              <p className="text-xs text-muted">Avg Per Job</p>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Upcoming Jobs */}
       <div className="glass-card p-5">
         <h2 className="font-brand text-base font-semibold text-primary mb-4">
           Upcoming Jobs
         </h2>
-        {upcomingJobs.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse flex items-center justify-between p-3 rounded-xl bg-surface border border-default"
+              >
+                <div className="space-y-2 flex-1">
+                  <div className="h-4 w-32 bg-muted rounded" />
+                  <div className="h-3 w-48 bg-muted rounded" />
+                </div>
+                <div className="h-6 w-16 bg-muted rounded" />
+              </div>
+            ))}
+          </div>
+        ) : upcomingJobs.length === 0 ? (
           <p className="text-muted text-sm text-center py-6">
             No upcoming jobs right now.
           </p>

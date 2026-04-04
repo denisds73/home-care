@@ -1,5 +1,5 @@
-import { memo, useState, useMemo } from 'react'
-import { mockJobs } from '../../data/mockData'
+import { memo, useState, useEffect, useMemo, useCallback } from 'react'
+import { partnerService } from '../../services/partnerService'
 import useStore from '../../store/useStore'
 import type { Job, JobStatus } from '../../types/domain'
 
@@ -12,7 +12,7 @@ const TAB_STATUSES: Record<Tab, JobStatus[]> = {
 }
 
 function formatCurrency(amount: number): string {
-  return '₹' + amount.toLocaleString('en-IN')
+  return '\u20B9' + amount.toLocaleString('en-IN')
 }
 
 function StatusBadge({ status }: { status: JobStatus }) {
@@ -30,9 +30,10 @@ function StatusBadge({ status }: { status: JobStatus }) {
 interface JobCardProps {
   job: Job
   onUpdateStatus: (id: string, status: JobStatus) => void
+  isUpdating: boolean
 }
 
-const JobCard = memo(({ job, onUpdateStatus }: JobCardProps) => {
+const JobCard = memo(({ job, onUpdateStatus, isUpdating }: JobCardProps) => {
   return (
     <div className="glass-card p-4 space-y-3">
       {/* Header */}
@@ -85,12 +86,14 @@ const JobCard = memo(({ job, onUpdateStatus }: JobCardProps) => {
           <button
             className="btn-base btn-success flex-1 py-2 text-sm"
             onClick={() => onUpdateStatus(job.id, 'accepted')}
+            disabled={isUpdating}
           >
             Accept
           </button>
           <button
             className="btn-base btn-danger flex-1 py-2 text-sm"
             onClick={() => onUpdateStatus(job.id, 'declined')}
+            disabled={isUpdating}
           >
             Decline
           </button>
@@ -100,6 +103,7 @@ const JobCard = memo(({ job, onUpdateStatus }: JobCardProps) => {
         <button
           className="btn-base btn-primary w-full py-2 text-sm"
           onClick={() => onUpdateStatus(job.id, 'in_progress')}
+          disabled={isUpdating}
         >
           Start Service
         </button>
@@ -108,6 +112,7 @@ const JobCard = memo(({ job, onUpdateStatus }: JobCardProps) => {
         <button
           className="btn-base btn-success w-full py-2 text-sm"
           onClick={() => onUpdateStatus(job.id, 'completed')}
+          disabled={isUpdating}
         >
           Mark Complete
         </button>
@@ -121,21 +126,54 @@ JobCard.displayName = 'JobCard'
 export default function JobsPage() {
   const showToast = useStore((s) => s.showToast)
   const [activeTab, setActiveTab] = useState<Tab>('new')
-  const [jobs, setJobs] = useState<Job[]>(mockJobs)
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
-  const updateJobStatus = (id: string, status: JobStatus) => {
-    setJobs((prev) =>
-      prev.map((j) => (j.id === id ? { ...j, status } : j)),
-    )
-    const labels: Record<JobStatus, string> = {
-      accepted: 'Job accepted successfully',
-      declined: 'Job declined',
-      in_progress: 'Service started',
-      completed: 'Job marked as complete',
-      new: 'Job updated',
+  const fetchJobs = useCallback(async () => {
+    try {
+      const res = await partnerService.getJobs()
+      setJobs(res.data)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load jobs')
+    } finally {
+      setIsLoading(false)
     }
-    showToast(labels[status], status === 'declined' ? 'danger' : 'success')
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchJobs()
+  }, [fetchJobs])
+
+  const updateJobStatus = useCallback(
+    async (id: string, status: JobStatus) => {
+      setUpdatingId(id)
+      try {
+        await partnerService.updateJobStatus(id, status)
+        // Optimistically update local state
+        setJobs((prev) =>
+          prev.map((j) => (j.id === id ? { ...j, status } : j)),
+        )
+        const labels: Record<JobStatus, string> = {
+          accepted: 'Job accepted successfully',
+          declined: 'Job declined',
+          in_progress: 'Service started',
+          completed: 'Job marked as complete',
+          new: 'Job updated',
+        }
+        showToast(labels[status], status === 'declined' ? 'danger' : 'success')
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Failed to update job'
+        showToast(message, 'danger')
+      } finally {
+        setUpdatingId(null)
+      }
+    },
+    [showToast],
+  )
 
   const tabCounts = useMemo(
     () => ({
@@ -153,10 +191,27 @@ export default function JobsPage() {
   )
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: 'new', label: `New Requests` },
+    { key: 'new', label: 'New Requests' },
     { key: 'active', label: 'Active' },
     { key: 'completed', label: 'Completed' },
   ]
+
+  if (error && jobs.length === 0) {
+    return (
+      <div className="fade-in flex flex-col items-center justify-center py-20">
+        <p className="text-error text-sm mb-4">{error}</p>
+        <button
+          className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px]"
+          onClick={() => {
+            setIsLoading(true)
+            fetchJobs()
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="fade-in space-y-5">
@@ -198,14 +253,35 @@ export default function JobsPage() {
       </div>
 
       {/* Job cards */}
-      {filteredJobs.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="glass-card p-4 space-y-3 animate-pulse">
+              <div className="flex justify-between">
+                <div className="h-4 w-32 bg-muted rounded" />
+                <div className="h-5 w-20 bg-muted rounded" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="h-14 bg-muted rounded-lg" />
+                <div className="h-14 bg-muted rounded-lg" />
+              </div>
+              <div className="h-10 bg-muted rounded-lg" />
+            </div>
+          ))}
+        </div>
+      ) : filteredJobs.length === 0 ? (
         <div className="glass-card p-10 text-center">
           <p className="text-muted text-sm">No jobs in this category.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredJobs.map((job) => (
-            <JobCard key={job.id} job={job} onUpdateStatus={updateJobStatus} />
+            <JobCard
+              key={job.id}
+              job={job}
+              onUpdateStatus={updateJobStatus}
+              isUpdating={updatingId === job.id}
+            />
           ))}
         </div>
       )}
