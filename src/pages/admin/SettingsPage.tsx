@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import useStore from '../../store/useStore'
 
+// NOTE: Settings page is not yet wired to the backend API.
+// No admin settings endpoints exist yet — all values are local/mock only.
 export default function SettingsPage() {
   const showToast = useStore(s => s.showToast)
   const [commission, setCommission] = useState(20)

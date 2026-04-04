@@ -1,35 +1,50 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { adminService } from '../../services/adminService'
 import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
 import { formatDate, statusClass, getValidTransitions } from '../../data/helpers'
 import type { BookingStatus, CategoryId, Booking } from '../../types/domain'
 
 export default function BookingManagementPage() {
-  const bookings = useStore(s => s.bookings)
-  const updateBookingStatus = useStore(s => s.updateBookingStatus)
   const showToast = useStore(s => s.showToast)
+
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<BookingStatus | ''>('')
   const [categoryFilter, setCategoryFilter] = useState<CategoryId | ''>('')
 
-  const filtered = bookings.filter((b: Booking) => {
-    if (statusFilter && b.booking_status !== statusFilter) return false
-    if (categoryFilter && b.category !== categoryFilter) return false
-    if (search) {
-      const q = search.toLowerCase()
-      return (
-        b.booking_id.toLowerCase().includes(q) ||
-        b.customer_name.toLowerCase().includes(q) ||
-        b.service_name.toLowerCase().includes(q)
-      )
+  const loadBookings = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      const filters: Record<string, string> = {}
+      if (statusFilter) filters.status = statusFilter
+      if (categoryFilter) filters.category = categoryFilter
+      if (search) filters.search = search
+      const result = await adminService.getBookings(filters)
+      setBookings(result.data ?? [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load bookings')
+    } finally {
+      setIsLoading(false)
     }
-    return true
-  })
+  }, [statusFilter, categoryFilter, search])
 
-  const handleStatusChange = (bookingId: string, status: BookingStatus) => {
-    updateBookingStatus(bookingId, status)
-    showToast(`Booking ${bookingId} → ${status}`, 'success')
+  useEffect(() => {
+    loadBookings()
+  }, [loadBookings])
+
+  const handleStatusChange = async (bookingId: string, status: BookingStatus) => {
+    try {
+      await adminService.updateBookingStatus(bookingId, status)
+      showToast(`Booking ${bookingId} → ${status}`, 'success')
+      await loadBookings()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to update status', 'danger')
+    }
   }
 
   return (
@@ -75,56 +90,83 @@ export default function BookingManagementPage() {
         </div>
       </div>
 
-      <div className="glass-card overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-muted bg-surface">
-              <th className="p-3">ID</th>
-              <th className="p-3">Customer</th>
-              <th className="p-3">Service</th>
-              <th className="p-3">Date</th>
-              <th className="p-3">Amount</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((b: Booking) => (
-              <tr key={b.booking_id} className="border-t border-gray-50 hover:bg-surface/50">
-                <td className="p-3 font-medium">{b.booking_id}</td>
-                <td className="p-3">{b.customer_name}</td>
-                <td className="p-3">{b.service_name}</td>
-                <td className="p-3 text-muted">{formatDate(b.preferred_date)}</td>
-                <td className="p-3">₹{b.price.toLocaleString()}</td>
-                <td className="p-3">
-                  <span className={`badge badge-${statusClass(b.booking_status)}`}>{b.booking_status}</span>
-                </td>
-                <td className="p-3">
-                  {getValidTransitions(b.booking_status).length > 0 && (
-                    <select
-                      key={`${b.booking_id}-${b.booking_status}`}
-                      className="input-base py-1 px-2 text-xs max-w-[140px]"
-                      defaultValue=""
-                      aria-label={`Change status for ${b.booking_id}`}
-                      onChange={e => {
-                        if (e.target.value) handleStatusChange(b.booking_id, e.target.value as BookingStatus)
-                      }}
-                    >
-                      <option value="">Change...</option>
-                      {getValidTransitions(b.booking_status).map(s => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filtered.length === 0 && <p className="text-center py-8 text-sm text-muted">No bookings found</p>}
-      </div>
+      {error && (
+        <div className="glass-card p-6 text-center">
+          <p className="text-error text-sm mb-3">{error}</p>
+          <button type="button" onClick={loadBookings} className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px]">
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!error && (
+        <div className="glass-card overflow-x-auto">
+          {isLoading ? (
+            <div className="p-6 space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="animate-pulse flex gap-4">
+                  <div className="h-4 w-16 bg-surface rounded" />
+                  <div className="h-4 w-28 bg-surface rounded" />
+                  <div className="h-4 w-24 bg-surface rounded" />
+                  <div className="h-4 w-20 bg-surface rounded" />
+                  <div className="h-4 w-16 bg-surface rounded" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-muted bg-surface">
+                    <th className="p-3">ID</th>
+                    <th className="p-3">Customer</th>
+                    <th className="p-3">Service</th>
+                    <th className="p-3">Date</th>
+                    <th className="p-3">Amount</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bookings.map((b: Booking) => (
+                    <tr key={b.booking_id} className="border-t border-gray-50 hover:bg-surface/50">
+                      <td className="p-3 font-medium">{b.booking_id}</td>
+                      <td className="p-3">{b.customer_name}</td>
+                      <td className="p-3">{b.service_name}</td>
+                      <td className="p-3 text-muted">{formatDate(b.preferred_date)}</td>
+                      <td className="p-3">₹{b.price.toLocaleString()}</td>
+                      <td className="p-3">
+                        <span className={`badge badge-${statusClass(b.booking_status)}`}>{b.booking_status}</span>
+                      </td>
+                      <td className="p-3">
+                        {getValidTransitions(b.booking_status).length > 0 && (
+                          <select
+                            key={`${b.booking_id}-${b.booking_status}`}
+                            className="input-base py-1 px-2 text-xs max-w-[140px]"
+                            defaultValue=""
+                            aria-label={`Change status for ${b.booking_id}`}
+                            onChange={e => {
+                              if (e.target.value) handleStatusChange(b.booking_id, e.target.value as BookingStatus)
+                            }}
+                          >
+                            <option value="">Change...</option>
+                            {getValidTransitions(b.booking_status).map(s => (
+                              <option key={s} value={s}>
+                                {s}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {bookings.length === 0 && <p className="text-center py-8 text-sm text-muted">No bookings found</p>}
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }

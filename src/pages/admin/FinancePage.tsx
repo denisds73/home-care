@@ -1,25 +1,91 @@
-import { useState } from 'react'
-import { monthlyRevenue, mockPayoutRequests } from '../../data/mockData'
+import { useState, useEffect, useCallback } from 'react'
+import { adminService } from '../../services/adminService'
+import type { FinanceSummary } from '../../services/adminService'
+import { monthlyRevenue } from '../../data/mockData'
 import { formatDate } from '../../data/helpers'
 import useStore from '../../store/useStore'
 import type { PayoutRequest } from '../../types/domain'
 
 export default function FinancePage() {
-  const [payouts, setPayouts] = useState(mockPayoutRequests)
   const showToast = useStore(s => s.showToast)
+
+  const [summary, setSummary] = useState<FinanceSummary | null>(null)
+  const [payouts, setPayouts] = useState<PayoutRequest[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Chart mock — backend does not yet provide time-series revenue data
   const maxVal = Math.max(...monthlyRevenue.map(m => Math.max(m.revenue, m.payouts)))
 
-  const totalRevenue = monthlyRevenue.reduce((s, m) => s + m.revenue, 0)
-  const totalPayouts = monthlyRevenue.reduce((s, m) => s + m.payouts, 0)
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      const [summaryRes, payoutsRes] = await Promise.all([
+        adminService.getFinanceSummary(),
+        adminService.getPayoutRequests(),
+      ])
+      setSummary(summaryRes.data)
+      setPayouts(payoutsRes.data ?? [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load finance data')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
-  const processPayoutRequest = (id: string, status: PayoutRequest['status']) => {
-    setPayouts(prev =>
-      prev.map(p =>
-        p.id === id ? { ...p, status, processedAt: new Date().toISOString().split('T')[0] } : p,
-      ),
-    )
-    showToast(`Payout ${status}`, status === 'processed' ? 'success' : 'warning')
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  const processPayoutRequest = async (id: string, status: 'processed' | 'rejected') => {
+    try {
+      await adminService.processPayoutRequest(id, status)
+      showToast(`Payout ${status}`, status === 'processed' ? 'success' : 'warning')
+      await loadData()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to process payout', 'danger')
+    }
   }
+
+  if (isLoading) {
+    return (
+      <div className="fade-in space-y-6">
+        <div>
+          <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">Finance & Payouts</h1>
+          <p className="text-muted text-sm mt-1">Revenue, commissions, and partner payout management.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="stat-card animate-pulse">
+              <div className="h-3 w-24 bg-surface rounded mb-2" />
+              <div className="h-7 w-20 bg-surface rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="fade-in space-y-6">
+        <div>
+          <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">Finance & Payouts</h1>
+        </div>
+        <div className="glass-card p-8 text-center">
+          <p className="text-error text-sm mb-3">{error}</p>
+          <button type="button" onClick={loadData} className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px]">
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const totalRevenue = summary?.totalRevenue ?? 0
+  const totalPayouts = summary?.totalPayouts ?? 0
+  const net = summary?.net ?? totalRevenue - totalPayouts
 
   return (
     <div className="fade-in space-y-6">
@@ -30,7 +96,7 @@ export default function FinancePage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="stat-card stat-border-primary">
-          <p className="text-xs text-secondary font-medium">Total Revenue (6mo)</p>
+          <p className="text-xs text-secondary font-medium">Total Revenue</p>
           <p className="text-2xl font-bold text-primary mt-1">₹{(totalRevenue / 1000).toFixed(0)}k</p>
         </div>
         <div className="stat-card stat-border-warning">
@@ -38,11 +104,12 @@ export default function FinancePage() {
           <p className="text-2xl font-bold text-primary mt-1">₹{(totalPayouts / 1000).toFixed(0)}k</p>
         </div>
         <div className="stat-card stat-border-success">
-          <p className="text-xs text-secondary font-medium">Commission (20%)</p>
-          <p className="text-2xl font-bold text-success mt-1">₹{((totalRevenue - totalPayouts) / 1000).toFixed(0)}k</p>
+          <p className="text-xs text-secondary font-medium">Net Revenue</p>
+          <p className="text-2xl font-bold text-success mt-1">₹{(net / 1000).toFixed(0)}k</p>
         </div>
       </div>
 
+      {/* Chart — uses mock time-series data; backend does not yet provide this */}
       <div className="glass-card p-5">
         <h2 className="text-sm font-semibold text-primary mb-4">Revenue vs Payouts</h2>
         <div className="flex items-end gap-4 h-40">
@@ -84,6 +151,7 @@ export default function FinancePage() {
         </div>
       </div>
 
+      {/* Payout Requests */}
       <div className="glass-card p-5">
         <h2 className="text-sm font-semibold text-primary mb-4">Payout Requests</h2>
         <div className="overflow-x-auto">
@@ -138,6 +206,13 @@ export default function FinancePage() {
                   </td>
                 </tr>
               ))}
+              {payouts.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-sm text-muted">
+                    No payout requests
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

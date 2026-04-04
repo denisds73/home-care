@@ -1,31 +1,33 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { adminService } from '../../services/adminService'
+import type { AdminUser } from '../../services/adminService'
 import useStore from '../../store/useStore'
 import { formatDate } from '../../data/helpers'
 
-interface MockUser {
-  id: string
-  name: string
-  email: string
-  bookings: number
-  joinedAt: string
-  active: boolean
-}
-
-const MOCK_USERS: MockUser[] = [
-  { id: 'u-1', name: 'Priya Sharma', email: 'priya@gmail.com', bookings: 12, joinedAt: '2025-08-15', active: true },
-  { id: 'u-2', name: 'Rahul Verma', email: 'rahul@gmail.com', bookings: 8, joinedAt: '2025-09-20', active: true },
-  { id: 'u-3', name: 'Meena Iyer', email: 'meena@yahoo.com', bookings: 5, joinedAt: '2025-11-05', active: true },
-  { id: 'u-4', name: 'Arun Das', email: 'arun@outlook.com', bookings: 3, joinedAt: '2026-01-10', active: false },
-  { id: 'u-5', name: 'Sneha Rao', email: 'sneha@gmail.com', bookings: 15, joinedAt: '2025-06-01', active: true },
-  { id: 'u-6', name: 'Vikash Jain', email: 'vikash@gmail.com', bookings: 2, joinedAt: '2026-03-15', active: true },
-  { id: 'u-7', name: 'Nisha Gupta', email: 'nisha@hotmail.com', bookings: 7, joinedAt: '2025-10-22', active: true },
-  { id: 'u-8', name: 'Karthik Reddy', email: 'karthik@gmail.com', bookings: 1, joinedAt: '2026-04-01', active: true },
-]
-
 export default function UserManagementPage() {
-  const [users, setUsers] = useState(MOCK_USERS)
-  const [search, setSearch] = useState('')
   const showToast = useStore(s => s.showToast)
+
+  const [users, setUsers] = useState<AdminUser[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+
+  const loadUsers = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      const result = await adminService.getUsers()
+      setUsers(result.data ?? [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load users')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadUsers()
+  }, [loadUsers])
 
   const filtered = users.filter(u => {
     if (!search) return true
@@ -33,9 +35,15 @@ export default function UserManagementPage() {
     return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
   })
 
-  const toggleActive = (id: string) => {
-    setUsers(prev => prev.map(u => (u.id === id ? { ...u, active: !u.active } : u)))
-    showToast('User status updated', 'success')
+  const toggleActive = async (id: string, currentStatus: 'active' | 'suspended') => {
+    const newStatus = currentStatus === 'active' ? 'suspended' : 'active'
+    try {
+      await adminService.updateUserStatus(id, newStatus)
+      showToast('User status updated', 'success')
+      await loadUsers()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to update user status', 'danger')
+    }
   }
 
   return (
@@ -55,44 +63,76 @@ export default function UserManagementPage() {
         />
       </div>
 
-      <div className="glass-card overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-muted bg-surface">
-              <th className="p-3">Name</th>
-              <th className="p-3">Email</th>
-              <th className="p-3">Bookings</th>
-              <th className="p-3">Joined</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(u => (
-              <tr key={u.id} className="border-t border-gray-50 hover:bg-surface/50">
-                <td className="p-3 font-medium">{u.name}</td>
-                <td className="p-3 text-secondary">{u.email}</td>
-                <td className="p-3">{u.bookings}</td>
-                <td className="p-3 text-muted">{formatDate(u.joinedAt)}</td>
-                <td className="p-3">
-                  <span className={`text-xs font-semibold ${u.active ? 'text-success' : 'text-error'}`}>
-                    {u.active ? 'Active' : 'Suspended'}
-                  </span>
-                </td>
-                <td className="p-3">
-                  <button
-                    type="button"
-                    onClick={() => toggleActive(u.id)}
-                    className={`text-xs font-semibold min-h-[44px] ${u.active ? 'text-error' : 'text-success'}`}
-                  >
-                    {u.active ? 'Suspend' : 'Activate'}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {error && (
+        <div className="glass-card p-6 text-center">
+          <p className="text-error text-sm mb-3">{error}</p>
+          <button type="button" onClick={loadUsers} className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px]">
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!error && (
+        <div className="glass-card overflow-x-auto">
+          {isLoading ? (
+            <div className="p-6 space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="animate-pulse flex gap-4">
+                  <div className="h-4 w-28 bg-surface rounded" />
+                  <div className="h-4 w-36 bg-surface rounded" />
+                  <div className="h-4 w-12 bg-surface rounded" />
+                  <div className="h-4 w-20 bg-surface rounded" />
+                  <div className="h-4 w-16 bg-surface rounded" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-muted bg-surface">
+                  <th className="p-3">Name</th>
+                  <th className="p-3">Email</th>
+                  <th className="p-3">Bookings</th>
+                  <th className="p-3">Joined</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(u => (
+                  <tr key={u.id} className="border-t border-gray-50 hover:bg-surface/50">
+                    <td className="p-3 font-medium">{u.name}</td>
+                    <td className="p-3 text-secondary">{u.email}</td>
+                    <td className="p-3">{u.bookings}</td>
+                    <td className="p-3 text-muted">{formatDate(u.joinedAt)}</td>
+                    <td className="p-3">
+                      <span className={`text-xs font-semibold ${u.status === 'active' ? 'text-success' : 'text-error'}`}>
+                        {u.status === 'active' ? 'Active' : 'Suspended'}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <button
+                        type="button"
+                        onClick={() => toggleActive(u.id, u.status)}
+                        className={`text-xs font-semibold min-h-[44px] ${u.status === 'active' ? 'text-error' : 'text-success'}`}
+                      >
+                        {u.status === 'active' ? 'Suspend' : 'Activate'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-sm text-muted">
+                      No users found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
     </div>
   )
 }
