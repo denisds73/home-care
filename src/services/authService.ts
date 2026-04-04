@@ -7,8 +7,10 @@ export interface LoginDto {
 }
 
 export const authService = {
-  login: (data: LoginDto) => api.post<{ user: User; token: string }>('/auth/login', data),
-  signup: (data: Partial<User> & LoginDto) => api.post<{ user: User; token: string }>('/auth/signup', data),
-  logout: () => api.post('/auth/logout', {}),
-  getCurrentUser: () => api.get<{ user: User }>('/auth/me'),
+  login: (data: LoginDto) =>
+    api.post<{ data: { user: User; token: string } }>('/auth/login', data),
+  signup: (data: Partial<User> & LoginDto) =>
+    api.post<{ data: { user: User; token: string } }>('/auth/signup', data),
+  logout: () => api.post<{ data: null }>('/auth/logout', {}),
+  getCurrentUser: () => api.get<{ data: { user: User } }>('/auth/me'),
 }
