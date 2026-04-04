@@ -23,6 +23,16 @@ export type BookingStatus =
 
 export type ToastType = 'success' | 'danger' | 'warning' | 'info'
 
+export type Role = 'customer' | 'partner' | 'admin'
+
+export type PartnerStatus = 'pending' | 'approved' | 'suspended'
+
+export type JobStatus = 'new' | 'accepted' | 'in_progress' | 'completed' | 'declined'
+
+export type TransactionType = 'credit' | 'debit'
+
+export type NotificationType = 'booking' | 'payment' | 'system' | 'partner'
+
 export interface ServiceListItem {
   id: number
   name: string
@@ -71,8 +81,12 @@ export type NewBookingPayload = Omit<Booking, 'booking_id'> & {
 }
 
 export interface User {
+  id: string
   name: string
   email: string
+  phone?: string
+  role: Role
+  avatar?: string
 }
 
 export interface CartLine {
@@ -91,4 +105,64 @@ export interface CategoryMeta {
 export interface ToastState {
   msg: string
   type: ToastType
+}
+
+export interface Partner {
+  id: string
+  name: string
+  email: string
+  phone: string
+  avatar?: string
+  skills: CategoryId[]
+  rating: number
+  completedJobs: number
+  status: PartnerStatus
+  serviceArea: string
+  isOnline: boolean
+  joinedAt: string
+  earnings: number
+}
+
+export interface Job {
+  id: string
+  bookingId: string
+  partnerId: string
+  customerName: string
+  phone: string
+  address: string
+  category: CategoryId
+  serviceName: string
+  price: number
+  preferredDate: string
+  timeSlot: TimeSlot | string
+  status: JobStatus
+  createdAt: string
+}
+
+export interface Transaction {
+  id: string
+  amount: number
+  type: TransactionType
+  description: string
+  bookingRef?: string
+  date: string
+}
+
+export interface Notification {
+  id: string
+  type: NotificationType
+  title: string
+  description: string
+  timestamp: string
+  read: boolean
+}
+
+export interface PayoutRequest {
+  id: string
+  partnerId: string
+  partnerName: string
+  amount: number
+  status: 'pending' | 'processed' | 'rejected'
+  requestedAt: string
+  processedAt?: string
 }

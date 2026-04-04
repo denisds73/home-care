@@ -332,3 +332,203 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
   .reveal { opacity: 1 !important; transform: none !important; }
   body { padding: 0 !important; }
 }
+
+/* ── Role theme tinting ── */
+.theme-partner {
+  --color-primary: #0D9488;
+  --color-primary-light: #14B8A6;
+  --color-primary-dark: #0F766E;
+  --color-primary-soft: #CCFBF1;
+  --color-accent: #F59E0B;
+  --color-accent-strong: #D97706;
+  --color-accent-soft: #FEF3C7;
+}
+.theme-admin {
+  --color-primary: #4338CA;
+  --color-primary-light: #6366F1;
+  --color-primary-dark: #3730A3;
+  --color-primary-soft: #E0E7FF;
+  --color-accent: #EC4899;
+  --color-accent-strong: #DB2777;
+  --color-accent-soft: #FCE7F3;
+}
+
+/* ── Dashboard sidebar ── */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 56px;
+  background: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
+  z-index: 40;
+  transition: width .2s ease;
+  overflow: hidden;
+}
+.sidebar:hover {
+  width: 240px;
+}
+.sidebar-logo {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  flex-shrink: 0;
+}
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+.sidebar-section {
+  padding: 16px 16px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: rgba(255,255,255,.3);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+.sidebar:hover .sidebar-section {
+  opacity: 1;
+}
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  color: rgba(255,255,255,.55);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background .15s ease, color .15s ease;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+}
+.sidebar-item:hover {
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.85);
+}
+.sidebar-item.active {
+  color: #fff;
+  background: rgba(255,255,255,.08);
+  border-left-color: var(--color-primary-light);
+}
+.sidebar-item svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.sidebar-label {
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+.sidebar:hover .sidebar-label {
+  opacity: 1;
+}
+.sidebar-bottom {
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding: 8px 0;
+  flex-shrink: 0;
+}
+
+/* ── Dashboard top bar ── */
+.dashboard-topbar {
+  height: 48px;
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.dashboard-content {
+  margin-left: 56px;
+  min-height: 100vh;
+  background: var(--color-surface);
+}
+
+/* ── Dashboard stat cards ── */
+.stat-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: box-shadow .2s ease;
+}
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,.06);
+}
+
+/* ── Mobile sidebar drawer ── */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 39;
+}
+.sidebar-mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  background: var(--color-text-primary);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform .25s ease;
+}
+.sidebar-mobile.open {
+  transform: translateX(0);
+}
+.sidebar-mobile .sidebar-label {
+  opacity: 1;
+}
+.sidebar-mobile .sidebar-section {
+  opacity: 1;
+}
+
+/* ── Availability toggle ── */
+.toggle-track {
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--color-border);
+  position: relative;
+  cursor: pointer;
+  transition: background .2s ease;
+}
+.toggle-track.on {
+  background: var(--color-success);
+}
+.toggle-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform .2s ease;
+}
+.toggle-track.on .toggle-thumb {
+  transform: translateX(16px);
+}
+
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .dashboard-content { margin-left: 0; }
+  .dashboard-topbar { padding: 0 16px; }
+}
