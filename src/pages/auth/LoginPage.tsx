@@ -25,18 +25,39 @@ export default function LoginPage() {
   const [signupPassword, setSignupPassword] = useState('')
   const [showSignupPassword, setShowSignupPassword] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    login(loginEmail || 'demo@homecare.app', 'customer')
-    showToast('Welcome back!', 'success')
-    navigate('/app')
+    setFormError('')
+    setIsSubmitting(true)
+    try {
+      await login(loginEmail, loginPassword, 'customer')
+      showToast('Welcome back!', 'success')
+      navigate('/app')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed. Please try again.'
+      setFormError(message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    login(signupEmail || 'demo@homecare.app', 'customer')
-    showToast('Account created! Welcome to HomeCare.', 'success')
-    navigate('/app')
+    setFormError('')
+    setIsSubmitting(true)
+    try {
+      await login(signupEmail, signupPassword, 'customer')
+      showToast('Account created! Welcome to HomeCare.', 'success')
+      navigate('/app')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Signup failed. Please try again.'
+      setFormError(message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -99,6 +120,11 @@ export default function LoginPage() {
           <div className="p-6">
             {tab === 'login' ? (
               <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                {formError && tab === 'login' && (
+                  <div className="text-xs text-error fade-in text-center py-2 px-3 rounded-lg bg-error/10">
+                    {formError}
+                  </div>
+                )}
                 {/* Email */}
                 <div className="flex flex-col gap-1">
                   <label htmlFor="login-email" className="text-xs font-semibold text-secondary">
@@ -181,8 +207,12 @@ export default function LoginPage() {
                   </button>
                 </div>
 
-                <button type="submit" className="btn-base btn-primary w-full py-3 text-sm mt-1">
-                  Log In
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn-base btn-primary w-full py-3 text-sm mt-1 disabled:opacity-60"
+                >
+                  {isSubmitting ? 'Signing in...' : 'Log In'}
                 </button>
 
                 {/* Divider */}
@@ -219,6 +249,11 @@ export default function LoginPage() {
               </form>
             ) : (
               <form onSubmit={handleSignup} className="flex flex-col gap-4">
+                {formError && tab === 'signup' && (
+                  <div className="text-xs text-error fade-in text-center py-2 px-3 rounded-lg bg-error/10">
+                    {formError}
+                  </div>
+                )}
                 {/* Full name */}
                 <div className="flex flex-col gap-1">
                   <label htmlFor="signup-name" className="text-xs font-semibold text-secondary">
@@ -328,15 +363,19 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                <button type="submit" className="btn-base btn-primary w-full py-3 text-sm mt-1">
-                  Create Account
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn-base btn-primary w-full py-3 text-sm mt-1 disabled:opacity-60"
+                >
+                  {isSubmitting ? 'Creating account...' : 'Create Account'}
                 </button>
               </form>
             )}
 
-            {/* Demo note */}
+            {/* Note */}
             <p className="mt-5 text-center text-xs text-muted">
-              Demo: any email / password works
+              Use your registered email and password
             </p>
           </div>
         </div>

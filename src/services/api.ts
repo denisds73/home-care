@@ -19,9 +19,10 @@ async function fetchClient<T>(endpoint: string, options: RequestInit = {}): Prom
     ...options.headers,
   }
 
-  // NOTE: You would normally add your auth token logic here:
-  // const token = localStorage.getItem('token')
-  // if (token) headers['Authorization'] = `Bearer ${token}`
+  const token = localStorage.getItem('homecare_token')
+  if (token) {
+    ;(headers as Record<string, string>)['Authorization'] = `Bearer ${token}`
+  }
 
   const config: RequestInit = {
     ...options,

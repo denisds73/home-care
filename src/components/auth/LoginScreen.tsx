@@ -14,7 +14,7 @@ export default function LoginScreen({ onAuthSuccess, onClose }: LoginScreenProps
   const showToast = useStore(s => s.showToast)
 
   const handleSubmit = () => {
-    login(email || 'user@demo.com', 'customer')
+    login(email || 'user@demo.com', 'password', 'customer')
     showToast('Welcome to HomeCare!', 'success')
     onAuthSuccess?.()
   }

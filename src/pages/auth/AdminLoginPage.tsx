@@ -5,21 +5,27 @@ import useStore from '../../store/useStore'
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('')
-  const [pin, setPin] = useState('')
-  const [error, setError] = useState(false)
+  const [password, setPassword] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
   const login = useAuthStore(s => s.login)
   const showToast = useStore(s => s.showToast)
   const navigate = useNavigate()
 
-  const handleSubmit = () => {
-    if (pin !== '1234') {
-      setError(true)
-      setPin('')
-      return
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setFormError('')
+    setIsSubmitting(true)
+    try {
+      await login(email, password, 'admin')
+      showToast('Admin access granted', 'success')
+      navigate('/admin')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed. Please try again.'
+      setFormError(message)
+    } finally {
+      setIsSubmitting(false)
     }
-    login(email || 'admin@homecare.com', 'admin')
-    showToast('Admin access granted', 'success')
-    navigate('/admin')
   }
 
   return (
@@ -50,43 +56,56 @@ export default function AdminLoginPage() {
           <h2 className="text-lg font-bold text-primary mb-1">Admin Login</h2>
           <p className="text-xs text-muted mb-5">Authorized personnel only</p>
 
-          <div className="space-y-3">
-            <input
-              type="email"
-              className="input-base w-full py-3 px-4 text-sm"
-              placeholder="Admin email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-            />
-            <input
-              type="password"
-              inputMode="numeric"
-              maxLength={4}
-              className="input-base w-full py-3 px-4 text-sm text-center tracking-[.3em] font-bold"
-              placeholder="4-digit PIN"
-              value={pin}
-              onChange={e => {
-                setPin(e.target.value)
-                setError(false)
-              }}
-              onKeyDown={e => {
-                if (e.key === 'Enter') handleSubmit()
-              }}
-            />
-            {error && <p className="text-error text-xs text-center">Incorrect PIN</p>}
-            <p className="text-xs text-muted text-center">
-              Demo PIN: <strong>1234</strong>
-            </p>
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {formError && (
+              <div className="text-xs text-error fade-in text-center py-2 px-3 rounded-lg bg-error/10">
+                {formError}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-1">
+              <label htmlFor="admin-email" className="text-xs font-semibold text-secondary">
+                Email address
+              </label>
+              <input
+                id="admin-email"
+                type="email"
+                className="input-base w-full py-3 px-4 text-sm"
+                placeholder="Admin email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label htmlFor="admin-password" className="text-xs font-semibold text-secondary">
+                Password
+              </label>
+              <input
+                id="admin-password"
+                type="password"
+                className="input-base w-full py-3 px-4 text-sm"
+                placeholder="Your password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+
             <button
-              type="button"
-              onClick={handleSubmit}
-              className="w-full py-3 font-bold text-sm text-white rounded-xl transition"
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-3 font-bold text-sm text-white rounded-xl transition disabled:opacity-60"
               style={{ background: '#4338ca' }}
             >
-              Unlock Admin
+              {isSubmitting ? 'Signing in...' : 'Unlock Admin'}
             </button>
-          </div>
-          <p className="text-center text-xs text-muted mt-5">Demo: any email + PIN 1234</p>
+          </form>
+
+          <p className="text-center text-xs text-muted mt-5">
+            Use your admin credentials to sign in
+          </p>
         </div>
       </div>
     </div>

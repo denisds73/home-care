@@ -11,12 +11,23 @@ export default function PartnerLoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    login(email || 'partner@homecare.app', 'partner')
-    showToast('Welcome back, Partner!', 'success')
-    navigate('/partner')
+    setFormError('')
+    setIsSubmitting(true)
+    try {
+      await login(email, password, 'partner')
+      showToast('Welcome back, Partner!', 'success')
+      navigate('/partner')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed. Please try again.'
+      setFormError(message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -65,6 +76,11 @@ export default function PartnerLoginPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              {formError && (
+                <div className="text-xs text-error fade-in text-center py-2 px-3 rounded-lg bg-error/10">
+                  {formError}
+                </div>
+              )}
               {/* Email */}
               <div className="flex flex-col gap-1">
                 <label htmlFor="partner-email" className="text-xs font-semibold text-secondary">
@@ -130,10 +146,11 @@ export default function PartnerLoginPage() {
 
               <button
                 type="submit"
-                className="btn-base w-full py-3 text-sm font-semibold text-white mt-1"
+                disabled={isSubmitting}
+                className="btn-base w-full py-3 text-sm font-semibold text-white mt-1 disabled:opacity-60"
                 style={{ background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)' }}
               >
-                Sign In
+                {isSubmitting ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
 
@@ -146,9 +163,8 @@ export default function PartnerLoginPage() {
           </div>
         </div>
 
-        {/* Demo note */}
         <p className="mt-4 text-center text-xs text-muted">
-          Demo: any email / password works
+          Use your registered partner credentials
         </p>
       </div>
     </div>
