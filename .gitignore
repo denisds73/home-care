@@ -25,3 +25,5 @@ npm-debug.log*
 # Optional tooling
 *.tsbuildinfo
 coverage/
+
+CLAUDE.md
