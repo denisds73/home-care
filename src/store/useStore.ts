@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { initialServices, CONVENIENCE_FEE, GST_RATE } from '../data/services'
 import { initialBookings } from '../data/bookings'
 import { CATEGORIES } from '../data/categories'
+import { serviceService } from '../services/serviceService'
+import { bookingService } from '../services/bookingService'
 import type {
   Booking,
   BookingStatus,
@@ -22,6 +24,20 @@ interface Store {
   /** Tracks highlighted category in navbar (synced from CategoryPage). */
   selectedCategory: CategoryId | null
   nextServiceId: number
+
+  /** API fetching state */
+  servicesLoading: boolean
+  servicesError: string | null
+  bookingsLoading: boolean
+  bookingsError: string | null
+
+  /** Fetch services from backend; falls back to mock data on failure */
+  fetchServices: (categoryId?: string) => Promise<void>
+  /** Fetch categories from backend; falls back to static CATEGORIES on failure */
+  fetchCategories: () => Promise<void>
+  /** Fetch bookings from backend; falls back to mock data on failure */
+  fetchBookings: () => Promise<void>
+
   addService: (svc: ServiceDraft) => void
   updateService: (id: number, data: Partial<Service> & { created_at?: string; updated_at?: string }) => void
   deleteService: (id: number) => void
@@ -55,6 +71,58 @@ const useStore = create<Store>()((set, get) => ({
   categories: CATEGORIES,
   selectedCategory: null,
   nextServiceId: 31,
+
+  servicesLoading: false,
+  servicesError: null,
+  bookingsLoading: false,
+  bookingsError: null,
+
+  fetchServices: async (categoryId?: string) => {
+    set({ servicesLoading: true, servicesError: null })
+    try {
+      const response = await serviceService.getServices(categoryId)
+      const services = response.data
+      if (Array.isArray(services) && services.length > 0) {
+        set({ services, servicesLoading: false })
+      } else {
+        // Keep existing data if API returned empty
+        set({ servicesLoading: false })
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load services'
+      set({ servicesError: message, servicesLoading: false })
+      // Mock data remains as fallback — no overwrite
+    }
+  },
+
+  fetchCategories: async () => {
+    try {
+      const response = await serviceService.getCategories()
+      const categories = response.data
+      if (Array.isArray(categories) && categories.length > 0) {
+        set({ categories })
+      }
+    } catch {
+      // Static CATEGORIES remain as fallback
+    }
+  },
+
+  fetchBookings: async () => {
+    set({ bookingsLoading: true, bookingsError: null })
+    try {
+      const response = await bookingService.getMyBookings()
+      const bookings = response.data
+      if (Array.isArray(bookings)) {
+        set({ bookings, bookingsLoading: false })
+      } else {
+        set({ bookingsLoading: false })
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load bookings'
+      set({ bookingsError: message, bookingsLoading: false })
+      // Mock data remains as fallback
+    }
+  },
   addService: (svc) => {
     const id = get().nextServiceId
     set({ services: [...get().services, { ...svc, id }], nextServiceId: id + 1 })

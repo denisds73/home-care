@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, type Dispatch, type SetStateAction, type K
 import { useNavigate } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import { useAuthStore } from '../../store/useAuthStore'
+import { bookingService } from '../../services/bookingService'
 import { CATEGORIES } from '../../data/categories'
 import { CONVENIENCE_FEE, GST_RATE } from '../../data/services'
 import type { PaymentMode, PaymentStatus, TimeSlot } from '../../types/domain'
@@ -222,10 +223,12 @@ function Step3({
   booking,
   onPayNow,
   onPayAfter,
+  submitting,
 }: {
   booking: BookingDraft
   onPayNow: (amount: number) => void
   onPayAfter: () => void
+  submitting: boolean
 }) {
   const cart = useStore(s => s.cart)
   const getCartTotal = useStore(s => s.getCartTotal)
@@ -272,11 +275,17 @@ function Step3({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <button type="button" onClick={() => onPayNow(total)} className="btn-base btn-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-          Pay Now
+        <button type="button" onClick={() => onPayNow(total)} disabled={submitting} className="btn-base btn-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+          {submitting ? (
+            <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+          )}
+          {submitting ? 'Processing...' : 'Pay Now'}
         </button>
-        <button type="button" onClick={onPayAfter} className="btn-base btn-secondary py-3 rounded-xl font-semibold text-sm">Pay After Service</button>
+        <button type="button" onClick={onPayAfter} disabled={submitting} className="btn-base btn-secondary py-3 rounded-xl font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed">
+          {submitting ? 'Processing...' : 'Pay After Service'}
+        </button>
       </div>
     </div>
   )
@@ -320,6 +329,7 @@ export default function BookingFlow() {
   const [payAmount, setPayAmount] = useState(0)
   const [confirmedId, setConfirmedId] = useState('')
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
+  const [submitting, setSubmitting] = useState(false)
   const showToast = useStore(s => s.showToast)
 
   const goBack = () => {
@@ -327,28 +337,53 @@ export default function BookingFlow() {
     else setStep(s => Math.max(1, s - 1))
   }
 
-  const createBooking = (paymentMode: PaymentMode, paymentStatus: PaymentStatus) => {
-    const id = addBooking({
-      customer_name: booking.name ?? '',
-      phone: booking.phone ?? '',
-      address: booking.address ?? '',
-      lat: 12.9716, lng: 77.5946,
-      category: cart[0]?.service.category ?? '',
-      service_id: cart[0]?.service.id,
-      service_name: cart.map(c => c.service.service_name).join(', '),
-      price: useStore.getState().getCartTotal(),
-      services_list: cart.map(c => ({ id: c.service.id, name: c.service.service_name, price: c.service.price, qty: c.qty })),
-      preferred_date: booking.date ?? '',
-      time_slot: booking.time_slot ?? '',
-      payment_mode: paymentMode,
-      payment_status: paymentStatus,
-      razorpay_order_id: null,
-      booking_status: 'Pending',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    setConfirmedId(id)
-    return id
+  const buildPayload = (paymentMode: PaymentMode, paymentStatus: PaymentStatus) => ({
+    customer_name: booking.name ?? '',
+    phone: booking.phone ?? '',
+    address: booking.address ?? '',
+    lat: 12.9716,
+    lng: 77.5946,
+    category: cart[0]?.service.category ?? '',
+    service_id: cart[0]?.service.id,
+    service_name: cart.map(c => c.service.service_name).join(', '),
+    price: useStore.getState().getCartTotal(),
+    services_list: cart.map(c => ({
+      id: c.service.id,
+      name: c.service.service_name,
+      price: c.service.price,
+      qty: c.qty,
+    })),
+    preferred_date: booking.date ?? '',
+    time_slot: booking.time_slot ?? '',
+    payment_mode: paymentMode,
+    payment_status: paymentStatus,
+    razorpay_order_id: null,
+    booking_status: 'Pending' as const,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  })
+
+  const createBooking = async (paymentMode: PaymentMode, paymentStatus: PaymentStatus): Promise<string> => {
+    const payload = buildPayload(paymentMode, paymentStatus)
+    setSubmitting(true)
+    try {
+      const response = await bookingService.createBooking(payload)
+      const created = response.data
+      const id = created.booking_id
+      // Sync into local store so other pages see it immediately
+      addBooking({ ...payload, razorpay_order_id: created.razorpay_order_id ?? null })
+      setConfirmedId(id)
+      setSubmitting(false)
+      return id
+    } catch (error) {
+      // Fallback to local store if API fails
+      const message = error instanceof Error ? error.message : 'Booking failed'
+      showToast(`API error: ${message}. Booking saved locally.`, 'warning')
+      const id = addBooking(payload)
+      setConfirmedId(id)
+      setSubmitting(false)
+      return id
+    }
   }
 
   const handlePayNow = (amount: number) => {
@@ -362,26 +397,26 @@ export default function BookingFlow() {
     setShowRazorpay(true)
   }
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = async () => {
     setShowRazorpay(false)
-    const id = createBooking('PAY_NOW', 'SUCCESS')
+    const id = await createBooking('PAY_NOW', 'SUCCESS')
     setStep(4)
     showToast(`Booking ${id} created!`, 'success')
   }
 
-  const handlePayAfter = () => {
+  const handlePayAfter = async () => {
     if (!isAuthenticated) {
       setPendingAction({ type: 'payAfter' })
       setShowAuth(true)
       showToast('Log in or sign up to place booking', 'info')
       return
     }
-    const id = createBooking('PAY_AFTER_SERVICE', 'PENDING')
+    const id = await createBooking('PAY_AFTER_SERVICE', 'PENDING')
     setStep(4)
     showToast(`Booking ${id} created!`, 'success')
   }
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = async () => {
     setShowAuth(false)
     const u = useAuthStore.getState().user
     if (u?.name) setBooking(b => (b.name ? b : { ...b, name: u.name }))
@@ -393,7 +428,7 @@ export default function BookingFlow() {
       setShowRazorpay(true)
       return
     }
-    const id = createBooking('PAY_AFTER_SERVICE', 'PENDING')
+    const id = await createBooking('PAY_AFTER_SERVICE', 'PENDING')
     setStep(4)
     showToast(`Booking ${id} created!`, 'success')
   }
@@ -410,7 +445,7 @@ export default function BookingFlow() {
 
         {step === 1 && <Step1 onNext={() => { setStep(2); showToast('OTP sent to ' + booking.phone, 'info') }} booking={booking} setBooking={setBooking} />}
         {step === 2 && <Step2 onNext={() => setStep(3)} phone={booking.phone} />}
-        {step === 3 && <Step3 booking={booking} onPayNow={handlePayNow} onPayAfter={handlePayAfter} />}
+        {step === 3 && <Step3 booking={booking} onPayNow={handlePayNow} onPayAfter={handlePayAfter} submitting={submitting} />}
         {step === 4 && <Step4 bookingId={confirmedId} booking={booking} />}
 
         {showRazorpay && <RazorpayModal amount={payAmount} onSuccess={handlePaymentSuccess} onClose={() => setShowRazorpay(false)} />}
