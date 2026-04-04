@@ -4,16 +4,15 @@ import MobileNav from '../components/layout/MobileNav'
 import CartDrawer from '../components/cart/CartDrawer'
 import CartBar from '../components/cart/CartBar'
 import DetailSheet from '../components/services/DetailSheet'
-import AdminAuth from '../components/admin/AdminAuth'
 import AccountSheet from '../components/layout/AccountSheet'
 import Toast from '../components/common/Toast'
 import ScrollToTop from '../components/common/ScrollToTop'
 
 /**
- * Main customer-facing layout.
+ * Customer-facing layout.
  * Wraps all public/account routes with navbar, footer, cart drawer, etc.
  */
-export default function MainLayout() {
+export default function CustomerLayout() {
   return (
     <div className="pb-16 sm:pb-0">
       <ScrollToTop />
@@ -31,7 +30,6 @@ export default function MainLayout() {
       <CartDrawer />
       <CartBar />
       <DetailSheet />
-      <AdminAuth />
       <AccountSheet />
       <Toast />
     </div>
