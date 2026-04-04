@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import { useAuthStore } from '../../store/useAuthStore'
-import { CATEGORIES, CATEGORY_IMAGES } from '../../data/categories'
+import { CATEGORIES, CATEGORY_ICONS } from '../../data/categories'
 
 export default function Navbar() {
   const navigate = useNavigate()
@@ -86,18 +86,43 @@ export default function Navbar() {
         </div>
       </div>
 
-      <div className="hidden sm:block border-b border-gray-100 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 flex">
-          <Link to="/app" className={`flex items-center gap-1.5 px-4 py-2.5 text-[.8rem] font-semibold whitespace-nowrap border-b-[2.5px] transition ${isHome ? 'text-brand border-brand' : 'text-secondary border-transparent hover:text-primary hover:bg-gray-50'}`}>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/></svg>
+      <div className="hidden sm:block border-b border-gray-100 overflow-x-auto relative" style={{ scrollbarWidth: 'none' }}>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 flex" role="tablist" aria-label="Service categories">
+          <Link
+            to="/app"
+            role="tab"
+            aria-selected={isHome}
+            aria-current={isHome ? 'page' : undefined}
+            className={`group flex items-center gap-2 px-4 py-3 text-[.8rem] font-medium tracking-[.01em] whitespace-nowrap border-b-[2.5px] transition-colors duration-150 ${
+              isHome
+                ? 'text-brand border-brand'
+                : 'text-muted border-transparent hover:text-primary'
+            }`}
+          >
+            <svg className="w-[20px] h-[20px] lg:w-[22px] lg:h-[22px] transition-transform duration-150 group-hover:scale-[1.08]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/></svg>
             All
           </Link>
-          {CATEGORIES.map(cat => (
-            <Link key={cat.id} to={`/app/services/${cat.id}`} className={`flex items-center gap-1.5 px-4 py-2.5 text-[.8rem] font-semibold whitespace-nowrap border-b-[2.5px] transition ${currentCategoryPath === cat.id || selectedCategory === cat.id && currentCategoryPath ? 'text-brand border-brand' : 'text-secondary border-transparent hover:text-primary hover:bg-gray-50'}`}>
-              <img src={CATEGORY_IMAGES[cat.id]} alt={cat.name} className="w-6 h-6 rounded-md object-cover" />
-              {cat.name}
-            </Link>
-          ))}
+          {CATEGORIES.map(cat => {
+            const isActive = currentCategoryPath === cat.id || (selectedCategory === cat.id && !!currentCategoryPath)
+            const IconComponent = CATEGORY_ICONS[cat.id]
+            return (
+              <Link
+                key={cat.id}
+                to={`/app/services/${cat.id}`}
+                role="tab"
+                aria-selected={isActive}
+                aria-current={isActive ? 'page' : undefined}
+                className={`group flex items-center gap-2 px-4 py-3 text-[.8rem] font-medium tracking-[.01em] whitespace-nowrap border-b-[2.5px] transition-colors duration-150 ${
+                  isActive
+                    ? 'text-brand border-brand'
+                    : 'text-muted border-transparent hover:text-primary'
+                }`}
+              >
+                <IconComponent className="w-[20px] h-[20px] lg:w-[22px] lg:h-[22px] transition-transform duration-150 group-hover:scale-[1.08]" aria-hidden="true" />
+                {cat.name}
+              </Link>
+            )
+          })}
         </div>
       </div>
     </nav>
