@@ -11,7 +11,7 @@ import { LOGIN_ROUTES } from '../../lib/auth'
 import { DatePicker } from '../common/DatePicker'
 import { PhoneVerificationFlow } from './PhoneVerificationFlow'
 
-const stepLabels = ['Details', 'Verify', 'Payment', 'Done']
+const stepLabels = ['Details', 'Payment', 'Done']
 
 interface BookingDraft {
   name?: string
@@ -37,7 +37,7 @@ function StepIndicator({ current }: { current: number }) {
                 </div>
                 <p className={`text-[.6rem] mt-1 whitespace-nowrap ${isActive ? 'text-brand font-semibold' : isDone ? 'text-success' : 'text-muted'}`}>{label}</p>
               </div>
-              {i < 3 && <div className={`w-6 sm:w-12 h-1 mb-5 ${isDone ? 'bg-success' : 'bg-gray-200'}`} />}
+              {i < stepLabels.length - 1 && <div className={`w-6 sm:w-12 h-1 mb-5 ${isDone ? 'bg-success' : 'bg-gray-200'}`} />}
             </div>
           )
         })}
@@ -400,14 +400,14 @@ export default function BookingFlow() {
   const handlePaymentSuccess = async () => {
     setShowRazorpay(false)
     const id = await createBooking('PAY_NOW', 'SUCCESS')
-    setStep(4)
+    setStep(3)
     showToast(`Booking ${id} created!`, 'success')
   }
 
   const handlePayAfter = async () => {
     // Auth is now handled inline in Step3 — this is only called when authenticated
     const id = await createBooking('PAY_AFTER_SERVICE', 'PENDING')
-    setStep(4)
+    setStep(3)
     showToast(`Booking ${id} created!`, 'success')
   }
 
@@ -440,15 +440,16 @@ export default function BookingFlow() {
         <StepIndicator current={step} />
 
         {step === 1 && <Step1 onNext={() => setStep(2)} booking={booking} setBooking={setBooking} />}
-        {step === 2 && (
+        {/* OTP step skipped for MVP — PhoneVerificationFlow ready for when backend OTP endpoints ship */}
+        {false && step === -1 && (
           <PhoneVerificationFlow
             phone={booking.phone ?? ''}
             onPhoneChange={(p) => setBooking(b => ({ ...b, phone: p }))}
-            onVerified={() => { showToast('Phone verified!', 'success'); setStep(3) }}
+            onVerified={() => { showToast('Phone verified!', 'success'); setStep(2) }}
           />
         )}
-        {step === 3 && <Step3 booking={booking} onPayNow={handlePayNow} onPayAfter={handlePayAfter} submitting={submitting} />}
-        {step === 4 && <Step4 bookingId={confirmedId} booking={booking} />}
+        {step === 2 && <Step3 booking={booking} onPayNow={handlePayNow} onPayAfter={handlePayAfter} submitting={submitting} />}
+        {step === 3 && <Step4 bookingId={confirmedId} booking={booking} />}
 
         {showRazorpay && <RazorpayModal amount={payAmount} onSuccess={handlePaymentSuccess} onClose={() => setShowRazorpay(false)} />}
       </div>
