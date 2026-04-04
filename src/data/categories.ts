@@ -1,4 +1,13 @@
+import type { ComponentType } from 'react'
 import type { CategoryId, CategoryMeta } from '../types/domain'
+import {
+  SnowflakeIcon,
+  TvIcon,
+  ThermometerIcon,
+  MicrowaveIcon,
+  DropletIcon,
+  WashingMachineIcon,
+} from '../components/common/Icons'
 import acImg from '../assets/images/ac-service.jpg'
 import tvImg from '../assets/images/tv-service.jpg'
 import fridgeImg from '../assets/images/fridge-service.jpg'
@@ -34,11 +43,20 @@ export const CATEGORY_SVGS: Record<CategoryId, string> = {
   washing_machine: `<svg viewBox="0 0 64 64" fill="none"><rect x="10" y="4" width="44" height="56" rx="6" fill="#EDE9FE" stroke="#6D28D9" stroke-width="2"/><circle cx="32" cy="36" r="14" fill="#DDD6FE" stroke="#6D28D9" stroke-width="1.5"/><circle cx="32" cy="36" r="8" fill="#7C3AED" opacity=".35"/><rect x="16" y="10" width="8" height="5" rx="2" fill="#A78BFA"/><rect x="28" y="10" width="8" height="5" rx="2" fill="#A78BFA"/><circle cx="44" cy="12" r="3" fill="#6D28D9"/></svg>`,
 }
 
+export const CATEGORY_ICONS: Record<CategoryId, ComponentType<{ className?: string }>> = {
+  ac: SnowflakeIcon,
+  tv: TvIcon,
+  refrigerator: ThermometerIcon,
+  microwave: MicrowaveIcon,
+  water_purifier: DropletIcon,
+  washing_machine: WashingMachineIcon,
+}
+
 export const CATEGORIES: CategoryMeta[] = [
-  { id: 'ac', name: 'AC', icon: '❄️', desc: 'Air Conditioner Services', color: '#7C3AED' },
-  { id: 'tv', name: 'TV', icon: '📺', desc: 'Television Services', color: '#6D28D9' },
-  { id: 'refrigerator', name: 'Refrigerator', icon: '🧊', desc: 'Refrigerator Services', color: '#4C1D95' },
-  { id: 'microwave', name: 'Microwave', icon: '🍳', desc: 'Microwave Oven Services', color: '#D4A017' },
-  { id: 'water_purifier', name: 'Water Purifier', icon: '💧', desc: 'Water Purifier Services', color: '#16A34A' },
-  { id: 'washing_machine', name: 'Washing Machine', icon: '🫧', desc: 'Washing Machine Services', color: '#6B7280' },
+  { id: 'ac', name: 'AC', icon: 'snowflake', desc: 'Air Conditioner Services', color: '#7C3AED' },
+  { id: 'tv', name: 'TV', icon: 'tv', desc: 'Television Services', color: '#6D28D9' },
+  { id: 'refrigerator', name: 'Refrigerator', icon: 'thermometer', desc: 'Refrigerator Services', color: '#4C1D95' },
+  { id: 'microwave', name: 'Microwave', icon: 'microwave', desc: 'Microwave Oven Services', color: '#D4A017' },
+  { id: 'water_purifier', name: 'Water Purifier', icon: 'droplet', desc: 'Water Purifier Services', color: '#16A34A' },
+  { id: 'washing_machine', name: 'Washing Machine', icon: 'washing-machine', desc: 'Washing Machine Services', color: '#6B7280' },
 ]

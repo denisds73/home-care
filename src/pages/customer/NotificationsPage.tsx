@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import useStore from '../../store/useStore'
 import { notificationService } from '../../services/notificationService'
+import { BellIcon } from '../../components/common/Icons'
 import type { Notification } from '../../types/domain'
 
 export default function NotificationsPage() {
@@ -94,7 +95,7 @@ export default function NotificationsPage() {
       <div className="max-w-3xl mx-auto px-4 py-6">
         <h1 className="text-xl font-bold text-primary mb-4">Notifications</h1>
         <div className="flex flex-col items-center justify-center py-16 text-center fade-in">
-          <span className="text-4xl mb-3" role="img" aria-label="No notifications">🔔</span>
+          <BellIcon className="w-10 h-10 text-muted mx-auto mb-3" />
           <h3 className="font-brand text-base font-semibold text-primary">No notifications yet</h3>
           <p className="text-muted text-sm mt-1">You will see your notifications here.</p>
         </div>

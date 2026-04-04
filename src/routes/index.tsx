@@ -3,6 +3,8 @@ import { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate, useParams } from 'react-router-dom'
 import CustomerLayout from '../layouts/CustomerLayout'
 import ProtectedRoute from '../components/common/ProtectedRoute'
+import { useAuthStore } from '../store/useAuthStore'
+import { DASHBOARD_ROUTES } from '../lib/auth'
 
 // ----- Eager-loaded pages (critical path) -----
 import HomePage from '../pages/HomePage'
@@ -76,9 +78,19 @@ function LegacyServiceRedirect() {
   return <Navigate to={categoryId ? `/app/services/${categoryId}` : '/app'} replace />
 }
 
+function RootRedirect() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const role = useAuthStore((s) => s.role)
+
+  if (isAuthenticated && role) {
+    return <Navigate to={DASHBOARD_ROUTES[role]} replace />
+  }
+  return <Navigate to="/app" replace />
+}
+
 export const router = createBrowserRouter([
-  // ----- Root redirect -----
-  { path: '/', element: <Navigate to="/app" replace /> },
+  // ----- Root redirect (role-aware) -----
+  { path: '/', element: <RootRedirect /> },
 
   // ----- Auth pages (no layout) -----
   { path: '/login', element: withSuspense(LoginPage) },

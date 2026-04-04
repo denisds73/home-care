@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ComponentType } from 'react'
 import useStore from '../../store/useStore'
 import { bookingService } from '../../services/bookingService'
 import { formatDate } from '../../data/helpers'
 import { statusClass } from '../../data/helpers'
+import { CalendarDaysIcon, CheckCircleIcon, BanIcon } from '../../components/common/Icons'
 import type { Booking, BookingStatus } from '../../types/domain'
 
 type Tab = 'upcoming' | 'past' | 'cancelled'
@@ -78,15 +79,15 @@ function BookingCard({ booking, tab, onCancel, onReschedule, isCancelling }: Boo
 }
 
 function EmptyState({ tab }: { tab: Tab }) {
-  const messages: Record<Tab, { icon: string; title: string; body: string }> = {
-    upcoming: { icon: '📅', title: 'No upcoming bookings', body: 'Book a service to get started.' },
-    past: { icon: '✅', title: 'No past bookings yet', body: 'Your completed bookings will show here.' },
-    cancelled: { icon: '🚫', title: 'No cancelled bookings', body: "You haven't cancelled any bookings." },
+  const messages: Record<Tab, { Icon: ComponentType<{ className?: string }>; title: string; body: string }> = {
+    upcoming: { Icon: CalendarDaysIcon, title: 'No upcoming bookings', body: 'Book a service to get started.' },
+    past: { Icon: CheckCircleIcon, title: 'No past bookings yet', body: 'Your completed bookings will show here.' },
+    cancelled: { Icon: BanIcon, title: 'No cancelled bookings', body: "You haven't cancelled any bookings." },
   }
-  const { icon, title, body } = messages[tab]
+  const { Icon, title, body } = messages[tab]
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center fade-in">
-      <span className="text-4xl mb-3" role="img" aria-label={title}>{icon}</span>
+      <Icon className="w-10 h-10 text-muted mx-auto mb-3" />
       <h3 className="font-brand text-base font-semibold text-primary">{title}</h3>
       <p className="text-muted text-sm mt-1">{body}</p>
     </div>

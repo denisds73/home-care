@@ -1,6 +1,7 @@
 import { ENV } from '../config/env'
 import useStore from '../store/useStore'
 import { useAuthStore } from '../store/useAuthStore'
+import { TOKEN_KEY } from '../lib/auth'
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -19,7 +20,7 @@ async function fetchClient<T>(endpoint: string, options: RequestInit = {}): Prom
     ...options.headers,
   }
 
-  const token = localStorage.getItem('homecare_token')
+  const token = localStorage.getItem(TOKEN_KEY)
   if (token) {
     ;(headers as Record<string, string>)['Authorization'] = `Bearer ${token}`
   }

@@ -1,34 +1,73 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../../store/useAuthStore'
-import useStore from '../../store/useStore'
+import { loginSchema, DASHBOARD_ROUTES } from '../../lib/auth'
+import type { LoginFormData } from '../../lib/auth'
 
 export default function PartnerLoginPage() {
   const navigate = useNavigate()
-  const login = useAuthStore(state => state.login)
-  const showToast = useStore(state => state.showToast)
+  const [searchParams] = useSearchParams()
+  const login = useAuthStore((state) => state.login)
+  const clearError = useAuthStore((state) => state.clearError)
+  const isLoading = useAuthStore((state) => state.isLoading)
+  const serverError = useAuthStore((state) => state.error)
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const role = useAuthStore((state) => state.role)
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [form, setForm] = useState<LoginFormData>({ email: '', password: '' })
+  const [touched, setTouched] = useState({ email: false, password: false })
   const [showPassword, setShowPassword] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formError, setFormError] = useState('')
+  const emailRef = useRef<HTMLInputElement>(null)
+  const passwordRef = useRef<HTMLInputElement>(null)
+
+  const returnTo = searchParams.get('returnTo')
+
+  // Redirect if already authenticated as partner
+  useEffect(() => {
+    if (isAuthenticated && role) {
+      navigate(returnTo ?? DASHBOARD_ROUTES[role] ?? '/partner', { replace: true })
+    }
+  }, [isAuthenticated, role, navigate, returnTo])
+
+  // Clear server error on mount
+  useEffect(() => { clearError() }, [clearError])
+
+  const validation = loginSchema.safeParse(form)
+  const fieldErrors: Partial<Record<keyof LoginFormData, string>> = {}
+  if (!validation.success) {
+    for (const issue of validation.error.issues) {
+      const key = issue.path[0] as keyof LoginFormData
+      if (!fieldErrors[key]) fieldErrors[key] = issue.message
+    }
+  }
+
+  const handleBlur = (field: keyof LoginFormData) => {
+    setTouched((prev) => ({ ...prev, [field]: true }))
+  }
+
+  const handleChange = (field: keyof LoginFormData, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }))
+    if (serverError) clearError()
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setFormError('')
-    setIsSubmitting(true)
-    try {
-      await login(email, password, 'partner')
-      showToast('Welcome back, Partner!', 'success')
-      navigate('/partner')
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Login failed. Please try again.'
-      setFormError(message)
-    } finally {
-      setIsSubmitting(false)
+    setTouched({ email: true, password: true })
+
+    if (!validation.success) {
+      const firstInvalid = validation.error.issues[0]?.path[0]
+      if (firstInvalid === 'email') emailRef.current?.focus()
+      else passwordRef.current?.focus()
+      return
     }
+
+    await login(form.email, form.password)
+    const dest = returnTo ?? DASHBOARD_ROUTES['partner'] ?? '/partner'
+    navigate(dest, { replace: true })
   }
+
+  const emailError = touched.email ? fieldErrors.email : undefined
+  const passwordError = touched.password ? fieldErrors.password : undefined
 
   return (
     <div className="min-h-screen bg-surface flex flex-col fade-in">
@@ -39,28 +78,13 @@ export default function PartnerLoginPage() {
       >
         <div className="flex items-center gap-3 mb-3">
           <div className="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center">
-            <svg
-              className="w-6 h-6 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
+            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
           <div className="flex flex-col">
-            <span className="font-brand text-2xl font-bold text-white tracking-tight leading-tight">
-              HomeCare
-            </span>
-            <span className="text-white/70 text-xs font-semibold tracking-widest uppercase -mt-0.5">
-              Partner Portal
-            </span>
+            <span className="font-brand text-2xl font-bold text-white tracking-tight leading-tight">HomeCare</span>
+            <span className="text-white/70 text-xs font-semibold tracking-widest uppercase -mt-0.5">Partner Portal</span>
           </div>
         </div>
         <p className="text-white/60 text-sm">Manage your jobs, earnings &amp; schedule</p>
@@ -75,17 +99,16 @@ export default function PartnerLoginPage() {
               <p className="text-muted text-sm mt-1">Access your partner dashboard</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              {formError && (
-                <div className="text-xs text-error fade-in text-center py-2 px-3 rounded-lg bg-error/10">
-                  {formError}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+              {serverError && (
+                <div className="text-xs text-error fade-in text-center py-2 px-3 rounded-lg bg-error/10" role="alert">
+                  {serverError}
                 </div>
               )}
+
               {/* Email */}
               <div className="flex flex-col gap-1">
-                <label htmlFor="partner-email" className="text-xs font-semibold text-secondary">
-                  Email address
-                </label>
+                <label htmlFor="partner-email" className="text-xs font-semibold text-secondary">Email address</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden="true">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -93,22 +116,28 @@ export default function PartnerLoginPage() {
                     </svg>
                   </span>
                   <input
+                    ref={emailRef}
                     id="partner-email"
                     type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
+                    required
+                    value={form.email}
+                    onChange={(e) => handleChange('email', e.target.value)}
+                    onBlur={() => handleBlur('email')}
                     placeholder="you@example.com"
-                    className="input-base w-full pl-9 pr-4 py-3 text-sm"
+                    className={`input-base w-full pl-9 pr-4 py-3 text-sm ${emailError ? 'field-invalid' : ''}`}
                     autoComplete="email"
+                    aria-invalid={!!emailError}
+                    aria-describedby={emailError ? 'partner-email-error' : undefined}
                   />
                 </div>
+                {emailError && (
+                  <p id="partner-email-error" className="text-xs text-error fade-in">{emailError}</p>
+                )}
               </div>
 
               {/* Password */}
               <div className="flex flex-col gap-1">
-                <label htmlFor="partner-password" className="text-xs font-semibold text-secondary">
-                  Password
-                </label>
+                <label htmlFor="partner-password" className="text-xs font-semibold text-secondary">Password</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden="true">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -116,17 +145,22 @@ export default function PartnerLoginPage() {
                     </svg>
                   </span>
                   <input
+                    ref={passwordRef}
                     id="partner-password"
                     type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
+                    required
+                    value={form.password}
+                    onChange={(e) => handleChange('password', e.target.value)}
+                    onBlur={() => handleBlur('password')}
                     placeholder="Your password"
-                    className="input-base w-full pl-9 pr-10 py-3 text-sm"
+                    className={`input-base w-full pl-9 pr-10 py-3 text-sm ${passwordError ? 'field-invalid' : ''}`}
                     autoComplete="current-password"
+                    aria-invalid={!!passwordError}
+                    aria-describedby={passwordError ? 'partner-password-error' : undefined}
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(v => !v)}
+                    onClick={() => setShowPassword((v) => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-secondary transition-colors"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
@@ -142,24 +176,26 @@ export default function PartnerLoginPage() {
                     )}
                   </button>
                 </div>
+                {passwordError && (
+                  <p id="partner-password-error" className="text-xs text-error fade-in">{passwordError}</p>
+                )}
               </div>
 
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isLoading}
                 className="btn-base w-full py-3 text-sm font-semibold text-white mt-1 disabled:opacity-60"
                 style={{ background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)' }}
               >
-                {isSubmitting ? 'Signing in...' : 'Sign In'}
+                {isLoading && (
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                )}
+                {isLoading ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
-
-            <p className="text-center text-xs text-muted">
-              Not a partner yet?{' '}
-              <button className="font-semibold hover:underline" style={{ color: '#0d9488' }}>
-                Apply to join
-              </button>
-            </p>
           </div>
         </div>
 

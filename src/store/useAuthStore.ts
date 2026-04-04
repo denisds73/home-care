@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import type { Role, User } from '../types/domain'
 import { authService } from '../services/authService'
-
-const TOKEN_KEY = 'homecare_token'
+import type { SignupDto } from '../services/authService'
+import { getStoredToken, setStoredToken, clearStoredToken } from '../lib/auth'
 
 interface AuthState {
   user: User | null
@@ -11,9 +11,10 @@ interface AuthState {
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
-  setAuth: (user: User, token: string) => void
-  login: (email: string, password: string, role: Role) => Promise<void>
+  login: (email: string, password: string, role?: Role) => Promise<void>
+  signup: (data: SignupDto) => Promise<void>
   logout: () => void
+  clearError: () => void
   restoreSession: () => Promise<void>
 }
 
@@ -25,23 +26,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: false,
   error: null,
 
-  setAuth: (user, token) => {
-    localStorage.setItem(TOKEN_KEY, token)
-    set({
-      user,
-      token,
-      role: user.role,
-      isAuthenticated: true,
-      error: null,
-    })
-  },
-
-  login: async (email, password, _role) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  login: async (email, password, _role?) => {
     set({ isLoading: true, error: null })
     try {
       const result = await authService.login({ email, password })
       const { user, token } = result.data
-      localStorage.setItem(TOKEN_KEY, token)
+      setStoredToken(token)
       set({
         user,
         token,
@@ -58,8 +49,30 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
+  signup: async (data) => {
+    set({ isLoading: true, error: null })
+    try {
+      const result = await authService.signup(data)
+      const { user, token } = result.data
+      setStoredToken(token)
+      set({
+        user,
+        token,
+        role: user.role,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+      })
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Signup failed. Please try again.'
+      set({ isLoading: false, error: message })
+      throw err
+    }
+  },
+
   logout: () => {
-    localStorage.removeItem(TOKEN_KEY)
+    clearStoredToken()
     set({
       user: null,
       token: null,
@@ -69,11 +82,19 @@ export const useAuthStore = create<AuthState>((set) => ({
     })
   },
 
+  clearError: () => {
+    set({ error: null })
+  },
+
   restoreSession: async () => {
-    const token = localStorage.getItem(TOKEN_KEY)
+    const token = getStoredToken()
     if (!token) return
 
     set({ isLoading: true })
+
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 10_000)
+
     try {
       const result = await authService.getCurrentUser()
       const { user } = result.data
@@ -85,7 +106,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         isLoading: false,
       })
     } catch {
-      localStorage.removeItem(TOKEN_KEY)
+      clearStoredToken()
       set({
         user: null,
         token: null,
@@ -93,6 +114,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: false,
         isLoading: false,
       })
+    } finally {
+      clearTimeout(timeout)
     }
   },
 }))

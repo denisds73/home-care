@@ -7,7 +7,8 @@ import { CATEGORIES } from '../../data/categories'
 import { CONVENIENCE_FEE, GST_RATE } from '../../data/services'
 import type { PaymentMode, PaymentStatus, TimeSlot } from '../../types/domain'
 import RazorpayModal from './RazorpayModal'
-import LoginScreen from '../auth/LoginScreen'
+import { LOGIN_ROUTES } from '../../lib/auth'
+import { DatePicker } from '../common/DatePicker'
 
 const stepLabels = ['Details', 'Verify', 'Payment', 'Done']
 
@@ -18,8 +19,6 @@ interface BookingDraft {
   date?: string
   time_slot?: string
 }
-
-type PendingAction = { type: 'payNow'; amount: number } | { type: 'payAfter' }
 
 function StepIndicator({ current }: { current: number }) {
   return (
@@ -132,12 +131,15 @@ function Step1({
             placeholder="Enter your complete address" />
           {errors.address && <p className="text-xs text-error mt-1">{errors.address}</p>}
         </div>
-        <div>
-          <label className="block text-sm font-medium text-secondary mb-1">Preferred Date <span className="text-error">*</span></label>
-          <input type="date" min={minDate} value={booking.date || ''} onChange={e => setBooking(b => ({ ...b, date: e.target.value }))}
-            className={`input-base w-full px-4 py-2.5 text-sm ${errors.date ? 'border-red-400 ring-2 ring-red-100' : ''}`} />
-          {errors.date && <p className="text-xs text-error mt-1">{errors.date}</p>}
-        </div>
+        <DatePicker
+          id="booking-date"
+          label="Preferred Date"
+          value={booking.date ?? null}
+          onChange={(date) => { setBooking(b => ({ ...b, date })); setErrors(er => ({ ...er, date: undefined })) }}
+          minDate={minDate}
+          placeholder="Select a date"
+          error={errors.date}
+        />
         <div>
           <label className="block text-sm font-medium text-secondary mb-2">Time Slot <span className="text-error">*</span></label>
           <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
@@ -219,6 +221,223 @@ function Step2({ onNext, phone }: { onNext: () => void; phone?: string }) {
   )
 }
 
+type AuthMode = 'choose' | 'login' | 'register'
+
+function InlineAuthForm({
+  mode,
+  onBack,
+}: {
+  mode: 'login' | 'register'
+  onBack: () => void
+}) {
+  const login = useAuthStore(s => s.login)
+  const signup = useAuthStore(s => s.signup)
+  const isLoading = useAuthStore(s => s.isLoading)
+  const authError = useAuthStore(s => s.error)
+  const clearError = useAuthStore(s => s.clearError)
+
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  const passwordValid = password.length >= 6
+  const nameValid = name.trim().length >= 2
+
+  const canSubmit =
+    mode === 'login'
+      ? emailValid && password.length > 0
+      : emailValid && passwordValid && nameValid
+
+  const handleSubmit = async () => {
+    clearError()
+    setTouched({ name: true, email: true, password: true })
+    if (!canSubmit) return
+
+    try {
+      if (mode === 'login') {
+        await login(email, password)
+      } else {
+        await signup({ name: name.trim(), email, password })
+      }
+      // On success, isAuthenticated flips to true via the store,
+      // Step3 re-renders and shows payment buttons automatically.
+    } catch {
+      // Error is already set in the auth store
+    }
+  }
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleSubmit()
+  }
+
+  useEffect(() => {
+    clearError()
+  }, [clearError])
+
+  return (
+    <div className="fade-in">
+      <button
+        type="button"
+        onClick={onBack}
+        className="flex items-center gap-1 text-sm text-brand font-medium mb-4 hover:text-brand-dark transition-colors"
+        aria-label="Back to auth options"
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back
+      </button>
+
+      <h4 className="text-base font-bold text-primary mb-3">
+        {mode === 'login' ? 'Login to your account' : 'Create an account'}
+      </h4>
+
+      <div className="space-y-3">
+        {mode === 'register' && (
+          <div>
+            <label htmlFor="auth-inline-name" className="block text-sm font-medium text-secondary mb-1">
+              Full Name
+            </label>
+            <input
+              id="auth-inline-name"
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              onBlur={() => setTouched(t => ({ ...t, name: true }))}
+              onKeyDown={handleKeyDown}
+              className={`input-base w-full px-4 py-2.5 text-sm ${touched.name && !nameValid ? 'field-invalid' : ''}`}
+              placeholder="Enter your full name"
+            />
+            {touched.name && !nameValid && (
+              <p className="text-xs text-error mt-1 fade-in">Name must be at least 2 characters</p>
+            )}
+          </div>
+        )}
+
+        <div>
+          <label htmlFor="auth-inline-email" className="block text-sm font-medium text-secondary mb-1">
+            Email
+          </label>
+          <input
+            id="auth-inline-email"
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            onBlur={() => setTouched(t => ({ ...t, email: true }))}
+            onKeyDown={handleKeyDown}
+            className={`input-base w-full px-4 py-2.5 text-sm ${touched.email && !emailValid ? 'field-invalid' : ''}`}
+            placeholder="you@example.com"
+          />
+          {touched.email && !emailValid && (
+            <p className="text-xs text-error mt-1 fade-in">Enter a valid email address</p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="auth-inline-password" className="block text-sm font-medium text-secondary mb-1">
+            Password
+          </label>
+          <input
+            id="auth-inline-password"
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            onBlur={() => setTouched(t => ({ ...t, password: true }))}
+            onKeyDown={handleKeyDown}
+            className={`input-base w-full px-4 py-2.5 text-sm ${touched.password && !passwordValid && mode === 'register' ? 'field-invalid' : ''}`}
+            placeholder={mode === 'register' ? 'Min 6 characters' : 'Enter your password'}
+          />
+          {touched.password && !passwordValid && mode === 'register' && (
+            <p className="text-xs text-error mt-1 fade-in">Password must be at least 6 characters</p>
+          )}
+        </div>
+      </div>
+
+      {authError && (
+        <p className="text-sm text-error mt-3 fade-in">{authError}</p>
+      )}
+
+      <button
+        type="button"
+        onClick={handleSubmit}
+        disabled={isLoading || !canSubmit}
+        className="btn-base btn-primary w-full py-3 font-semibold text-sm mt-4 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {isLoading ? (
+          <>
+            <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            {mode === 'login' ? 'Logging in...' : 'Creating account...'}
+          </>
+        ) : (
+          mode === 'login' ? 'Login & Continue' : 'Create Account & Continue'
+        )}
+      </button>
+    </div>
+  )
+}
+
+function Step3AuthGate() {
+  const navigate = useNavigate()
+  const [authMode, setAuthMode] = useState<AuthMode>('choose')
+
+  if (authMode === 'login' || authMode === 'register') {
+    return (
+      <div className="glass-card p-5 mb-6">
+        <InlineAuthForm mode={authMode} onBack={() => setAuthMode('choose')} />
+      </div>
+    )
+  }
+
+  return (
+    <div className="glass-card p-5 mb-6 slide-up">
+      <div className="flex items-center gap-2 mb-4">
+        <svg className="w-5 h-5 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <h4 className="text-base font-bold text-primary">Sign in to complete booking</h4>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        <button
+          type="button"
+          onClick={() => setAuthMode('login')}
+          className="btn-base btn-primary py-3 rounded-xl font-semibold text-sm"
+          aria-label="Login and pay"
+        >
+          Login & Pay
+        </button>
+        <button
+          type="button"
+          onClick={() => setAuthMode('register')}
+          className="btn-base btn-secondary py-3 rounded-xl font-semibold text-sm"
+          aria-label="Register and pay"
+        >
+          Register & Pay
+        </button>
+      </div>
+
+      <div className="flex items-center gap-3 my-4">
+        <div className="flex-1 h-px bg-gray-200" />
+        <span className="text-xs text-muted font-medium">or</span>
+        <div className="flex-1 h-px bg-gray-200" />
+      </div>
+
+      <button
+        type="button"
+        onClick={() => {
+          navigate(`${LOGIN_ROUTES.customer}?returnTo=${encodeURIComponent('/app/booking')}`)
+        }}
+        className="w-full text-sm text-brand font-medium hover:text-brand-dark transition-colors py-2"
+        aria-label="Continue as guest and pay after service"
+      >
+        Continue as Guest &rarr; Pay After Service
+      </button>
+    </div>
+  )
+}
+
 function Step3({
   booking,
   onPayNow,
@@ -232,6 +451,7 @@ function Step3({
 }) {
   const cart = useStore(s => s.cart)
   const getCartTotal = useStore(s => s.getCartTotal)
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
   const subtotal = getCartTotal()
   const gst = Math.round(subtotal * GST_RATE)
   const total = subtotal + CONVENIENCE_FEE + gst
@@ -274,19 +494,23 @@ function Step3({
         <div className="flex justify-between py-2 text-base font-extrabold border-t-2 border-gray-200 mt-1"><span className="text-primary">Total Amount</span><span className="text-brand-dark">₹{total}</span></div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <button type="button" onClick={() => onPayNow(total)} disabled={submitting} className="btn-base btn-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
-          {submitting ? (
-            <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-          )}
-          {submitting ? 'Processing...' : 'Pay Now'}
-        </button>
-        <button type="button" onClick={onPayAfter} disabled={submitting} className="btn-base btn-secondary py-3 rounded-xl font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed">
-          {submitting ? 'Processing...' : 'Pay After Service'}
-        </button>
-      </div>
+      {!isAuthenticated ? (
+        <Step3AuthGate />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button type="button" onClick={() => onPayNow(total)} disabled={submitting} className="btn-base btn-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+            {submitting ? (
+              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            )}
+            {submitting ? 'Processing...' : 'Pay Now'}
+          </button>
+          <button type="button" onClick={onPayAfter} disabled={submitting} className="btn-base btn-secondary py-3 rounded-xl font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed">
+            {submitting ? 'Processing...' : 'Pay After Service'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -318,19 +542,30 @@ export default function BookingFlow() {
   const navigate = useNavigate()
   const addBooking = useStore(s => s.addBooking)
   const cart = useStore(s => s.cart)
-  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
   const [step, setStep] = useState(1)
-  const [booking, setBooking] = useState<BookingDraft>(() => {
-    const u = useAuthStore.getState().user
-    return u?.name ? { name: u.name } : {}
-  })
+  const user = useAuthStore(s => s.user)
+  const [booking, setBooking] = useState<BookingDraft>(() => ({
+    name: user?.name ?? '',
+    phone: user?.phone ?? '',
+    address: '',
+    date: '',
+    time_slot: '',
+  }))
   const [showRazorpay, setShowRazorpay] = useState(false)
-  const [showAuth, setShowAuth] = useState(false)
   const [payAmount, setPayAmount] = useState(0)
   const [confirmedId, setConfirmedId] = useState('')
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const showToast = useStore(s => s.showToast)
+
+  useEffect(() => {
+    if (user) {
+      setBooking(prev => ({
+        ...prev,
+        name: prev.name || user.name || '',
+        phone: prev.phone || user.phone || '',
+      }))
+    }
+  }, [user])
 
   const goBack = () => {
     if (step <= 1) navigate('/app')
@@ -387,12 +622,7 @@ export default function BookingFlow() {
   }
 
   const handlePayNow = (amount: number) => {
-    if (!isAuthenticated) {
-      setPendingAction({ type: 'payNow', amount })
-      setShowAuth(true)
-      showToast('Log in or sign up to continue payment', 'info')
-      return
-    }
+    // Auth is now handled inline in Step3 — this is only called when authenticated
     setPayAmount(amount)
     setShowRazorpay(true)
   }
@@ -405,29 +635,7 @@ export default function BookingFlow() {
   }
 
   const handlePayAfter = async () => {
-    if (!isAuthenticated) {
-      setPendingAction({ type: 'payAfter' })
-      setShowAuth(true)
-      showToast('Log in or sign up to place booking', 'info')
-      return
-    }
-    const id = await createBooking('PAY_AFTER_SERVICE', 'PENDING')
-    setStep(4)
-    showToast(`Booking ${id} created!`, 'success')
-  }
-
-  const handleAuthSuccess = async () => {
-    setShowAuth(false)
-    const u = useAuthStore.getState().user
-    if (u?.name) setBooking(b => (b.name ? b : { ...b, name: u.name }))
-    const action = pendingAction
-    setPendingAction(null)
-    if (!action) return
-    if (action.type === 'payNow') {
-      setPayAmount(action.amount)
-      setShowRazorpay(true)
-      return
-    }
+    // Auth is now handled inline in Step3 — this is only called when authenticated
     const id = await createBooking('PAY_AFTER_SERVICE', 'PENDING')
     setStep(4)
     showToast(`Booking ${id} created!`, 'success')
@@ -449,7 +657,6 @@ export default function BookingFlow() {
         {step === 4 && <Step4 bookingId={confirmedId} booking={booking} />}
 
         {showRazorpay && <RazorpayModal amount={payAmount} onSuccess={handlePaymentSuccess} onClose={() => setShowRazorpay(false)} />}
-        {showAuth && <LoginScreen onAuthSuccess={handleAuthSuccess} onClose={() => { setShowAuth(false); setPendingAction(null) }} />}
       </div>
     </div>
   )

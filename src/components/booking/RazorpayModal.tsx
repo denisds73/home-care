@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, type ComponentType } from 'react'
+import { SmartphoneIcon, CreditCardIcon, BankIcon } from '../common/Icons'
 
 type PayState = 'methods' | 'processing' | 'success' | 'failed'
 
@@ -13,10 +14,10 @@ export default function RazorpayModal({ amount, onSuccess, onClose }: RazorpayMo
   const [selected, setSelected] = useState(0)
   const [orderId, setOrderId] = useState('')
 
-  const methods = [
-    { icon: '📱', name: 'UPI', desc: 'Google Pay, PhonePe, Paytm' },
-    { icon: '💳', name: 'Credit / Debit Card', desc: 'Visa, Mastercard, RuPay' },
-    { icon: '🏦', name: 'Net Banking', desc: 'All major banks' },
+  const methods: { Icon: ComponentType<{ className?: string }>; name: string; desc: string }[] = [
+    { Icon: SmartphoneIcon, name: 'UPI', desc: 'Google Pay, PhonePe, Paytm' },
+    { Icon: CreditCardIcon, name: 'Credit / Debit Card', desc: 'Visa, Mastercard, RuPay' },
+    { Icon: BankIcon, name: 'Net Banking', desc: 'All major banks' },
   ]
 
   const simulatePayment = () => {
@@ -44,7 +45,7 @@ export default function RazorpayModal({ amount, onSuccess, onClose }: RazorpayMo
                 {methods.map((m, i) => (
                   <button key={i} type="button" onClick={() => setSelected(i)}
                     className={`w-full rounded-lg p-3 flex items-center gap-3 border-2 transition text-left ${i === selected ? 'border-brand bg-brand-soft' : 'border-gray-200 hover:border-brand hover:bg-brand-soft'}`}>
-                    <div className="w-8 h-8 bg-brand-soft rounded-full flex items-center justify-center text-sm">{m.icon}</div>
+                    <div className="w-8 h-8 bg-brand-soft rounded-full flex items-center justify-center text-brand"><m.Icon className="w-5 h-5" /></div>
                     <div><p className="font-medium text-sm">{m.name}</p><p className="text-xs text-muted">{m.desc}</p></div>
                   </button>
                 ))}

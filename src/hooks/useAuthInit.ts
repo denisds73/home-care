@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '../store/useAuthStore'
+import { getStoredToken } from '../lib/auth'
+
+const RESTORE_TIMEOUT_MS = 10_000
 
 /**
  * Restores the auth session on app mount by checking localStorage for a saved token
@@ -8,21 +11,31 @@ import { useAuthStore } from '../store/useAuthStore'
  */
 export function useAuthInit(): { isLoading: boolean } {
   const [isLoading, setIsLoading] = useState(() => {
-    return localStorage.getItem('homecare_token') !== null
+    return getStoredToken() !== null
   })
 
   const restoreSession = useAuthStore((s) => s.restoreSession)
 
   useEffect(() => {
-    const token = localStorage.getItem('homecare_token')
-    if (!token) {
-      setIsLoading(false)
-      return
-    }
+    const token = getStoredToken()
+    if (!token) return
+
+    let cancelled = false
+
+    const safety = setTimeout(() => {
+      if (!cancelled) setIsLoading(false)
+    }, RESTORE_TIMEOUT_MS)
 
     restoreSession().finally(() => {
+      cancelled = true
+      clearTimeout(safety)
       setIsLoading(false)
     })
+
+    return () => {
+      cancelled = true
+      clearTimeout(safety)
+    }
   }, [restoreSession])
 
   return { isLoading }
