@@ -32,4 +32,9 @@ export class CreateServiceDto {
   @IsBoolean()
   @IsOptional()
   is_basic?: boolean;
+
+  @ApiPropertyOptional({ example: true, default: true })
+  @IsBoolean()
+  @IsOptional()
+  is_active?: boolean;
 }

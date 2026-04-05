@@ -32,7 +32,7 @@ interface Store {
   bookingsError: string | null
 
   /** Fetch services from backend; falls back to mock data on failure */
-  fetchServices: (categoryId?: string) => Promise<void>
+  fetchServices: () => Promise<void>
   /** Fetch categories from backend; falls back to static CATEGORIES on failure */
   fetchCategories: () => Promise<void>
   /** Fetch bookings from backend; falls back to mock data on failure */
@@ -77,21 +77,20 @@ const useStore = create<Store>()((set, get) => ({
   bookingsLoading: false,
   bookingsError: null,
 
-  fetchServices: async (categoryId?: string) => {
+  fetchServices: async () => {
     set({ servicesLoading: true, servicesError: null })
     try {
-      const response = await serviceService.getServices(categoryId)
+      // Always fetch ALL services — CategoryPage filters locally by category
+      const response = await serviceService.getServices()
       const services = response.data
       if (Array.isArray(services) && services.length > 0) {
         set({ services, servicesLoading: false })
       } else {
-        // Keep existing data if API returned empty
         set({ servicesLoading: false })
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to load services'
       set({ servicesError: message, servicesLoading: false })
-      // Mock data remains as fallback — no overwrite
     }
   },
 

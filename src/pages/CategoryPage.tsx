@@ -18,7 +18,7 @@ export default function CategoryPage() {
   useEffect(() => {
     if (categoryId) {
       useStore.setState({ selectedCategory: categoryId as CategoryId })
-      fetchServices(categoryId)
+      fetchServices()
     }
   }, [categoryId, fetchServices])
 
@@ -104,7 +104,7 @@ export default function CategoryPage() {
             <p className="text-secondary text-sm mb-4">{servicesError}</p>
             <button
               type="button"
-              onClick={() => fetchServices(categoryId)}
+              onClick={() => fetchServices()}
               className="btn-base btn-primary px-6 py-2.5 text-sm"
             >
               Try Again
