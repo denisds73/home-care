@@ -23,14 +23,21 @@ interface SearchPillProps {
 
 function SearchPill({ inputId, value, onChange }: SearchPillProps) {
   return (
-    <div className="relative flex items-center rounded-xl bg-surface pl-10 pr-4 min-h-[40px] border border-border-default focus-within:border-brand/40 focus-within:bg-white transition-colors duration-150">
+    <div
+      className="relative flex items-center rounded-full pl-11 pr-5 min-h-[44px] transition-all duration-200 focus-within:ring-2 focus-within:ring-brand/15"
+      style={{
+        background: 'linear-gradient(145deg, #f8f9fb, #f1f3f6)',
+        boxShadow: 'inset 0 1.5px 3px rgba(0,0,0,0.06), 0 1px 0 rgba(255,255,255,0.7)',
+      }}
+    >
       <svg
-        className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
+        className="w-[18px] h-[18px] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
         strokeWidth="2"
         aria-hidden
+        style={{ color: 'var(--color-primary-light)' }}
       >
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
@@ -39,8 +46,8 @@ function SearchPill({ inputId, value, onChange }: SearchPillProps) {
         type="search"
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="flex-1 min-w-0 border-0 bg-transparent py-2 pl-0 pr-2 text-[.85rem] text-primary placeholder:text-muted focus:outline-none focus:ring-0"
-        placeholder="Search for services..."
+        className="flex-1 min-w-0 border-0 bg-transparent py-2.5 pl-0 pr-2 text-[.85rem] text-primary placeholder:text-muted/70 focus:outline-none focus:ring-0"
+        placeholder="Search for AC, TV, appliance services..."
         aria-label="Search services"
         autoComplete="off"
       />
