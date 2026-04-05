@@ -70,10 +70,10 @@ export default function PartnerLoginPage() {
   const passwordError = touched.password ? fieldErrors.password : undefined
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col fade-in">
-      {/* Teal gradient header */}
+    <div className="min-h-screen bg-surface flex flex-col md:flex-row fade-in">
+      {/* Brand panel */}
       <div
-        className="relative flex flex-col items-center justify-center pt-14 pb-20 px-4"
+        className="relative flex flex-col items-center justify-center pt-14 pb-20 px-4 md:pb-14 md:w-[45%] lg:w-[50%] md:min-h-screen md:sticky md:top-0"
         style={{ background: 'linear-gradient(140deg, #042f2e 0%, #0f766e 52%, #0d9488 120%)' }}
       >
         <div className="flex items-center gap-3 mb-3">
@@ -87,12 +87,29 @@ export default function PartnerLoginPage() {
             <span className="text-white/70 text-xs font-semibold tracking-widest uppercase -mt-0.5">Partner Portal</span>
           </div>
         </div>
-        <p className="text-white/60 text-sm">Manage your jobs, earnings &amp; schedule</p>
+        <p className="text-white/60 text-sm mb-6">Manage your jobs, earnings &amp; schedule</p>
+
+        <div className="hidden md:flex flex-col gap-4 mt-8 max-w-xs">
+          {[
+            { text: 'Set your own schedule and work hours', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { text: 'Get paid weekly with transparent earnings', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { text: 'Join 2,000+ service professionals', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
+          ].map((item, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                </svg>
+              </div>
+              <p className="text-white/70 text-sm leading-snug">{item.text}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Card overlapping header */}
-      <div className="flex-1 flex flex-col items-center px-4 -mt-10 pb-10">
-        <div className="w-full max-w-md glass-card overflow-hidden">
+      {/* Form panel */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-10 pb-10 md:mt-0 md:pb-0 md:px-8 lg:px-16">
+        <div className="w-full max-w-md glass-card overflow-hidden md:shadow-none md:border-0 md:bg-transparent">
           <div className="p-6 flex flex-col gap-5">
             <div>
               <h2 className="font-brand text-xl font-bold text-primary">Sign in to your account</h2>

@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom'
-import Navbar from '../components/layout/Navbar'
+import { Navbar } from '../components/layout/Navbar'
 import MobileNav from '../components/layout/MobileNav'
 import CartDrawer from '../components/cart/CartDrawer'
 import CartBar from '../components/cart/CartBar'
@@ -14,7 +14,7 @@ import ScrollToTop from '../components/common/ScrollToTop'
  */
 export default function CustomerLayout() {
   return (
-    <div className="pb-16 sm:pb-0">
+    <div className="pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:pb-0">
       <ScrollToTop />
       <a
         href="#mainContent"

@@ -246,10 +246,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col fade-in">
-      {/* Gradient header */}
+    <div className="min-h-screen bg-surface flex flex-col md:flex-row fade-in">
+      {/* Brand panel — stacked on mobile, left column on desktop */}
       <div
-        className="relative flex flex-col items-center justify-center pt-14 pb-20 px-4"
+        className="relative flex flex-col items-center justify-center pt-10 pb-14 px-4 md:pt-14 md:pb-14 md:w-[45%] lg:w-[50%] md:min-h-screen md:sticky md:top-0"
         style={{ background: 'linear-gradient(140deg, #0B1220 0%, #4C1D95 52%, #6D28D9 120%)' }}
       >
         <div className="flex items-center gap-3 mb-3">
@@ -260,20 +260,49 @@ export default function LoginPage() {
           </div>
           <span className="font-brand text-2xl font-bold text-white tracking-tight">HomeCare</span>
         </div>
-        <p className="text-white/70 text-sm">Your home, expertly cared for</p>
+        <p className="text-white/70 text-sm mb-6">Your home, expertly cared for</p>
+
+        {/* Trust signals — desktop only */}
+        <div className="hidden md:flex flex-col gap-4 mt-8 max-w-xs">
+          {[
+            { text: 'Verified professionals with background checks', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { text: '30-day service guarantee on all bookings', icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z' },
+            { text: 'Trusted by 50,000+ homeowners across India', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
+          ].map((item, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                </svg>
+              </div>
+              <p className="text-white/70 text-sm leading-snug">{item.text}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Card overlapping header */}
-      <div className="flex-1 flex flex-col items-center px-4 -mt-10 pb-10">
-        <div className="w-full max-w-md glass-card overflow-hidden">
+      {/* Form panel — overlapping card on mobile, right column on desktop */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-8 pb-8 md:mt-0 md:pb-0 md:px-8 lg:px-16">
+        <div className="w-full max-w-[420px]">
+          {/* Desktop heading — hidden on mobile where the gradient header serves this role */}
+          <div className="hidden md:block mb-8">
+            <h1 className="text-2xl font-bold font-brand text-primary">
+              {tab === 'login' ? 'Welcome back' : 'Create your account'}
+            </h1>
+            <p className="text-sm text-muted mt-1">
+              {tab === 'login' ? 'Sign in to manage your home services' : 'Join thousands of homeowners on HomeCare'}
+            </p>
+          </div>
+
+          <div className="glass-card overflow-hidden md:rounded-2xl md:shadow-[0_4px_24px_rgba(0,0,0,0.06)] md:border md:border-border-default">
           {/* Tabs */}
           <div className="flex border-b border-default">
             {(['login', 'signup'] as const).map((t) => (
               <button
                 key={t}
-                className={`flex-1 py-4 text-sm font-semibold transition-colors ${
+                className={`flex-1 py-3.5 text-[.8rem] font-semibold transition-colors ${
                   tab === t
-                    ? 'text-brand border-b-2 border-brand bg-brand-soft/30'
+                    ? 'text-brand border-b-2 border-brand bg-brand-soft/20'
                     : 'text-muted hover:text-secondary'
                 }`}
                 onClick={() => switchTab(t)}
@@ -283,7 +312,7 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <div className="p-6">
+          <div className="p-5 md:p-6">
             {tab === 'login' ? (
               <form ref={formRef} onSubmit={handleLogin} className="flex flex-col gap-4" noValidate>
                 {serverError && (
@@ -500,6 +529,7 @@ export default function LoginPage() {
             <p className="mt-5 text-center text-xs text-muted">
               {tab === 'login' ? 'Use your registered email and password' : 'By signing up you agree to our terms of service'}
             </p>
+          </div>
           </div>
         </div>
       </div>

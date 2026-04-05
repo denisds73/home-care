@@ -1,6 +1,6 @@
 import type { MouseEvent, KeyboardEvent } from 'react'
 import useStore from '../../store/useStore'
-import { SERVICE_IMAGES } from '../../data/categories'
+import { getServiceImage } from '../../data/service-images'
 import type { Service } from '../../types/domain'
 
 interface ServiceCardProps {
@@ -13,7 +13,7 @@ export default function ServiceCard({ service: s }: ServiceCardProps) {
   const openDetailSheet = useStore(st => st.openDetailSheet)
   const showToast = useStore(st => st.showToast)
   const qty = useStore(state => state.cart.find(c => c.service.id === s.id)?.qty || 0)
-  const img = SERVICE_IMAGES[s.category] || ''
+  const img = getServiceImage(s)
   const origPrice = Math.round(s.price * 1.2)
   const discount = Math.round(((origPrice - s.price) / origPrice) * 100)
   const seed = ((s.id * 2654435761) >>> 0) / 4294967296

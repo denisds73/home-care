@@ -1,5 +1,6 @@
 import useStore from '../../store/useStore'
-import { CATEGORIES, STORYSET_IMGS } from '../../data/categories'
+import { CATEGORIES } from '../../data/categories'
+import { getServiceImage } from '../../data/service-images'
 
 export default function DetailSheet() {
   const detailSheetOpen = useStore(s => s.detailSheetOpen)
@@ -35,7 +36,7 @@ export default function DetailSheet() {
         </button>
         <div className="px-5 pb-6">
           <div className="flex items-center gap-4 mb-4 rounded-2xl p-4" style={{ background: cat ? cat.color + '10' : 'var(--color-muted)' }}>
-            <img src={STORYSET_IMGS[svc.category]} alt="" className="w-24 h-24 sm:w-32 sm:h-32 object-contain shrink-0" />
+            <img src={getServiceImage(svc)} alt="" className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-xl shrink-0" />
             <div className="flex-1 min-w-0">
               <h3 className="text-lg font-extrabold text-primary">{svc.service_name}</h3>
               <p className="text-xs text-muted">{cat?.name} Service</p>

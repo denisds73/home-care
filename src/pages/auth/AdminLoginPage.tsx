@@ -70,28 +70,44 @@ export default function AdminLoginPage() {
   const passwordError = touched.password ? fieldErrors.password : undefined
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center p-4 fade-in">
-      <div className="w-full max-w-md">
-        {/* Indigo gradient header */}
-        <div
-          className="rounded-2xl overflow-hidden shadow-xl"
-          style={{ background: 'linear-gradient(140deg, #1e1b4b 0%, #3730a3 52%, #4338ca 120%)' }}
-        >
-          <div className="text-white text-center py-10 px-6">
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <svg className="w-9 h-9" fill="none" viewBox="0 0 24 24" stroke="#a5b4fc" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z" />
-              </svg>
-              <span className="text-xl font-extrabold font-brand">
-                HomeCare <span className="text-sm font-normal opacity-70">Admin</span>
-              </span>
-            </div>
-            <p className="text-sm opacity-70">Platform Administration</p>
-          </div>
+    <div className="min-h-screen bg-surface flex flex-col md:flex-row fade-in">
+      {/* Brand panel */}
+      <div
+        className="relative flex flex-col items-center justify-center pt-14 pb-20 px-4 md:pb-14 md:w-[45%] lg:w-[50%] md:min-h-screen md:sticky md:top-0"
+        style={{ background: 'linear-gradient(140deg, #1e1b4b 0%, #3730a3 52%, #4338ca 120%)' }}
+      >
+        <div className="flex items-center justify-center gap-2 mb-3">
+          <svg className="w-9 h-9" fill="none" viewBox="0 0 24 24" stroke="#a5b4fc" strokeWidth="2" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z" />
+          </svg>
+          <span className="text-xl font-extrabold font-brand text-white">
+            HomeCare <span className="text-sm font-normal opacity-70">Admin</span>
+          </span>
         </div>
+        <p className="text-white/60 text-sm mb-6">Platform Administration</p>
 
-        {/* Card */}
-        <div className="glass-card -mt-6 relative z-10 p-7">
+        <div className="hidden md:flex flex-col gap-4 mt-8 max-w-xs">
+          {[
+            { text: 'Full operational control over bookings and services', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+            { text: 'Real-time dashboard with revenue analytics', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+            { text: 'Partner management and approval workflows', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+          ].map((item, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                </svg>
+              </div>
+              <p className="text-white/70 text-sm leading-snug">{item.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Form panel */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-10 pb-10 md:mt-0 md:pb-0 md:px-8 lg:px-16">
+        <div className="w-full max-w-md">
+        <div className="glass-card p-7 md:shadow-none md:border-0 md:bg-transparent">
           <h2 className="text-lg font-bold text-primary mb-1">Admin Login</h2>
           <p className="text-xs text-muted mb-5">Authorized personnel only</p>
 
@@ -195,6 +211,7 @@ export default function AdminLoginPage() {
           <p className="text-center text-xs text-muted mt-5">
             Use your admin credentials to sign in
           </p>
+        </div>
         </div>
       </div>
     </div>

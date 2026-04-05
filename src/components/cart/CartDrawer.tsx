@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import useStore from '../../store/useStore'
-import { SERVICE_IMAGES, CATEGORIES } from '../../data/categories'
+import { CATEGORIES } from '../../data/categories'
+import { getServiceImage } from '../../data/service-images'
 import { CONVENIENCE_FEE, GST_RATE } from '../../data/services'
 
 export default function CartDrawer() {
@@ -46,7 +47,7 @@ export default function CartDrawer() {
                 const catName = CATEGORIES.find(cat => cat.id === c.service.category)?.name || ''
                 return (
                   <div key={c.service.id} className="flex gap-3 bg-gray-50 rounded-xl p-3 items-center">
-                    <img src={SERVICE_IMAGES[c.service.category]} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />
+                    <img src={getServiceImage(c.service)} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate text-primary">{c.service.service_name}</p>
                       <p className="text-xs text-muted">{catName}</p>

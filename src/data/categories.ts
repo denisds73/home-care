@@ -20,7 +20,7 @@ export const CATEGORY_IMAGES: Record<CategoryId, string> = {
   refrigerator: fridgeImg,
   microwave: microwaveImg,
   water_purifier: purifierImg,
-  washing_machine: acImg,
+  washing_machine: '/images/categories/washing-machine.png',
 }
 
 export const SERVICE_IMAGES: Record<CategoryId, string> = { ...CATEGORY_IMAGES }

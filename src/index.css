@@ -233,6 +233,122 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
 /* ====== NAV ====== */
 .nav-active { border-bottom: 3px solid var(--color-primary); color: var(--color-primary) !important; }
 
+/* Customer navbar shell — theme tokens, scroll state */
+.nav-shell {
+  background: var(--color-background);
+  transition: background 0.2s ease, box-shadow 0.2s ease, backdrop-filter 0.2s ease;
+}
+.nav-shell--scrolled {
+  background: color-mix(in srgb, var(--color-background) 88%, transparent);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Brand stripe under navbar */
+.nav-gradient-border {
+  position: relative;
+}
+.nav-gradient-border::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    var(--color-primary),
+    var(--color-primary-light)
+  );
+  pointer-events: none;
+}
+
+/* Category pill chips (desktop/tablet) */
+.nav-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  background: var(--color-muted);
+  color: var(--color-text-secondary);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
+}
+.nav-chip:hover {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+.nav-chip-active {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-primary-light) 100%
+  );
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(109, 40, 217, 0.25);
+  transform: scale(1.05);
+}
+.nav-chip-active:hover {
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-primary-light) 100%
+  );
+}
+
+.nav-category-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.nav-category-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile navbar search overlay */
+@keyframes navSearchSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.nav-search-overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 48;
+  background: rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.2s ease-out;
+}
+.nav-search-panel {
+  animation: navSearchSlideDown 0.2s ease-out;
+}
+
+/* Floating mobile bottom bar */
+.nav-floating-bar {
+  margin-left: 0.75rem;
+  margin-right: 0.75rem;
+  bottom: 0.75rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.08);
+}
+.nav-tab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
 /* Detail sheet inclusions */
 .detail-inclusions li { position: relative; padding-left: 20px; font-size: .8rem; color: #6B7280; margin-bottom: 6px; }
 .detail-inclusions li::before { content: ''; position: absolute; left: 0; top: 6px; width: 10px; height: 10px; border-radius: 50%; }
@@ -282,7 +398,8 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
 }
 
 @media (max-width: 639px) {
-  body { padding-bottom: 64px; }
+  /* Mobile nav clearance: prefer CustomerLayout padding-bottom */
+  body { padding-bottom: 0; }
   .glass-hero-stat { padding: 10px 12px; border-radius: 12px; }
   .glass-hero-stat p:first-child { font-size: 1.25rem !important; }
   .glass-hero-stat p:last-child { font-size: .6rem !important; }
