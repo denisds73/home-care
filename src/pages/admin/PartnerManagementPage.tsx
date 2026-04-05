@@ -17,7 +17,27 @@ export default function PartnerManagementPage() {
       setIsLoading(true)
       setError(null)
       const result = await adminService.getPartners()
-      setPartners(result.data ?? [])
+      // API returns nested user object + snake_case — map to Partner interface
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mapped: Partner[] = (result.data as any[] ?? []).map((p: any) => {
+        const user = (p.user ?? {}) as Record<string, unknown>
+        return {
+          id: String(p.id),
+          name: String(user.name ?? ''),
+          email: String(user.email ?? ''),
+          phone: String(user.phone ?? ''),
+          avatar: (user.avatar as string) || undefined,
+          skills: (p.skills ?? []) as Partner['skills'],
+          rating: Number(p.rating ?? 0),
+          completedJobs: Number(p.completed_jobs ?? 0),
+          status: String(p.status ?? 'pending') as PartnerStatus,
+          serviceArea: String(p.service_area ?? ''),
+          isOnline: Boolean(p.is_online),
+          joinedAt: String(p.joined_at ?? ''),
+          earnings: Number(p.earnings ?? 0),
+        }
+      })
+      setPartners(mapped)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load partners')
     } finally {
