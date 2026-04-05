@@ -18,18 +18,24 @@ export default function DetailSheet() {
   if (!svc) return null
 
   const cat = CATEGORIES.find(c => c.id === svc.category)
-  const origPrice = Math.round(svc.price * 1.2)
-  const discount = Math.round(((origPrice - svc.price) / origPrice) * 100)
+  // Use real original_price if available, fallback to 20% markup
+  const origPrice = svc.original_price ? Number(svc.original_price) : Math.round(Number(svc.price) * 1.2)
+  const discount = Math.round(((origPrice - Number(svc.price)) / origPrice) * 100)
   const seed = ((svc.id * 2654435761) >>> 0) / 4294967296
-  const rating = (4.5 + seed * 0.5).toFixed(1)
-  const reviews = Math.floor(seed * 2000) + 200
+  // Use real rating if available, fallback to seed formula
+  const hasRealRating = svc.rating_average && svc.rating_average > 0
+  const rating = hasRealRating ? Number(svc.rating_average).toFixed(1) : (4.5 + seed * 0.5).toFixed(1)
+  const reviews = svc.rating_count && svc.rating_count > 0 ? svc.rating_count : Math.floor(seed * 2000) + 200
 
-  // Generate fake rating breakdown from seed
+  // Rating distribution: use real data if available, fallback to seed-based breakdown
   const star5 = Math.round(60 + seed * 20)
   const star4 = Math.round(15 + seed * 10)
   const star3 = Math.round(5 + seed * 8)
   const star2 = Math.round(2 + seed * 3)
   const star1 = 100 - star5 - star4 - star3 - star2
+  const dist = svc.rating_distribution && svc.rating_distribution.some(v => v > 0)
+    ? svc.rating_distribution
+    : [star5, star4, star3, star2, star1]
 
   const handleAdd = () => { addToCart(svc.id); showToast(`${svc.service_name} added`, 'success') }
 
@@ -71,7 +77,7 @@ export default function DetailSheet() {
             style={{ background: cat ? cat.color + '10' : 'var(--color-muted)' }}
           >
             <img
-              src={getServiceImage(svc)}
+              src={svc.image_url || getServiceImage(svc)}
               alt=""
               className="w-24 h-24 md:w-36 md:h-36 object-cover rounded-xl shrink-0"
             />
@@ -87,7 +93,7 @@ export default function DetailSheet() {
           </div>
 
           {/* Description */}
-          <p className="text-sm text-secondary mb-6 leading-relaxed">{svc.description}</p>
+          <p className="text-sm text-secondary mb-6 leading-relaxed">{svc.long_description || svc.description}</p>
 
           {/* Two-column layout on desktop */}
           <div className="md:grid md:grid-cols-2 md:gap-6">
@@ -97,12 +103,15 @@ export default function DetailSheet() {
               <div className="mb-5">
                 <h4 className="text-sm font-bold mb-2.5 text-primary">What&apos;s Included</h4>
                 <ul className="space-y-2">
-                  {[
-                    `Professional ${cat?.name || ''} technician`,
-                    svc.description.split(',')[0] || 'Complete service',
-                    'Post-service cleanup',
-                    '30-day service warranty',
-                  ].map((item, i) => (
+                  {(svc.inclusions && svc.inclusions.length > 0
+                    ? svc.inclusions
+                    : [
+                        `Professional ${cat?.name || ''} technician`,
+                        svc.description.split(',')[0] || 'Complete service',
+                        'Post-service cleanup',
+                        '30-day service warranty',
+                      ]
+                  ).map((item, i) => (
                     <li key={i} className="flex items-center gap-2.5 text-[.8rem] text-secondary">
                       <span className="w-5 h-5 rounded-full bg-green-50 flex items-center justify-center shrink-0">
                         <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
@@ -119,7 +128,10 @@ export default function DetailSheet() {
               <div className="mb-5">
                 <h4 className="text-sm font-bold mb-2.5 text-primary">Not Included</h4>
                 <ul className="space-y-2">
-                  {['Spare parts (charged separately if needed)', 'Additional units beyond first one'].map((item, i) => (
+                  {(svc.exclusions && svc.exclusions.length > 0
+                    ? svc.exclusions
+                    : ['Spare parts (charged separately if needed)', 'Additional units beyond first one']
+                  ).map((item, i) => (
                     <li key={i} className="flex items-center gap-2.5 text-[.8rem] text-secondary">
                       <span className="w-5 h-5 rounded-full bg-red-50 flex items-center justify-center shrink-0">
                         <svg className="w-3 h-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
@@ -154,11 +166,11 @@ export default function DetailSheet() {
                   {/* Bars */}
                   <div className="flex-1 space-y-1.5">
                     {[
-                      { label: '5', pct: star5 },
-                      { label: '4', pct: star4 },
-                      { label: '3', pct: star3 },
-                      { label: '2', pct: star2 },
-                      { label: '1', pct: star1 },
+                      { label: '5', pct: dist[0] },
+                      { label: '4', pct: dist[1] },
+                      { label: '3', pct: dist[2] },
+                      { label: '2', pct: dist[3] },
+                      { label: '1', pct: dist[4] },
                     ].map(bar => (
                       <div key={bar.label} className="flex items-center gap-2">
                         <span className="text-[.65rem] font-semibold text-muted w-3 text-right">{bar.label}</span>
@@ -179,14 +191,17 @@ export default function DetailSheet() {
               <div className="bg-surface rounded-xl p-4">
                 <h4 className="text-sm font-bold mb-3 text-primary">Frequently Asked</h4>
                 <div className="space-y-3">
-                  {[
-                    { q: 'How long does it take?', a: 'Typically 45-90 minutes depending on the service.' },
-                    { q: 'What if I\'m not satisfied?', a: 'We offer a 30-day warranty. We\'ll fix it for free.' },
-                    { q: 'Do I need to provide any tools?', a: 'No, our technician brings all required equipment.' },
-                  ].map((faq, i) => (
+                  {(svc.faqs && svc.faqs.length > 0
+                    ? svc.faqs
+                    : [
+                        { question: 'How long does it take?', answer: svc.estimated_duration ? `Typically ${svc.estimated_duration} depending on the service.` : 'Typically 45-90 minutes depending on the service.' },
+                        { question: 'What if I\'m not satisfied?', answer: 'We offer a 30-day warranty. We\'ll fix it for free.' },
+                        { question: 'Do I need to provide any tools?', answer: 'No, our technician brings all required equipment.' },
+                      ]
+                  ).map((faq, i) => (
                     <div key={i}>
-                      <p className="text-[.8rem] font-semibold text-primary">{faq.q}</p>
-                      <p className="text-[.75rem] text-secondary mt-0.5 leading-relaxed">{faq.a}</p>
+                      <p className="text-[.8rem] font-semibold text-primary">{faq.question}</p>
+                      <p className="text-[.75rem] text-secondary mt-0.5 leading-relaxed">{faq.answer}</p>
                     </div>
                   ))}
                 </div>

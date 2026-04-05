@@ -3,7 +3,12 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class SeedServices1712200001000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      INSERT INTO "services" ("category", "service_name", "description", "price", "is_basic", "is_active")
+      INSERT INTO "services" (
+        "category", "service_name", "description", "price", "is_basic", "is_active",
+        "long_description", "original_price", "image_url", "estimated_duration",
+        "inclusions", "exclusions", "faqs",
+        "rating_average", "rating_count", "rating_distribution", "sort_order"
+      )
       VALUES
         -- AC Repair & Service
         (
@@ -12,7 +17,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Complete gas top-up for split and window ACs. Includes leak testing and pressure check.',
           499.00,
           true,
-          true
+          true,
+          'Complete gas top-up service for split and window air conditioners. Our certified technicians perform a thorough leak detection test using advanced tools before recharging with the appropriate refrigerant (R410A or R32). Includes pressure calibration and a post-service performance check to ensure optimal cooling.',
+          599.00,
+          NULL,
+          '45-60 min',
+          '["R410A/R32 gas refill","Leak detection test","Pressure calibration","Performance check"]',
+          '["Spare parts if needed","Additional units"]',
+          '[{"question":"What gas type is used?","answer":"We use R410A or R32 depending on your AC model for optimal performance."},{"question":"How long does the cooling last?","answer":"Typically 2-3 years with normal usage and no leaks."},{"question":"Is there a warranty?","answer":"Yes, 30-day service warranty on gas refill work."}]',
+          4.7,
+          1250,
+          '[72,18,6,3,1]',
+          1
         ),
         (
           'ac',
@@ -20,7 +36,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Thorough deep cleaning of indoor and outdoor units with foam-jet technology.',
           399.00,
           true,
-          true
+          true,
+          'Professional deep cleaning service for both indoor and outdoor AC units using high-pressure foam-jet technology. Removes dust, mold, and bacteria buildup from filters, coils, and fins. Improves airflow efficiency and cooling performance while eliminating musty odors.',
+          479.00,
+          NULL,
+          '60-90 min',
+          '["Indoor unit foam wash","Outdoor unit cleaning","Filter deep clean","Drain line flush","Anti-bacterial spray"]',
+          '["Chemical overhaul","Gas top-up"]',
+          '[{"question":"How often should I deep clean my AC?","answer":"We recommend deep cleaning every 3-4 months for optimal performance."},{"question":"Will this fix cooling issues?","answer":"Deep cleaning improves airflow and cooling efficiency by up to 20%. If the issue persists, a technician will diagnose further."}]',
+          4.8,
+          2100,
+          '[75,16,5,3,1]',
+          2
         ),
         (
           'ac',
@@ -28,7 +55,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Professional split AC installation including drilling, piping, and electrical wiring.',
           1499.00,
           false,
-          true
+          true,
+          'End-to-end professional split AC installation by certified technicians. Includes wall drilling, copper piping (up to 3 meters), electrical wiring, outdoor unit mounting with bracket, vacuum testing, and gas charging. Post-installation performance verification included.',
+          1799.00,
+          NULL,
+          '2-3 hours',
+          '["Wall drilling and mounting","Copper piping up to 3m","Electrical wiring","Outdoor bracket installation","Vacuum and gas charge"]',
+          '["Extra copper piping beyond 3m","Stabilizer installation","MCB replacement"]',
+          '[{"question":"What is included in the installation?","answer":"Wall drilling, up to 3m copper piping, electrical wiring, bracket, vacuum test, and gas charge."},{"question":"Do I need to provide the bracket?","answer":"No, we provide a standard outdoor unit bracket at no extra cost."},{"question":"How long does installation take?","answer":"Typically 2-3 hours depending on site conditions."}]',
+          4.6,
+          890,
+          '[68,20,7,3,2]',
+          3
         ),
         (
           'ac',
@@ -36,7 +74,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Diagnosis and repair of AC compressor issues. Includes replacement if needed (parts extra).',
           2499.00,
           false,
-          true
+          true,
+          'Expert diagnosis and repair of AC compressor malfunctions including electrical faults, refrigerant issues, and mechanical failures. Our technicians use advanced diagnostic tools to pinpoint the exact issue. If replacement is needed, we source genuine parts from authorized dealers.',
+          2899.00,
+          NULL,
+          '60-90 min',
+          '["Complete compressor diagnosis","Electrical testing","Refrigerant pressure check","Repair or replacement labor"]',
+          '["Replacement compressor cost","Additional refrigerant gas","Electrical panel upgrades"]',
+          '[{"question":"How do I know if my compressor is failing?","answer":"Signs include warm air output, unusual noises, circuit breaker tripping, or the outdoor unit not starting."},{"question":"Is it better to repair or replace?","answer":"Our technician will advise based on compressor age and damage. Repair is preferred when cost-effective."}]',
+          4.5,
+          420,
+          '[65,22,8,3,2]',
+          4
         ),
 
         -- TV Repair & Installation
@@ -46,7 +95,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Secure wall mount installation for LED/LCD TVs up to 65 inches. Includes concealed wiring.',
           499.00,
           true,
-          true
+          true,
+          'Professional wall mount installation for LED, LCD, and OLED TVs up to 65 inches. Includes precise leveling, secure anchor bolting into brick or concrete walls, and concealed cable management for a clean look. Compatible with fixed, tilt, and full-motion mount types.',
+          599.00,
+          NULL,
+          '45-60 min',
+          '["Wall mount bracket installation","Precise leveling","Concealed wiring","Cable management"]',
+          '["Wall mount bracket (if not provided)","Drywall-only installations"]',
+          '[{"question":"Do you provide the mount bracket?","answer":"We can supply standard brackets at additional cost, or install your own bracket."},{"question":"Can you mount on drywall?","answer":"We recommend brick or concrete walls for secure mounting. Drywall needs special anchors which may be extra."},{"question":"What TV sizes do you support?","answer":"We handle TVs from 24 to 65 inches with this service."}]',
+          4.8,
+          1800,
+          '[76,15,5,3,1]',
+          1
         ),
         (
           'tv',
@@ -54,7 +114,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'LCD/LED screen panel diagnosis and replacement for all major TV brands.',
           1999.00,
           false,
-          true
+          true,
+          'Comprehensive LCD/LED screen panel diagnosis and replacement service covering all major brands including Samsung, LG, Sony, and Mi. Our technicians assess whether the panel can be repaired or needs full replacement, sourcing genuine panels with manufacturer warranty.',
+          2399.00,
+          NULL,
+          '60-90 min',
+          '["Screen damage diagnosis","Panel sourcing from authorized dealers","Professional replacement","Post-repair calibration"]',
+          '["Screen panel cost (quoted separately)","Cosmetic body damage repair"]',
+          '[{"question":"How do I know if my screen needs replacement?","answer":"Cracked displays, dead pixels in large clusters, or persistent discoloration indicate panel replacement."},{"question":"Is it worth replacing the screen?","answer":"For TVs under 3 years old, replacement is usually cost-effective. Our technician will advise."}]',
+          4.4,
+          560,
+          '[62,21,10,4,3]',
+          2
         ),
         (
           'tv',
@@ -62,7 +133,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'TV motherboard diagnosis, chip-level repair, or full board replacement.',
           1299.00,
           false,
-          true
+          true,
+          'Advanced chip-level motherboard diagnosis and repair for LED, LCD, and Smart TVs. Covers power supply issues, HDMI port failures, software corruption, and component-level faults. If repair is not feasible, a replacement board is sourced from authorized channels.',
+          1499.00,
+          NULL,
+          '60-90 min',
+          '["Chip-level board diagnosis","Component replacement","Firmware re-flash","Functional testing"]',
+          '["Replacement board cost (if needed)","Screen panel issues"]',
+          '[{"question":"What symptoms indicate a motherboard issue?","answer":"No power, no display with backlight on, HDMI ports not working, or Smart TV apps crashing repeatedly."},{"question":"Can you repair all TV brands?","answer":"Yes, we service Samsung, LG, Sony, Mi, OnePlus, TCL, and most other brands."}]',
+          4.5,
+          380,
+          '[64,22,8,4,2]',
+          3
         ),
         (
           'tv',
@@ -70,7 +152,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Complete diagnostic checkup covering display, sound, ports, and remote pairing.',
           299.00,
           true,
-          true
+          true,
+          'Full diagnostic health check for your TV covering display quality, audio output, all HDMI/USB ports, Wi-Fi connectivity (for Smart TVs), remote control pairing, and software updates. Ideal for identifying issues before they become major problems.',
+          349.00,
+          NULL,
+          '30-45 min',
+          '["Display quality assessment","Audio output testing","Port connectivity check","Remote pairing verification","Software update check"]',
+          '["Parts replacement","Physical damage repair"]',
+          '[{"question":"What does the checkup cover?","answer":"Display, sound, all ports, remote pairing, Wi-Fi, and software—a complete health check."},{"question":"Will the technician fix issues found?","answer":"Minor issues like software updates are handled on the spot. Hardware repairs are quoted separately."}]',
+          4.6,
+          950,
+          '[70,19,6,3,2]',
+          4
         ),
 
         -- Refrigerator Repair
@@ -80,7 +173,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Refrigerant gas recharge for single-door and double-door refrigerators with leak check.',
           599.00,
           true,
-          true
+          true,
+          'Professional refrigerant gas recharging service for single-door and double-door refrigerators. Includes comprehensive leak detection using electronic sniffers, system evacuation, precise gas charging to manufacturer specifications, and post-charge cooling performance verification.',
+          719.00,
+          NULL,
+          '45-60 min',
+          '["Electronic leak detection","System evacuation","Gas recharge to spec","Cooling performance test"]',
+          '["Compressor replacement","Condenser coil repair"]',
+          '[{"question":"How do I know my fridge needs gas?","answer":"Signs include reduced cooling, frost buildup on the back panel, or the compressor running continuously."},{"question":"What type of gas is used?","answer":"We use R134a or R600a depending on your refrigerator model."},{"question":"How long does the gas last?","answer":"With no leaks, the gas should last the lifetime of the refrigerator."}]',
+          4.7,
+          1100,
+          '[71,19,6,3,1]',
+          1
         ),
         (
           'refrigerator',
@@ -88,7 +192,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Faulty thermostat diagnosis and replacement to restore proper cooling.',
           899.00,
           false,
-          true
+          true,
+          'Expert diagnosis and replacement of faulty thermostats in refrigerators. A malfunctioning thermostat can cause overcooling, undercooling, or complete cooling failure. Our technicians test the existing thermostat, replace it with a compatible unit, and calibrate temperature settings.',
+          1049.00,
+          NULL,
+          '30-45 min',
+          '["Thermostat diagnosis","Compatible replacement","Temperature calibration","Functional verification"]',
+          '["Other electrical component repairs","Gas recharge if needed"]',
+          '[{"question":"What are signs of a bad thermostat?","answer":"Fridge too cold, not cold enough, or inconsistent temperatures despite setting changes."},{"question":"Do you carry universal thermostats?","answer":"We carry common models and can source brand-specific ones within 24-48 hours if needed."}]',
+          4.6,
+          340,
+          '[67,21,7,3,2]',
+          2
         ),
         (
           'refrigerator',
@@ -96,7 +211,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Replacement of worn-out rubber door gasket to improve cooling efficiency.',
           349.00,
           true,
-          true
+          true,
+          'Replacement of worn, cracked, or loose rubber door gaskets (seals) for single-door and double-door refrigerators. A proper seal prevents cold air leakage, reduces energy consumption, and prevents frost buildup. We source gaskets compatible with all major brands.',
+          419.00,
+          NULL,
+          '30-45 min',
+          '["Old gasket removal","Surface cleaning","New gasket installation","Seal integrity test"]',
+          '["Door hinge repair","Door panel replacement"]',
+          '[{"question":"How do I test if my door seal is bad?","answer":"Place a paper strip in the door and close it. If the paper slides out easily, the seal needs replacement."},{"question":"Do you have seals for all brands?","answer":"We stock common sizes and can order brand-specific seals within 24 hours."}]',
+          4.8,
+          780,
+          '[74,17,5,3,1]',
+          3
         ),
         (
           'refrigerator',
@@ -104,7 +230,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Full compressor replacement for refrigerators with cooling failure. Includes gas charging.',
           2299.00,
           false,
-          true
+          true,
+          'Complete compressor replacement service for refrigerators experiencing total cooling failure. Includes removal of the failed compressor, installation of a new genuine or compatible unit, full system evacuation, gas charging, and extended performance testing to ensure reliable operation.',
+          2749.00,
+          NULL,
+          '2-3 hours',
+          '["Failed compressor removal","New compressor installation","System evacuation and gas charge","Extended performance test","Wiring and relay check"]',
+          '["Compressor unit cost (quoted separately)","Condenser or evaporator damage"]',
+          '[{"question":"How long does a new compressor last?","answer":"A quality compressor typically lasts 8-12 years with proper maintenance."},{"question":"Is replacement worth it on an old fridge?","answer":"For fridges under 8 years old, replacement is usually cost-effective. Our technician will advise based on your model."}]',
+          4.5,
+          290,
+          '[63,23,8,4,2]',
+          4
         ),
 
         -- Microwave Repair
@@ -114,7 +251,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Replacement of faulty magnetron to restore microwave heating. Compatible with all brands.',
           1199.00,
           false,
-          true
+          true,
+          'Professional replacement of the magnetron—the core heating component in your microwave. A faulty magnetron results in no heating, sparking, or unusual buzzing noises. Our technicians test the existing magnetron, source a compatible replacement, and perform a full safety check after installation.',
+          1399.00,
+          NULL,
+          '45-60 min',
+          '["Magnetron testing and diagnosis","Compatible magnetron sourcing","Professional installation","Post-install safety and heating test"]',
+          '["Magnetron part cost (quoted separately)","Cavity or door damage"]',
+          '[{"question":"How do I know if my magnetron is bad?","answer":"The microwave runs but does not heat food, or you hear loud buzzing/humming sounds."},{"question":"Is it safe to use a microwave with a bad magnetron?","answer":"No, continued use can damage other components. Stop using it and schedule a repair."}]',
+          4.5,
+          310,
+          '[64,22,8,4,2]',
+          1
         ),
         (
           'microwave',
@@ -122,7 +270,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Repair or replacement of turntable motor and plate assembly.',
           399.00,
           true,
-          true
+          true,
+          'Repair or replacement of the turntable motor and plate assembly in your microwave. A non-rotating turntable leads to uneven cooking. Our service covers motor diagnosis, coupler inspection, and roller guide replacement if needed.',
+          479.00,
+          NULL,
+          '30-45 min',
+          '["Motor diagnosis","Coupler inspection","Motor repair or replacement","Roller guide check"]',
+          '["Glass turntable plate (if broken)","Cavity cleaning"]',
+          '[{"question":"Why is my turntable not spinning?","answer":"Common causes are a burnt motor, broken coupler, or debris stuck under the plate."},{"question":"Can I use the microwave without the turntable?","answer":"It will work but food will heat unevenly. We recommend getting it fixed."}]',
+          4.6,
+          520,
+          '[68,20,7,3,2]',
+          2
         ),
         (
           'microwave',
@@ -130,7 +289,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Complete checkup including cavity cleaning, door alignment, and functional testing.',
           299.00,
           true,
-          true
+          true,
+          'Comprehensive microwave servicing covering interior cavity cleaning, door seal and latch inspection, turntable operation check, control panel testing, and overall safety verification. Ideal for preventive maintenance to extend appliance life.',
+          349.00,
+          NULL,
+          '30-45 min',
+          '["Cavity deep cleaning","Door seal and latch check","Turntable operation test","Control panel testing","Safety verification"]',
+          '["Parts replacement","Magnetron issues"]',
+          '[{"question":"How often should I service my microwave?","answer":"Annual servicing helps maintain efficiency and catches issues early."},{"question":"Will servicing fix heating problems?","answer":"The checkup identifies heating issues; repairs are quoted separately if needed."}]',
+          4.7,
+          680,
+          '[71,18,6,3,2]',
+          3
         ),
         (
           'microwave',
@@ -138,7 +308,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Diagnosis and repair of touch panel, timer, and control board issues.',
           899.00,
           false,
-          true
+          true,
+          'Expert diagnosis and repair of microwave control panel issues including unresponsive touch buttons, erratic timer behavior, display malfunctions, and control board faults. Covers membrane keypad replacement and circuit board component-level repair.',
+          1049.00,
+          NULL,
+          '45-60 min',
+          '["Control panel diagnosis","Membrane keypad testing","Circuit board inspection","Component-level repair"]',
+          '["Full control board replacement cost","Magnetron or cavity issues"]',
+          '[{"question":"My buttons are not responding—is it the panel?","answer":"Yes, unresponsive buttons usually indicate a worn membrane keypad or faulty control board."},{"question":"Can you fix display issues?","answer":"Yes, we handle display malfunctions including dim screens and flickering."}]',
+          4.4,
+          250,
+          '[61,23,9,4,3]',
+          4
         ),
 
         -- Water Purifier Service
@@ -148,7 +329,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Replacement of sediment, carbon, and RO membrane filters for optimal water quality.',
           499.00,
           true,
-          true
+          true,
+          'Complete filter replacement service covering sediment filter, pre-carbon filter, RO membrane, post-carbon filter, and mineral cartridge. Using genuine or high-quality compatible filters to ensure your water purifier delivers safe, clean drinking water.',
+          579.00,
+          NULL,
+          '30-45 min',
+          '["Sediment filter replacement","Pre-carbon filter replacement","RO membrane replacement","Post-carbon filter replacement","TDS level check"]',
+          '["Filter costs (quoted separately)","Plumbing modifications"]',
+          '[{"question":"How often should I change filters?","answer":"Sediment and carbon filters every 6 months, RO membrane every 12 months, depending on water quality."},{"question":"Do you use genuine filters?","answer":"We use genuine or high-quality compatible filters based on your preference and purifier brand."},{"question":"Will my TDS level improve?","answer":"Yes, fresh filters restore optimal TDS levels for safe drinking water."}]',
+          4.8,
+          1650,
+          '[74,17,5,3,1]',
+          1
         ),
         (
           'water_purifier',
@@ -156,7 +348,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Complete servicing including filter change, UV lamp check, tank sanitization, and TDS calibration.',
           899.00,
           false,
-          true
+          true,
+          'Comprehensive annual maintenance package for RO, UV, and RO+UV water purifiers. Includes replacement of all filters, UV lamp inspection, storage tank sanitization, TDS controller calibration, leak check, and full system flush to ensure pure, safe water output year-round.',
+          1049.00,
+          NULL,
+          '60-90 min',
+          '["All filter replacement","UV lamp inspection","Tank sanitization","TDS calibration","System flush and leak check"]',
+          '["Filter and UV lamp costs (quoted separately)","Major plumbing work"]',
+          '[{"question":"What is included in annual maintenance?","answer":"Filter changes, UV lamp check, tank sanitization, TDS calibration, and complete system flush."},{"question":"How long does the service take?","answer":"Approximately 60-90 minutes depending on the purifier model and condition."}]',
+          4.9,
+          2400,
+          '[78,14,5,2,1]',
+          2
         ),
         (
           'water_purifier',
@@ -164,7 +367,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'New RO water purifier installation with plumbing, wall mounting, and initial flush.',
           599.00,
           true,
-          true
+          true,
+          'Professional installation of new RO water purifiers. Includes wall mounting, inlet and outlet plumbing connections, drain pipe routing, initial system flush, and TDS level testing. Ensures your purifier is set up correctly for optimal long-term performance.',
+          699.00,
+          NULL,
+          '45-60 min',
+          '["Wall mounting","Inlet plumbing connection","Outlet and drain routing","Initial system flush","TDS level testing"]',
+          '["Extra plumbing beyond 3m","Electrical point installation"]',
+          '[{"question":"Do I need a separate water tap?","answer":"An inlet tap near the purifier is ideal. We can install a T-connector on an existing tap if needed."},{"question":"How long until the water is safe to drink?","answer":"After the initial flush (about 15-20 minutes), the water is ready for consumption."}]',
+          4.7,
+          920,
+          '[70,19,6,3,2]',
+          3
         ),
         (
           'water_purifier',
@@ -172,7 +386,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Replacement of UV lamp and ballast for UV and UV+RO water purifier models.',
           799.00,
           false,
-          true
+          true,
+          'Replacement of the UV lamp and electronic ballast in UV and UV+RO water purifiers. A functioning UV lamp is critical for killing bacteria and viruses. Includes UV intensity testing post-replacement to ensure effective disinfection.',
+          949.00,
+          NULL,
+          '30-45 min',
+          '["UV lamp replacement","Ballast inspection and replacement","UV intensity testing","System sanitization"]',
+          '["UV lamp and ballast cost (quoted separately)","Filter replacements"]',
+          '[{"question":"How do I know if my UV lamp needs replacement?","answer":"Most UV lamps last 8,000-10,000 hours. If your purifier shows a UV alert or water tastes different, it is time."},{"question":"Is UV necessary if I have RO?","answer":"Yes, UV provides an additional layer of protection against bacteria and viruses that may pass through the RO membrane."}]',
+          4.6,
+          430,
+          '[67,21,7,3,2]',
+          4
         ),
 
         -- Washing Machine Repair
@@ -182,7 +407,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Deep cleaning of washing machine drum to remove lint, mold, and odor buildup.',
           399.00,
           true,
-          true
+          true,
+          'Professional deep cleaning of your washing machine drum using specialized cleaning agents to remove lint, mold, detergent residue, and odor-causing bacteria. Applicable to both top-load and front-load machines. Restores freshness and improves wash quality.',
+          479.00,
+          NULL,
+          '45-60 min',
+          '["Drum descaling treatment","Mold and bacteria removal","Gasket and seal cleaning","Detergent tray cleaning","Drain filter flush"]',
+          '["Mechanical repairs","Gasket replacement"]',
+          '[{"question":"How often should I clean my washing machine drum?","answer":"Every 2-3 months to prevent mold, odor, and residue buildup."},{"question":"Is this safe for front-load machines?","answer":"Yes, our cleaning process is safe and effective for both top-load and front-load machines."},{"question":"Will this fix bad smell from my washer?","answer":"Yes, drum cleaning eliminates the bacteria and mold causing the odor."}]',
+          4.8,
+          1400,
+          '[73,18,5,3,1]',
+          1
         ),
         (
           'washing_machine',
@@ -190,7 +426,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Complete motor replacement for top-load and front-load washing machines.',
           2199.00,
           false,
-          true
+          true,
+          'Full motor replacement service for washing machines experiencing spin failure, excessive vibration, or complete motor burnout. Covers both top-load and front-load models. Includes motor testing, removal of the failed unit, installation of a new motor, belt alignment (if applicable), and test cycles.',
+          2549.00,
+          NULL,
+          '2-3 hours',
+          '["Motor diagnosis and testing","Failed motor removal","New motor installation","Belt alignment check","Test wash cycle"]',
+          '["Motor unit cost (quoted separately)","PCB board issues","Drum bearing replacement"]',
+          '[{"question":"What are signs of motor failure?","answer":"The drum does not spin, makes grinding noises, or the machine trips the circuit breaker during spin cycle."},{"question":"How long does a new motor last?","answer":"A quality replacement motor typically lasts 7-10 years with normal usage."}]',
+          4.5,
+          320,
+          '[63,23,8,4,2]',
+          2
         ),
         (
           'washing_machine',
@@ -198,7 +445,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Diagnosis and repair of drain pump blockage or motor failure.',
           549.00,
           true,
-          true
+          true,
+          'Diagnosis and repair of drain pump issues including blockages, impeller damage, and motor failure. If the washing machine is not draining water properly or makes humming sounds during the drain cycle, the drain pump likely needs attention. Includes pump cleaning, repair, or replacement.',
+          649.00,
+          NULL,
+          '45-60 min',
+          '["Drain pump diagnosis","Blockage removal","Impeller inspection","Pump motor testing","Drain hose check"]',
+          '["Replacement pump cost (if needed)","Internal hose replacement"]',
+          '[{"question":"Why is my washing machine not draining?","answer":"Common causes are a clogged drain filter, blocked pump, or faulty pump motor."},{"question":"Can I prevent drain pump issues?","answer":"Clean the drain filter monthly and avoid washing items with loose debris like coins or tissues."}]',
+          4.7,
+          610,
+          '[69,20,6,3,2]',
+          3
         ),
         (
           'washing_machine',
@@ -206,7 +464,18 @@ export class SeedServices1712200001000 implements MigrationInterface {
           'Electronic control board diagnosis and repair for washing machine programs and cycles.',
           1499.00,
           false,
-          true
+          true,
+          'Expert diagnosis and repair of the electronic control board (PCB) that manages washing machine programs, water levels, and spin cycles. Covers component-level repair of relays, capacitors, and microprocessors. If beyond repair, a compatible replacement board is sourced.',
+          1749.00,
+          NULL,
+          '60-90 min',
+          '["PCB board diagnosis","Component-level repair","Relay and capacitor testing","Program cycle verification"]',
+          '["Replacement PCB cost (if needed)","Motor or mechanical issues"]',
+          '[{"question":"What indicates a PCB board problem?","answer":"Error codes on display, programs not starting, random cycle changes, or the machine not responding to controls."},{"question":"Can all PCB boards be repaired?","answer":"Most can be repaired at component level. If the board is severely damaged, we source a replacement."},{"question":"How long does the repair take?","answer":"Typically 60-90 minutes for diagnosis and repair."}]',
+          4.3,
+          270,
+          '[60,24,9,4,3]',
+          4
         )
       ON CONFLICT DO NOTHING;
     `);

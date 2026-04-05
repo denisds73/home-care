@@ -13,12 +13,15 @@ export default function ServiceCard({ service: s }: ServiceCardProps) {
   const openDetailSheet = useStore(st => st.openDetailSheet)
   const showToast = useStore(st => st.showToast)
   const qty = useStore(state => state.cart.find(c => c.service.id === s.id)?.qty || 0)
-  const img = getServiceImage(s)
-  const origPrice = Math.round(s.price * 1.2)
-  const discount = Math.round(((origPrice - s.price) / origPrice) * 100)
+  const img = s.image_url || getServiceImage(s)
+  // Use real original_price if available, fallback to 20% markup
+  const origPrice = s.original_price ? Number(s.original_price) : Math.round(Number(s.price) * 1.2)
+  const discount = Math.round(((origPrice - Number(s.price)) / origPrice) * 100)
+  // Use real rating if available, fallback to seed formula
   const seed = ((s.id * 2654435761) >>> 0) / 4294967296
-  const rating = (4.5 + seed * 0.5).toFixed(1)
-  const reviews = Math.floor(seed * 2000) + 200
+  const hasRealRating = s.rating_average && s.rating_average > 0
+  const rating = hasRealRating ? Number(s.rating_average).toFixed(1) : (4.5 + seed * 0.5).toFixed(1)
+  const reviews = s.rating_count && s.rating_count > 0 ? s.rating_count : Math.floor(seed * 2000) + 200
   const reviewsK = reviews >= 1000 ? (reviews / 1000).toFixed(1) + 'K' : String(reviews)
 
   const handleAdd = (e: MouseEvent) => {

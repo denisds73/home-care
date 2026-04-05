@@ -33,6 +33,11 @@ export type TransactionType = 'credit' | 'debit'
 
 export type NotificationType = 'booking' | 'payment' | 'system' | 'partner'
 
+export interface ServiceFaq {
+  question: string
+  answer: string
+}
+
 export interface ServiceListItem {
   id: number
   name: string
@@ -51,6 +56,19 @@ export interface Service {
   /** Admin catalog timestamps (optional; mock seed data omits these) */
   created_at?: string
   updated_at?: string
+
+  // Expanded catalog fields — all optional for backward compat
+  long_description?: string
+  original_price?: number
+  image_url?: string
+  estimated_duration?: string
+  inclusions?: string[]
+  exclusions?: string[]
+  faqs?: ServiceFaq[]
+  rating_average?: number
+  rating_count?: number
+  rating_distribution?: number[] // [5star%, 4star%, 3star%, 2star%, 1star%]
+  sort_order?: number
 }
 
 export interface Booking {
