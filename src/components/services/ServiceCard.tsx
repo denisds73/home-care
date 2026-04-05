@@ -38,10 +38,12 @@ export default function ServiceCard({ service: s }: ServiceCardProps) {
       onKeyDown={(e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') openSheet() }}
       role="button"
       tabIndex={0}
-      className={`bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,.04)] overflow-hidden relative cursor-pointer transition hover:shadow-lg active:scale-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${s.is_basic ? 'border-2 border-brand' : 'border border-gray-100'}`}
+      className={`group bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,.04)] overflow-hidden relative cursor-pointer transition hover:shadow-lg active:scale-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${s.is_basic ? 'border-2 border-brand' : 'border border-gray-100'}`}
     >
       {s.is_basic && <div className="absolute top-0 right-3 bg-brand text-white text-[.6rem] font-bold px-2 py-1 rounded-b-md uppercase tracking-wider z-10">★ Recommended</div>}
-      <img src={img} alt={s.service_name} className="w-full h-[100px] sm:h-[140px] object-cover" loading="lazy" />
+      <div className="relative w-full aspect-[16/9] bg-surface overflow-hidden">
+        <img src={img} alt={s.service_name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" loading="lazy" />
+      </div>
       <div className="p-2.5 sm:p-4">
         <h4 className="font-bold text-[.75rem] sm:text-sm mb-1 text-primary line-clamp-1">{s.service_name}</h4>
         <div className="flex items-center gap-1 text-[.7rem] text-secondary mb-1">
