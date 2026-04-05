@@ -195,7 +195,7 @@ export default function DetailSheet() {
           </div>
 
           {/* Sticky add-to-cart footer */}
-          <div className="sticky bottom-0 bg-white pt-4 pb-2 border-t border-border-default -mx-5 md:-mx-8 px-5 md:px-8 mt-4">
+          <div className="sticky bottom-0 bg-white pt-4 pb-2 -mx-5 md:-mx-8 px-5 md:px-8 mt-4" style={{ boxShadow: '0 -1px 0 rgba(0,0,0,0.04), 0 -4px 12px rgba(0,0,0,0.03)' }}>
             {qty === 0 ? (
               <button type="button" onClick={handleAdd} className="btn-base btn-primary w-full py-3.5 font-bold text-sm">
                 Add to Cart — ₹{svc.price}
