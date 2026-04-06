@@ -41,7 +41,8 @@ async function fetchClient<T>(endpoint: string, options: RequestInit = {}): Prom
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      throw new ApiError(response.status, errorData.message || 'Something went wrong')
+      const message = errorData.error?.message ?? errorData.message ?? 'Something went wrong'
+      throw new ApiError(response.status, message)
     }
 
     return await response.json() as T
