@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, TooManyRequestsException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
 
 interface OtpRecord {
   otp: string;
@@ -66,7 +66,7 @@ export class OtpService {
     const timestamps = (this.sendLog.get(phone) ?? []).filter(t => t > windowStart);
 
     if (timestamps.length >= 5) {
-      throw new TooManyRequestsException('Too many OTP requests. Please try again later.');
+      throw new HttpException('Too many OTP requests. Please try again later.', HttpStatus.TOO_MANY_REQUESTS);
     }
 
     timestamps.push(now);
