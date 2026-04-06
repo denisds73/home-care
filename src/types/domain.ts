@@ -93,6 +93,23 @@ export interface Booking {
   updated_at: string
 }
 
+/** Payload sent to POST /bookings — matches backend CreateBookingDto */
+export interface CreateBookingPayload {
+  customer_name: string
+  phone: string
+  address: string
+  lat: number
+  lng: number
+  category: string
+  service_id?: number
+  service_name: string
+  price: number
+  services_list: ServiceListItem[]
+  preferred_date: string
+  time_slot: string
+  payment_mode: PaymentMode
+}
+
 /** Payload passed to `addBooking` before `booking_id` is assigned */
 export type NewBookingPayload = Omit<Booking, 'booking_id'> & {
   razorpay_order_id?: string | null

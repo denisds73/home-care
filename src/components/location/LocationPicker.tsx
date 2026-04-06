@@ -1,10 +1,10 @@
 import { useEffect, useRef, useCallback } from 'react'
-import { useUIStore } from '../../store/useUIStore'
+import useStore from '../../store/useStore'
 import { LocationPickerContent } from './LocationPickerContent'
 
 export function LocationPicker() {
-  const open = useUIStore(s => s.locationPickerOpen)
-  const setOpen = useUIStore(s => s.setLocationPickerOpen)
+  const open = useStore(s => s.locationPickerOpen)
+  const setOpen = useStore(s => s.setLocationPickerOpen)
   const panelRef = useRef<HTMLDivElement>(null)
 
   const close = useCallback(() => setOpen(false), [setOpen])

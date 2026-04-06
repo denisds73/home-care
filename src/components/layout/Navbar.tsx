@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useLocationStore } from '../../store/useLocationStore'
-import { useUIStore } from '../../store/useUIStore'
 import { NavbarCategoryChips } from './NavbarCategoryChips'
 import { LocationPicker } from '../location/LocationPicker'
 import { useServiceSearch, type SearchResult } from '../../hooks/useServiceSearch'
@@ -220,7 +219,7 @@ export function Navbar() {
   const location = useLocationStore(s => s.location)
   const locationStatus = useLocationStore(s => s.status)
   const detectCurrentLocation = useLocationStore(s => s.detectCurrentLocation)
-  const setLocationPickerOpen = useUIStore(s => s.setLocationPickerOpen)
+  const setLocationPickerOpen = useStore(s => s.setLocationPickerOpen)
   const [scrolled, setScrolled] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const prevCartRef = useRef(cartCount)

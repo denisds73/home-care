@@ -7,9 +7,10 @@ interface RazorpayModalProps {
   amount: number
   onSuccess: () => void
   onClose: () => void
+  onPayAfter?: () => void
 }
 
-export default function RazorpayModal({ amount, onSuccess, onClose }: RazorpayModalProps) {
+export default function RazorpayModal({ amount, onSuccess, onClose, onPayAfter }: RazorpayModalProps) {
   const [state, setState] = useState<PayState>('methods')
   const [selected, setSelected] = useState(0)
   const [orderId, setOrderId] = useState('')
@@ -23,7 +24,7 @@ export default function RazorpayModal({ amount, onSuccess, onClose }: RazorpayMo
   const simulatePayment = () => {
     setOrderId('rzp_order_' + Math.random().toString(36).slice(2, 13))
     setState('processing')
-    setTimeout(() => { setState(Math.random() < 0.8 ? 'success' : 'failed') }, 2000)
+    setTimeout(() => { setState('success') }, 2000)
   }
 
   return (
@@ -31,7 +32,14 @@ export default function RazorpayModal({ amount, onSuccess, onClose }: RazorpayMo
       <div className="bg-card border border-default rounded-2xl shadow-xl w-full max-w-sm overflow-hidden scale-in">
         <div className="px-5 py-4 text-white rzp-header">
           <div className="flex items-center justify-between">
-            <div><p className="text-xs opacity-80">HomeCare Services</p><h3 className="text-lg font-bold">Payment</h3></div>
+            <div>
+              <p className="text-xs opacity-80">HomeCare Services</p>
+              <h3 className="text-lg font-bold">Payment</h3>
+              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-white/20 text-[.6rem] font-medium tracking-wide uppercase">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                Sandbox Mode
+              </span>
+            </div>
             <button onClick={onClose} className="text-white opacity-80 hover:opacity-100" aria-label="Close payment"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
           </div>
           <p className="text-2xl font-extrabold mt-1">₹{amount}</p>
@@ -50,7 +58,9 @@ export default function RazorpayModal({ amount, onSuccess, onClose }: RazorpayMo
                   </button>
                 ))}
               </div>
-              <button type="button" onClick={simulatePayment} className="btn-base btn-primary w-full py-3 rounded-xl font-semibold text-sm text-white">Pay Securely</button>
+              <button type="button" onClick={simulatePayment} className="btn-base btn-primary w-full py-3 rounded-xl font-semibold text-sm text-white relative overflow-hidden">
+                <span className="relative z-10">Pay ₹{amount} Securely</span>
+              </button>
             </>
           )}
 
@@ -64,11 +74,13 @@ export default function RazorpayModal({ amount, onSuccess, onClose }: RazorpayMo
 
           {state === 'success' && (
             <div className="text-center py-6">
-              <div className="w-16 h-16 mx-auto mb-3 rounded-full flex items-center justify-center bg-green-100">
+              <div className="w-16 h-16 mx-auto mb-3 rounded-full flex items-center justify-center bg-green-100 scale-in">
                 <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
               </div>
               <p className="font-bold text-lg text-success">Payment Successful!</p>
-              <p className="text-xs text-muted mt-1 font-mono">Order: {orderId}</p>
+              <p className="text-xs text-muted mt-1">Amount paid</p>
+              <p className="text-base font-bold mt-0.5">₹{amount}</p>
+              <p className="text-xs text-muted mt-2 font-mono bg-muted inline-block px-3 py-1 rounded-full">{orderId}</p>
               <button type="button" onClick={onSuccess} className="btn-base btn-success text-white w-full py-3 rounded-xl font-semibold text-sm mt-4">Continue</button>
             </div>
           )}
@@ -82,7 +94,7 @@ export default function RazorpayModal({ amount, onSuccess, onClose }: RazorpayMo
               <p className="text-sm text-secondary mt-1">Transaction could not be completed.</p>
               <div className="space-y-2 mt-5">
                 <button type="button" onClick={() => setState('methods')} className="btn-base btn-primary w-full py-3 rounded-xl font-semibold text-sm text-white">Retry Payment</button>
-                <button type="button" onClick={onClose} className="btn-base btn-secondary w-full py-2.5 rounded-xl font-semibold text-sm border-2 border-brand text-brand hover:bg-muted transition">Pay After Service</button>
+                <button type="button" onClick={onPayAfter ?? onClose} className="btn-base btn-secondary w-full py-2.5 rounded-xl font-semibold text-sm border-2 border-brand text-brand hover:bg-muted transition">Pay After Service</button>
               </div>
             </div>
           )}

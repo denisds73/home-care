@@ -1,9 +1,10 @@
 import { create } from 'zustand'
-import { initialServices, CONVENIENCE_FEE, GST_RATE } from '../data/services'
+import { initialServices } from '../data/services'
 import { initialBookings } from '../data/bookings'
 import { CATEGORIES } from '../data/categories'
 import { serviceService } from '../services/serviceService'
 import { bookingService } from '../services/bookingService'
+import { calculatePricing } from '../utils/pricing'
 import type {
   Booking,
   BookingStatus,
@@ -61,6 +62,8 @@ interface Store {
   detailSheetOpen: boolean
   detailServiceId: number | null
   accountSheetOpen: boolean
+  locationPickerOpen: boolean
+  setLocationPickerOpen: (open: boolean) => void
   toggleCartDrawer: () => void
   openDetailSheet: (id: number) => void
   closeDetailSheet: () => void
@@ -184,16 +187,14 @@ const useStore = create<Store>()((set, get) => ({
   },
   getCartTotal: () => get().cart.reduce((sum, c) => sum + c.service.price * c.qty, 0),
   getCartCount: () => get().cart.reduce((sum, c) => sum + c.qty, 0),
-  getCartGrandTotal: () => {
-    const subtotal = get().getCartTotal()
-    if (subtotal === 0) return 0
-    return subtotal + CONVENIENCE_FEE + Math.round(subtotal * GST_RATE)
-  },
+  getCartGrandTotal: () => calculatePricing(get().cart).grandTotal,
 
   cartDrawerOpen: false,
   detailSheetOpen: false,
   detailServiceId: null,
   accountSheetOpen: false,
+  locationPickerOpen: false,
+  setLocationPickerOpen: (open) => set({ locationPickerOpen: open }),
   toggleCartDrawer: () => set(s => ({ cartDrawerOpen: !s.cartDrawerOpen })),
   openDetailSheet: (id) => set({ detailSheetOpen: true, detailServiceId: id }),
   closeDetailSheet: () => set({ detailSheetOpen: false }),

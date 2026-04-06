@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
-import { CONVENIENCE_FEE, GST_RATE } from '../../data/services'
+import { calculatePricing } from '../../utils/pricing'
 import { CartItem } from './CartItem'
 import { CartPricingSummary } from './CartPricingSummary'
 
@@ -15,13 +15,11 @@ export function CartDrawer() {
   const removeItemFromCart = useStore(s => s.removeItemFromCart)
   const clearCart = useStore(s => s.clearCart)
   const showToast = useStore(s => s.showToast)
-  const total = useStore(s => s.getCartTotal())
   const count = useStore(s => s.getCartCount())
   const navigate = useNavigate()
   const closeRef = useRef<HTMLButtonElement>(null)
 
-  const gst = Math.round(total * GST_RATE)
-  const grandTotal = total > 0 ? total + CONVENIENCE_FEE + gst : 0
+  const pricing = calculatePricing(cart)
 
   /* Focus close button on open + Escape to close */
   useEffect(() => {
@@ -130,10 +128,10 @@ export function CartDrawer() {
           {cart.length > 0 && (
             <CartPricingSummary
               count={count}
-              subtotal={total}
-              convenienceFee={CONVENIENCE_FEE}
-              gst={gst}
-              grandTotal={grandTotal}
+              subtotal={pricing.subtotal}
+              convenienceFee={pricing.convenienceFee}
+              gst={pricing.gst}
+              grandTotal={pricing.grandTotal}
               onProceed={proceedToBooking}
               onClear={clearCart}
             />

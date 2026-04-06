@@ -5,13 +5,13 @@ import { useAuthStore } from '../../store/useAuthStore'
 import { bookingService } from '../../services/bookingService'
 import { useLocationStore } from '../../store/useLocationStore'
 import { CATEGORIES } from '../../data/categories'
-import { CONVENIENCE_FEE, GST_RATE } from '../../data/services'
-import type { PaymentMode, PaymentStatus, TimeSlot } from '../../types/domain'
+import { calculatePricing } from '../../utils/pricing'
+import type { PaymentMode, TimeSlot } from '../../types/domain'
 import RazorpayModal from './RazorpayModal'
 import { LOGIN_ROUTES } from '../../lib/auth'
 import { DatePicker } from '../common/DatePicker'
-import { PhoneVerificationFlow } from './PhoneVerificationFlow'
 
+const DRAFT_KEY = 'hc_booking_draft'
 const stepLabels = ['Details', 'Payment', 'Done']
 
 interface BookingDraft {
@@ -20,6 +20,20 @@ interface BookingDraft {
   address?: string
   date?: string
   time_slot?: string
+}
+
+const SLOT_LABELS: Record<string, string> = {
+  '9AM-12PM': '9:00 AM – 12:00 PM',
+  '12PM-3PM': '12:00 PM – 3:00 PM',
+  '3PM-6PM': '3:00 PM – 6:00 PM',
+}
+
+function formatSlot(s: string | undefined): string {
+  return s ? (SLOT_LABELS[s] ?? s) : ''
+}
+
+function formatDate(d: string | undefined): string {
+  return d ? new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
 }
 
 function StepIndicator({ current }: { current: number }) {
@@ -47,7 +61,7 @@ function StepIndicator({ current }: { current: number }) {
   )
 }
 
-function Step1({
+function DetailsStep({
   onNext,
   booking,
   setBooking,
@@ -167,19 +181,16 @@ function Step1({
           {errors.slot && <p className="text-xs text-error mt-1">{errors.slot}</p>}
         </div>
       </div>
-      <button type="button" onClick={handleSubmit} className="btn-base btn-primary w-full py-3 font-semibold mt-6 text-sm">Continue to Verify Phone</button>
+      <button type="button" onClick={handleSubmit} className="btn-base btn-primary w-full py-3 font-semibold mt-6 text-sm">Continue to Payment</button>
     </div>
   )
 }
 
-// Step2 is now handled by PhoneVerificationFlow component
-
-function Step3AuthGate({ booking }: { booking: BookingDraft }) {
+function PaymentAuthGate({ booking }: { booking: BookingDraft }) {
   const navigate = useNavigate()
 
   const handleLoginRedirect = () => {
-    // Persist booking state so it survives the auth redirect
-    sessionStorage.setItem('booking_draft', JSON.stringify(booking))
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(booking))
     navigate(`${LOGIN_ROUTES.customer}?returnTo=${encodeURIComponent('/app/booking')}`)
   }
 
@@ -209,7 +220,7 @@ function Step3AuthGate({ booking }: { booking: BookingDraft }) {
 }
 
 
-function Step3({
+function PaymentStep({
   booking,
   onPayNow,
   onPayAfter,
@@ -221,14 +232,9 @@ function Step3({
   submitting: boolean
 }) {
   const cart = useStore(s => s.cart)
-  const getCartTotal = useStore(s => s.getCartTotal)
+  const pricing = calculatePricing(cart)
   const isAuthenticated = useAuthStore(s => s.isAuthenticated)
-  const subtotal = getCartTotal()
-  const gst = Math.round(subtotal * GST_RATE)
-  const total = subtotal + CONVENIENCE_FEE + gst
 
-  const formatDate = (d: string | undefined) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
-  const formatSlot = (s: string | undefined) => s === '9AM-12PM' ? '9:00 AM – 12:00 PM' : s === '12PM-3PM' ? '12:00 PM – 3:00 PM' : '3:00 PM – 6:00 PM'
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6 md:p-8 slide-up">
@@ -260,16 +266,16 @@ function Step3({
         {cart.map(c => (
           <div key={c.service.id} className="flex justify-between py-1 text-sm"><span className="text-secondary">{c.service.service_name}{c.qty > 1 ? ` × ${c.qty}` : ''}</span><span className="font-semibold">₹{c.service.price * c.qty}</span></div>
         ))}
-        <div className="flex justify-between py-1 text-sm"><span className="text-secondary">Convenience Fee</span><span className="font-semibold">₹{CONVENIENCE_FEE}</span></div>
-        <div className="flex justify-between py-1 text-sm"><span className="text-secondary">GST (18%)</span><span className="font-semibold">₹{gst}</span></div>
-        <div className="flex justify-between py-2 text-base font-extrabold border-t-2 border-gray-200 mt-1"><span className="text-primary">Total Amount</span><span className="text-brand-dark">₹{total}</span></div>
+        <div className="flex justify-between py-1 text-sm"><span className="text-secondary">Convenience Fee</span><span className="font-semibold">₹{pricing.convenienceFee}</span></div>
+        <div className="flex justify-between py-1 text-sm"><span className="text-secondary">GST (18%)</span><span className="font-semibold">₹{pricing.gst}</span></div>
+        <div className="flex justify-between py-2 text-base font-extrabold border-t-2 border-gray-200 mt-1"><span className="text-primary">Total Amount</span><span className="text-brand-dark">₹{pricing.grandTotal}</span></div>
       </div>
 
       {!isAuthenticated ? (
-        <Step3AuthGate booking={booking} />
+        <PaymentAuthGate booking={booking} />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button type="button" onClick={() => onPayNow(total)} disabled={submitting} className="btn-base btn-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+          <button type="button" onClick={() => onPayNow(pricing.grandTotal)} disabled={submitting} className="btn-base btn-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
             {submitting ? (
               <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
@@ -286,10 +292,9 @@ function Step3({
   )
 }
 
-function Step4({ bookingId, booking }: { bookingId: string; booking: BookingDraft }) {
+function ConfirmationStep({ bookingId, booking }: { bookingId: string; booking: BookingDraft }) {
   const navigate = useNavigate()
   const clearCart = useStore(s => s.clearCart)
-  const formatDate = (d: string | undefined) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6 md:p-8 slide-up text-center">
@@ -302,9 +307,17 @@ function Step4({ bookingId, booking }: { bookingId: string; booking: BookingDraf
       <div className="bg-gray-50 rounded-xl p-5 text-left mb-6 space-y-2.5">
         <div className="flex justify-between"><span className="text-secondary text-sm">Booking ID</span><span className="font-bold text-sm text-brand-dark">{bookingId}</span></div>
         <div className="flex justify-between"><span className="text-secondary text-sm">Date</span><span className="font-semibold text-sm">{formatDate(booking.date)}</span></div>
+        <div className="flex justify-between"><span className="text-secondary text-sm">Time Slot</span><span className="font-semibold text-sm">{booking.time_slot}</span></div>
         <div className="flex justify-between"><span className="text-secondary text-sm">Address</span><span className="font-semibold text-sm text-right max-w-xs">{booking.address}</span></div>
       </div>
-      <button type="button" onClick={() => { clearCart(); navigate('/app') }} className="btn-base btn-primary px-8 py-3 font-semibold text-sm">Back to Home</button>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <button type="button" onClick={() => { clearCart(); navigate('/app/bookings') }} className="btn-base btn-primary flex-1 px-6 py-3 font-semibold text-sm">
+          View My Bookings
+        </button>
+        <button type="button" onClick={() => { clearCart(); navigate('/app') }} className="btn-base btn-secondary flex-1 px-6 py-3 font-semibold text-sm">
+          Back to Home
+        </button>
+      </div>
     </div>
   )
 }
@@ -317,11 +330,11 @@ export default function BookingFlow() {
   const user = useAuthStore(s => s.user)
   const authLoading = useAuthStore(s => s.isLoading)
 
-  // Restore booking draft from sessionStorage if returning from auth redirect
+  // Restore booking draft from localStorage if returning from auth redirect
   const [booking, setBooking] = useState<BookingDraft>(() => {
-    const saved = sessionStorage.getItem('booking_draft')
+    const saved = localStorage.getItem(DRAFT_KEY)
     if (saved) {
-      sessionStorage.removeItem('booking_draft')
+      localStorage.removeItem(DRAFT_KEY)
       try { return JSON.parse(saved) as BookingDraft } catch { /* fall through */ }
     }
     return {
@@ -336,10 +349,21 @@ export default function BookingFlow() {
   const [payAmount, setPayAmount] = useState(0)
   const [confirmedId, setConfirmedId] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [bookingError, setBookingError] = useState<string | null>(null)
   const showToast = useStore(s => s.showToast)
 
+  // Redirect to home if cart is empty (unless on confirmation step)
+  useEffect(() => {
+    if (cart.length === 0 && step !== 3) {
+      navigate('/app', { replace: true })
+    }
+  }, [cart.length, step, navigate])
+
+  // Pre-fill name/phone once when user becomes available after async auth restore.
+  // This syncs external auth state into local form state — a valid use of setState in effect.
   useEffect(() => {
     if (user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing external auth state
       setBooking(prev => ({
         ...prev,
         name: prev.name || user.name || '',
@@ -353,73 +377,83 @@ export default function BookingFlow() {
     else setStep(s => Math.max(1, s - 1))
   }
 
-  const buildPayload = (paymentMode: PaymentMode, paymentStatus: PaymentStatus) => ({
-    customer_name: booking.name ?? '',
-    phone: booking.phone ?? '',
-    address: booking.address ?? '',
-    lat: useLocationStore.getState().location?.lat ?? 12.9716,
-    lng: useLocationStore.getState().location?.lng ?? 77.5946,
-    category: cart[0]?.service.category ?? '',
-    service_id: cart[0]?.service.id,
-    service_name: cart.map(c => c.service.service_name).join(', '),
-    price: useStore.getState().getCartTotal(),
-    services_list: cart.map(c => ({
-      id: c.service.id,
-      name: c.service.service_name,
-      price: c.service.price,
-      qty: c.qty,
-    })),
-    preferred_date: booking.date ?? '',
-    time_slot: booking.time_slot ?? '',
-    payment_mode: paymentMode,
-    payment_status: paymentStatus,
-    razorpay_order_id: null,
-    booking_status: 'Pending' as const,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  })
+  const buildPayload = (paymentMode: PaymentMode) => {
+    const categories = [...new Set(cart.map(c => c.service.category))]
+    return {
+      customer_name: booking.name ?? '',
+      phone: booking.phone ?? '',
+      address: booking.address ?? '',
+      lat: Number(useLocationStore.getState().location?.lat ?? 12.9716),
+      lng: Number(useLocationStore.getState().location?.lng ?? 77.5946),
+      category: categories.length === 1 ? categories[0] : categories.join(','),
+      service_id: cart.length === 1 ? cart[0].service.id : undefined,
+      service_name: cart.map(c => c.service.service_name).join(', '),
+      price: calculatePricing(cart).grandTotal,
+      services_list: cart.map(c => ({
+        id: c.service.id,
+        name: c.service.service_name,
+        price: Number(c.service.price),
+        qty: c.qty,
+      })),
+      preferred_date: booking.date ?? '',
+      time_slot: booking.time_slot ?? '',
+      payment_mode: paymentMode,
+    }
+  }
 
-  const createBooking = async (paymentMode: PaymentMode, paymentStatus: PaymentStatus): Promise<string> => {
-    const payload = buildPayload(paymentMode, paymentStatus)
+  const createBooking = async (paymentMode: PaymentMode): Promise<string | null> => {
+    const payload = buildPayload(paymentMode)
     setSubmitting(true)
+    setBookingError(null)
     try {
       const response = await bookingService.createBooking(payload)
       const created = response.data
       const id = created.booking_id
-      // Sync into local store so other pages see it immediately
-      addBooking({ ...payload, razorpay_order_id: created.razorpay_order_id ?? null })
+      addBooking({
+        ...payload,
+        payment_status: created.payment_status ?? 'PENDING',
+        razorpay_order_id: created.razorpay_order_id ?? null,
+        booking_status: created.booking_status ?? 'Pending',
+        created_at: created.created_at ?? new Date().toISOString(),
+        updated_at: created.updated_at ?? new Date().toISOString(),
+      })
       setConfirmedId(id)
       setSubmitting(false)
       return id
     } catch (error) {
-      // Fallback to local store if API fails
-      const message = error instanceof Error ? error.message : 'Booking failed'
-      showToast(`API error: ${message}. Booking saved locally.`, 'warning')
-      const id = addBooking(payload)
-      setConfirmedId(id)
+      const message = error instanceof Error ? error.message : 'Something went wrong'
+      setBookingError(message)
+      showToast(`Booking failed: ${message}. Please try again.`, 'danger')
       setSubmitting(false)
-      return id
+      return null
     }
   }
 
   const handlePayNow = (amount: number) => {
-    // Auth is now handled inline in Step3 — this is only called when authenticated
     setPayAmount(amount)
     setShowRazorpay(true)
   }
 
   const handlePaymentSuccess = async () => {
     setShowRazorpay(false)
-    const id = await createBooking('PAY_NOW', 'SUCCESS')
-    setStep(3)
-    showToast(`Booking ${id} created!`, 'success')
+    const id = await createBooking('PAY_NOW')
+    if (id) {
+      setStep(3)
+      showToast(`Booking ${id} created!`, 'success')
+    }
   }
 
   const handlePayAfter = async () => {
-    // Auth is now handled inline in Step3 — this is only called when authenticated
-    const id = await createBooking('PAY_AFTER_SERVICE', 'PENDING')
-    setStep(3)
-    showToast(`Booking ${id} created!`, 'success')
+    const id = await createBooking('PAY_AFTER_SERVICE')
+    if (id) {
+      setStep(3)
+      showToast(`Booking ${id} created!`, 'success')
+    }
+  }
+
+  const handlePayAfterFromModal = async () => {
+    setShowRazorpay(false)
+    await handlePayAfter()
   }
 
   // Show skeleton while auth is restoring so form never flashes empty then prefills
@@ -450,19 +484,28 @@ export default function BookingFlow() {
 
         <StepIndicator current={step} />
 
-        {step === 1 && <Step1 onNext={() => setStep(2)} booking={booking} setBooking={setBooking} />}
-        {/* OTP step skipped for MVP — PhoneVerificationFlow ready for when backend OTP endpoints ship */}
-        {false && step === -1 && (
-          <PhoneVerificationFlow
-            phone={booking.phone ?? ''}
-            onPhoneChange={(p) => setBooking(b => ({ ...b, phone: p }))}
-            onVerified={() => { showToast('Phone verified!', 'success'); setStep(2) }}
+        {step === 1 && <DetailsStep onNext={() => setStep(2)} booking={booking} setBooking={setBooking} />}
+        {step === 2 && (
+          <>
+            <PaymentStep booking={booking} onPayNow={handlePayNow} onPayAfter={handlePayAfter} submitting={submitting} />
+            {bookingError && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-center slide-up">
+                <p className="text-sm text-error font-medium">{bookingError}</p>
+                <button type="button" onClick={() => setBookingError(null)} className="text-xs text-brand font-medium mt-2 hover:underline">Dismiss</button>
+              </div>
+            )}
+          </>
+        )}
+        {step === 3 && <ConfirmationStep bookingId={confirmedId} booking={booking} />}
+
+        {showRazorpay && (
+          <RazorpayModal
+            amount={payAmount}
+            onSuccess={handlePaymentSuccess}
+            onClose={() => setShowRazorpay(false)}
+            onPayAfter={handlePayAfterFromModal}
           />
         )}
-        {step === 2 && <Step3 booking={booking} onPayNow={handlePayNow} onPayAfter={handlePayAfter} submitting={submitting} />}
-        {step === 3 && <Step4 bookingId={confirmedId} booking={booking} />}
-
-        {showRazorpay && <RazorpayModal amount={payAmount} onSuccess={handlePaymentSuccess} onClose={() => setShowRazorpay(false)} />}
       </div>
     </div>
   )

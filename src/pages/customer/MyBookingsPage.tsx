@@ -1,6 +1,5 @@
 import { useState, useEffect, type ComponentType } from 'react'
 import useStore from '../../store/useStore'
-import { bookingService } from '../../services/bookingService'
 import { formatDate } from '../../data/helpers'
 import { statusClass } from '../../data/helpers'
 import { CalendarDaysIcon, CheckCircleIcon, BanIcon } from '../../components/common/Icons'
@@ -102,37 +101,27 @@ const TABS: { key: Tab; label: string }[] = [
 
 export default function MyBookingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('upcoming')
-  const [bookings, setBookings] = useState<Booking[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
-  const showToast = useStore(state => state.showToast)
-
-  const fetchBookings = async () => {
-    try {
-      setError(null)
-      const result = await bookingService.getMyBookings()
-      setBookings(result.data)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load bookings'
-      setError(message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const bookings = useStore(s => s.bookings)
+  const bookingsLoading = useStore(s => s.bookingsLoading)
+  const bookingsError = useStore(s => s.bookingsError)
+  const fetchBookings = useStore(s => s.fetchBookings)
+  const updateBookingStatus = useStore(s => s.updateBookingStatus)
+  const showToast = useStore(s => s.showToast)
 
   useEffect(() => {
     fetchBookings()
-  }, [])
+  }, [fetchBookings])
 
   const filtered = filterByTab(bookings, activeTab)
 
   async function handleCancel(id: string) {
     setCancellingId(id)
     try {
-      await bookingService.cancelBooking(id)
+      const { cancelBooking } = await import('../../services/bookingService').then(m => m.bookingService)
+      await cancelBooking(id)
+      updateBookingStatus(id, 'Cancelled')
       showToast('Booking cancelled successfully.', 'success')
-      await fetchBookings()
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to cancel booking'
       showToast(message, 'danger')
@@ -177,17 +166,17 @@ export default function MyBookingsPage() {
         </div>
 
         {/* Content states */}
-        {isLoading ? (
+        {bookingsLoading ? (
           <div className="flex flex-col items-center justify-center py-16">
             <div className="w-8 h-8 border-3 border-muted border-t-brand rounded-full animate-spin" />
             <p className="text-muted text-sm mt-3">Loading bookings...</p>
           </div>
-        ) : error ? (
+        ) : bookingsError ? (
           <div className="flex flex-col items-center justify-center py-16 text-center fade-in">
-            <p className="text-error text-sm font-medium">{error}</p>
+            <p className="text-error text-sm font-medium">{bookingsError}</p>
             <button
               className="btn-base btn-secondary px-4 py-2 text-sm mt-4"
-              onClick={() => { setIsLoading(true); fetchBookings() }}
+              onClick={fetchBookings}
               aria-label="Retry loading bookings"
             >
               Retry
