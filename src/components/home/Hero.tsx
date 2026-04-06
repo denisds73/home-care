@@ -3,8 +3,8 @@ import heroBg from '../../assets/images/hero-bg.jpg'
 
 export default function Hero() {
   return (
-    <div className="hero-section text-white py-16 sm:py-20 md:py-28" style={{ background: `url(${heroBg}) center/cover no-repeat`, minHeight: '420px', position: 'relative' }}>
-      <div className="hero-overlay" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(11,18,32,.84) 0%, rgba(23,37,84,.58) 48%, rgba(109,40,217,.62) 100%)' }} />
+    <div className="hero-section text-white py-16 sm:py-20 md:py-28" style={{ background: `url(${heroBg}) 60% center/cover no-repeat`, minHeight: '420px', position: 'relative' }}>
+      <div className="hero-overlay" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(11,18,32,.82) 0%, rgba(23,37,84,.52) 48%, rgba(109,40,217,.55) 100%)' }} />
       <div className="hero-content" style={{ position: 'relative', zIndex: 2 }}>
         <div className="max-w-7xl mx-auto px-4 text-center">
           <Reveal>
