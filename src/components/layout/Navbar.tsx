@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, type FormEvent } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import { useAuthStore } from '../../store/useAuthStore'
-import { CATEGORIES } from '../../data/categories'
 import { NavbarCategoryChips } from './NavbarCategoryChips'
+import { useServiceSearch, type SearchResult } from '../../hooks/useServiceSearch'
 
 function getInitials(name: string): string {
   return name
@@ -15,35 +15,145 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-interface SearchPillProps {
-  inputId: string
-  value: string
-  onChange: (v: string) => void
-}
+function SearchBar({ inputId, onNavigate }: { inputId: string; onNavigate: () => void }) {
+  const navigate = useNavigate()
+  const { query, setQuery, results, isSearching, isOpen, clear, close } = useServiceSearch()
+  const containerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [activeIndex, setActiveIndex] = useState(-1)
+  const showDropdown = isOpen && (results.length > 0 || (query.trim().length >= 2 && !isSearching))
 
-function SearchPill({ inputId, value, onChange }: SearchPillProps) {
+  useEffect(() => {
+    if (!isOpen) return
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) close()
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [isOpen, close])
+
+  useEffect(() => { setActiveIndex(-1) }, [results])
+
+  const selectResult = (r: SearchResult) => {
+    navigate(r.navigateTo)
+    clear()
+    onNavigate()
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') { e.preventDefault(); close(); inputRef.current?.blur(); return }
+    if (!showDropdown || results.length === 0) return
+    switch (e.key) {
+      case 'ArrowDown': e.preventDefault(); setActiveIndex(i => (i + 1) % results.length); break
+      case 'ArrowUp': e.preventDefault(); setActiveIndex(i => (i <= 0 ? results.length - 1 : i - 1)); break
+      case 'Enter': e.preventDefault(); if (activeIndex >= 0) selectResult(results[activeIndex]); break
+    }
+  }
+
   return (
-    <div className="relative flex items-center rounded-full bg-muted pl-11 pr-5 min-h-[42px] transition-colors duration-150 focus-within:bg-white focus-within:ring-1 focus-within:ring-brand/25">
-      <svg
-        className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth="2"
-        aria-hidden
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-      <input
-        id={inputId}
-        type="search"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className="flex-1 min-w-0 border-0 bg-transparent py-2.5 pl-0 pr-2 text-[.85rem] text-primary placeholder:text-muted focus:outline-none focus:ring-0"
-        placeholder="Search for services..."
-        aria-label="Search services"
-        autoComplete="off"
-      />
+    <div ref={containerRef} className="relative" onKeyDown={handleKeyDown}>
+      {/* Input pill */}
+      <div className="relative flex items-center min-h-[42px] rounded-full bg-white border border-text-secondary transition-[border-color] duration-150 focus-within:border-brand">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+          {isSearching ? (
+            <svg className="w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" aria-hidden style={{ animation: 'spin 0.8s linear infinite' }}>
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity=".2" />
+              <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          )}
+        </div>
+        <input
+          ref={inputRef}
+          id={inputId}
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          className="flex-1 min-w-0 border-0 bg-transparent py-2.5 pl-11 pr-10 text-[.85rem] text-primary placeholder:text-secondary focus:outline-none focus:ring-0"
+          placeholder="Search for services..."
+          aria-label="Search services"
+          aria-expanded={showDropdown}
+          aria-controls={showDropdown ? `${inputId}-results` : undefined}
+          aria-activedescendant={activeIndex >= 0 ? `${inputId}-result-${activeIndex}` : undefined}
+          autoComplete="off"
+          role="combobox"
+          aria-autocomplete="list"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={clear}
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/[.05] hover:bg-black/[.08] flex items-center justify-center transition-colors"
+            aria-label="Clear search"
+          >
+            <svg className="w-3 h-3 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {/* Dropdown — absolutely positioned, max 5 results visible */}
+      {showDropdown && (
+        <div
+          id={`${inputId}-results`}
+          role="listbox"
+          className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 bg-white rounded-2xl overflow-hidden max-h-[340px] overflow-y-auto"
+          style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)' }}
+        >
+
+          {results.length > 0 ? (
+            <div className="py-1">
+              {results.map((r, i) => (
+                <button
+                  key={`${r.type}-${r.id}`}
+                  id={`${inputId}-result-${i}`}
+                  role="option"
+                  aria-selected={i === activeIndex}
+                  type="button"
+                  onClick={() => selectResult(r)}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors duration-75 mx-0 ${
+                    i === activeIndex ? 'bg-brand-soft/30' : 'hover:bg-muted/60'
+                  }`}
+                >
+                  <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
+                    r.type === 'category' ? 'bg-brand-soft/60 text-brand' : 'bg-muted text-muted'
+                  }`}>
+                    {r.type === 'category' ? (
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[.8rem] font-medium text-primary truncate">{r.title}</p>
+                    <p className="text-[.65rem] text-muted truncate">{r.subtitle}</p>
+                  </div>
+                  {r.price !== undefined && (
+                    <span className="text-[.75rem] font-semibold text-brand shrink-0">₹{r.price}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          ) : (
+            /* No results */
+            <div className="px-4 py-5 text-center">
+              <svg className="w-8 h-8 mx-auto mb-2 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <p className="text-[.8rem] text-muted">No results for &ldquo;<span className="font-medium text-secondary">{query.trim()}</span>&rdquo;</p>
+              <p className="text-[.65rem] text-muted mt-0.5">Try a different search term</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -55,10 +165,8 @@ export function Navbar() {
   const authLoading = useAuthStore(s => s.isLoading)
   const toggleCartDrawer = useStore(s => s.toggleCartDrawer)
   const showToast = useStore(s => s.showToast)
-  const services = useStore(s => s.services)
   const cartCount = useStore(s => s.getCartCount())
   const [scrolled, setScrolled] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const prevCartRef = useRef(cartCount)
   const [badgeBounce, setBadgeBounce] = useState(false)
@@ -98,30 +206,6 @@ export function Navbar() {
     })
   }, [mobileSearchOpen])
 
-  const handleSearch = () => {
-    const q = searchQuery.trim().toLowerCase()
-    if (!q) return
-    const cat = CATEGORIES.find(
-      c => c.name.toLowerCase().includes(q) || c.id.includes(q),
-    )
-    if (cat) {
-      navigate(`/app/services/${cat.id}`)
-      setSearchQuery('')
-      setMobileSearchOpen(false)
-      return
-    }
-    const svc = services.find(
-      s => s.service_name.toLowerCase().includes(q) && s.is_active,
-    )
-    if (svc) {
-      navigate(`/app/services/${svc.category}`)
-      setSearchQuery('')
-      setMobileSearchOpen(false)
-      return
-    }
-    showToast('No matching service found', 'warning')
-  }
-
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false)
   const avatarMenuRef = useRef<HTMLDivElement>(null)
 
@@ -141,11 +225,6 @@ export function Navbar() {
     cartCount > 0
       ? `Shopping cart, ${cartCount} item${cartCount > 1 ? 's' : ''}`
       : 'Shopping cart, empty'
-
-  const onSearchSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    handleSearch()
-  }
 
   return (
     <>
@@ -199,17 +278,10 @@ export function Navbar() {
             </button>
           </div>
 
-          {/* Center zone — Search (centered in available space) */}
-          <form
-            onSubmit={onSearchSubmit}
-            className="hidden sm:block w-full max-w-md mx-auto"
-          >
-            <SearchPill
-              inputId="navbar-search-desktop"
-              value={searchQuery}
-              onChange={setSearchQuery}
-            />
-          </form>
+          {/* Center zone — Search with live results */}
+          <div className="hidden sm:block w-full max-w-md mx-auto">
+            <SearchBar inputId="navbar-search-desktop" onNavigate={() => {}} />
+          </div>
 
           {/* Mobile: search icon in center zone */}
           <div className="flex sm:hidden justify-center">
@@ -380,13 +452,9 @@ export function Navbar() {
             onClick={() => setMobileSearchOpen(false)}
           />
           <div className="fixed left-0 right-0 top-16 z-[49] sm:hidden px-4 py-3 bg-white border-b border-default shadow-md nav-search-panel">
-            <form onSubmit={onSearchSubmit} className="flex gap-2 items-start">
+            <div className="flex gap-2 items-start">
               <div className="flex-1 min-w-0">
-                <SearchPill
-                  inputId="navbar-search-mobile"
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                />
+                <SearchBar inputId="navbar-search-mobile" onNavigate={() => setMobileSearchOpen(false)} />
               </div>
               <button
                 type="button"
@@ -394,22 +462,11 @@ export function Navbar() {
                 className="shrink-0 w-11 h-11 rounded-full bg-muted flex items-center justify-center text-secondary hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(109,40,217,0.22)]"
                 aria-label="Close search"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  aria-hidden
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-            </form>
+            </div>
           </div>
         </>
       )}
