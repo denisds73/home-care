@@ -21,8 +21,9 @@ function SearchBar({ inputId, onNavigate }: { inputId: string; onNavigate: () =>
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [activeIndex, setActiveIndex] = useState(-1)
-  const showDropdown = isOpen && (results.length > 0 || (query.trim().length >= 2 && !isSearching))
+  const showDropdown = isOpen && (results.length > 0 || query.trim().length >= 2)
 
+  /* Close on outside click */
   useEffect(() => {
     if (!isOpen) return
     const handler = (e: MouseEvent) => {
@@ -53,27 +54,29 @@ function SearchBar({ inputId, onNavigate }: { inputId: string; onNavigate: () =>
   return (
     <div ref={containerRef} className="relative" onKeyDown={handleKeyDown}>
       {/* Input pill */}
-      <div className="relative flex items-center min-h-[42px] rounded-full bg-white border border-text-secondary transition-[border-color] duration-150 focus-within:border-brand">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+      <div className="search-pill">
+        {/* Search / loading icon */}
+        <div className="absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
           {isSearching ? (
-            <svg className="w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" aria-hidden style={{ animation: 'spin 0.8s linear infinite' }}>
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity=".2" />
-              <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            <svg className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-brand" viewBox="0 0 24 24" fill="none" aria-hidden style={{ animation: 'spin 0.8s linear infinite' }}>
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" opacity=".15" />
+              <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
           ) : (
-            <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <svg className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           )}
         </div>
+
         <input
           ref={inputRef}
           id={inputId}
           type="text"
           value={query}
           onChange={e => setQuery(e.target.value)}
-          className="flex-1 min-w-0 border-0 bg-transparent py-2.5 pl-11 pr-10 text-[.85rem] text-primary placeholder:text-secondary focus:outline-none focus:ring-0"
-          placeholder="Search for services..."
+          className="flex-1 min-w-0 border-0 bg-transparent py-2.5 pl-10 sm:pl-11 pr-10 text-[.82rem] sm:text-[.85rem] font-medium text-primary placeholder:text-text-muted placeholder:font-normal focus:outline-none focus:ring-0"
+          placeholder="Search services..."
           aria-label="Search services"
           aria-expanded={showDropdown}
           aria-controls={showDropdown ? `${inputId}-results` : undefined}
@@ -82,31 +85,47 @@ function SearchBar({ inputId, onNavigate }: { inputId: string; onNavigate: () =>
           role="combobox"
           aria-autocomplete="list"
         />
+
+        {/* Clear button */}
         {query && (
           <button
             type="button"
             onClick={clear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/[.05] hover:bg-black/[.08] flex items-center justify-center transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/[.06] hover:bg-black/[.1] flex items-center justify-center transition-colors duration-150"
             aria-label="Clear search"
           >
-            <svg className="w-3 h-3 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+            <svg className="w-3 h-3 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         )}
       </div>
 
-      {/* Dropdown — absolutely positioned, max 5 results visible */}
+      {/* Dropdown results panel */}
       {showDropdown && (
         <div
           id={`${inputId}-results`}
           role="listbox"
-          className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 bg-white rounded-2xl overflow-hidden max-h-[340px] overflow-y-auto"
-          style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)' }}
+          className="search-dropdown"
         >
+          {/* Searching — shimmer skeleton */}
+          {isSearching && results.length === 0 && (
+            <div className="p-2.5 sm:p-3 space-y-2">
+              {[1, 2, 3].map(n => (
+                <div key={n} className="flex items-center gap-2.5 sm:gap-3 px-1">
+                  <div className="w-8 h-8 sm:w-[34px] sm:h-[34px] rounded-lg sm:rounded-[10px] search-skeleton shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="search-skeleton w-3/5 h-[12px]" />
+                    <div className="search-skeleton w-2/5 h-[10px]" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
-          {results.length > 0 ? (
-            <div className="py-1">
+          {/* Results list */}
+          {results.length > 0 && (
+            <div className="py-1 sm:py-1.5">
               {results.map((r, i) => (
                 <button
                   key={`${r.type}-${r.id}`}
@@ -115,41 +134,70 @@ function SearchBar({ inputId, onNavigate }: { inputId: string; onNavigate: () =>
                   aria-selected={i === activeIndex}
                   type="button"
                   onClick={() => selectResult(r)}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors duration-75 mx-0 ${
-                    i === activeIndex ? 'bg-brand-soft/30' : 'hover:bg-muted/60'
-                  }`}
+                  className="search-result"
                 >
-                  <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
-                    r.type === 'category' ? 'bg-brand-soft/60 text-brand' : 'bg-muted text-muted'
+                  {/* Type icon */}
+                  <div className={`search-result-icon ${
+                    r.type === 'category' ? 'search-result-icon--category' : 'search-result-icon--service'
                   }`}>
                     {r.type === 'category' ? (
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                       </svg>
                     ) : (
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                     )}
                   </div>
+
+                  {/* Text content */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-[.8rem] font-medium text-primary truncate">{r.title}</p>
-                    <p className="text-[.65rem] text-muted truncate">{r.subtitle}</p>
+                    <p className="text-[.8rem] sm:text-[.82rem] font-semibold text-primary truncate leading-tight">{r.title}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[.62rem] sm:text-[.65rem] text-text-muted truncate">{r.subtitle}</span>
+                      {r.rating && (
+                        <>
+                          <span className="text-[.5rem] text-text-muted">·</span>
+                          <span className="inline-flex items-center gap-0.5 text-[.62rem] sm:text-[.65rem] text-accent-strong font-semibold">
+                            <svg className="w-2.5 h-2.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            {r.rating}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Price badge */}
                   {r.price !== undefined && (
-                    <span className="text-[.75rem] font-semibold text-brand shrink-0">₹{r.price}</span>
+                    <span className="text-[.7rem] sm:text-[.75rem] font-bold text-brand bg-brand-soft/40 px-1.5 sm:px-2 py-0.5 rounded-full shrink-0">
+                      ₹{r.price}
+                    </span>
                   )}
+
+                  {/* Arrow indicator */}
+                  <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-text-muted/50 shrink-0 hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               ))}
             </div>
-          ) : (
-            /* No results */
-            <div className="px-4 py-5 text-center">
-              <svg className="w-8 h-8 mx-auto mb-2 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <p className="text-[.8rem] text-muted">No results for &ldquo;<span className="font-medium text-secondary">{query.trim()}</span>&rdquo;</p>
-              <p className="text-[.65rem] text-muted mt-0.5">Try a different search term</p>
+          )}
+
+          {/* Empty state */}
+          {!isSearching && results.length === 0 && (
+            <div className="px-4 py-6 sm:px-5 sm:py-7 text-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2.5 sm:mb-3 rounded-full bg-muted flex items-center justify-center">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <p className="text-[.8rem] sm:text-[.82rem] font-semibold text-secondary">No results found</p>
+              <p className="text-[.65rem] sm:text-[.7rem] text-text-muted mt-1">
+                No match for &ldquo;<span className="font-medium text-primary">{query.trim()}</span>&rdquo;. Try another term.
+              </p>
             </div>
           )}
         </div>
