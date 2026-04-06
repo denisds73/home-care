@@ -9,6 +9,8 @@ import {
   type LoginFormData,
   type SignupFormData,
 } from '../../lib/auth'
+import { otpService } from '../../services/otpService'
+import { ResendTimer } from '../../components/booking/ResendTimer'
 
 type Tab = 'login' | 'signup'
 
@@ -121,6 +123,13 @@ export default function LoginPage() {
   const [showSignupPw, setShowSignupPw] = useState(false)
   const [showSignupConfirmPw, setShowSignupConfirmPw] = useState(false)
 
+  // Phone OTP verification state
+  const [otpSent, setOtpSent] = useState(false)
+  const [otpValue, setOtpValue] = useState('')
+  const [phoneVerified, setPhoneVerified] = useState(false)
+  const [otpLoading, setOtpLoading] = useState(false)
+  const [otpError, setOtpError] = useState('')
+
   // Shared state
   const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -134,6 +143,10 @@ export default function LoginPage() {
     setTouched({})
     setFieldErrors({})
     setServerError('')
+    setOtpSent(false)
+    setOtpValue('')
+    setPhoneVerified(false)
+    setOtpError('')
   }, [])
 
   /* ── Login handlers ── */
@@ -187,6 +200,12 @@ export default function LoginPage() {
     if (fieldErrors[field]) {
       setFieldErrors((prev) => { const copy = { ...prev }; delete copy[field]; return copy })
     }
+    if (field === 'phone') {
+      setPhoneVerified(false)
+      setOtpSent(false)
+      setOtpValue('')
+      setOtpError('')
+    }
   }
 
   const handleSignupBlur = (field: keyof SignupFormData) => {
@@ -210,13 +229,17 @@ export default function LoginPage() {
       el?.focus()
       return
     }
+    if (!phoneVerified) {
+      setFieldErrors(prev => ({ ...prev, phone: 'Please verify your phone number' }))
+      return
+    }
     setIsSubmitting(true)
     try {
       await signup({
         name: signupData.name,
         email: signupData.email,
         password: signupData.password,
-        phone: signupData.phone || undefined,
+        phone: signupData.phone,
       })
       showToast('Account created!', 'success')
       navigate('/app')
@@ -225,6 +248,54 @@ export default function LoginPage() {
       setServerError(message)
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  /* ── Phone OTP helpers ── */
+
+  const isPhoneValid = /^[6-9]\d{9}$/.test(signupData.phone)
+
+  const handleSendOtp = async () => {
+    if (!isPhoneValid) return
+    setOtpLoading(true)
+    setOtpError('')
+    try {
+      await otpService.sendOtp(signupData.phone)
+      setOtpSent(true)
+      showToast('OTP sent to your phone', 'success')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to send OTP'
+      setOtpError(message)
+    } finally {
+      setOtpLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async () => {
+    if (otpValue.length !== 6) return
+    setOtpLoading(true)
+    setOtpError('')
+    try {
+      await otpService.verifyOtp(signupData.phone, otpValue)
+      setPhoneVerified(true)
+      setOtpSent(false)
+      showToast('Phone verified!', 'success')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Invalid OTP'
+      setOtpError(message)
+    } finally {
+      setOtpLoading(false)
+    }
+  }
+
+  const handleResendOtp = async () => {
+    setOtpError('')
+    try {
+      await otpService.sendOtp(signupData.phone)
+      showToast('OTP resent', 'success')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to resend'
+      setOtpError(message)
     }
   }
 
@@ -434,25 +505,109 @@ export default function LoginPage() {
                   <FieldError field="email" />
                 </div>
 
-                {/* Phone */}
+                {/* Phone with inline OTP verification */}
                 <div className="flex flex-col gap-1">
-                  <label htmlFor="signup-phone" className="text-xs font-semibold text-secondary">Phone number <span className="text-muted font-normal">(optional)</span></label>
+                  <label htmlFor="signup-phone" className="text-xs font-semibold text-secondary">
+                    Phone number <span className="text-error">*</span>
+                  </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden="true">{PhoneIcon}</span>
                     <input
                       id="signup-phone"
                       type="tel"
+                      required
+                      maxLength={10}
+                      inputMode="numeric"
                       value={signupData.phone}
-                      onChange={(e) => handleSignupChange('phone', e.target.value)}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '')
+                        handleSignupChange('phone', digits)
+                      }}
                       onBlur={() => handleSignupBlur('phone')}
-                      placeholder="+91 98765 43210"
-                      className={fieldCls('phone')}
+                      placeholder="10-digit mobile number"
+                      className={`input-base w-full pl-9 ${phoneVerified ? 'pr-10' : isPhoneValid && !phoneVerified ? 'pr-20' : 'pr-4'} py-3 text-sm${touched.phone && fieldErrors.phone ? ' field-invalid' : phoneVerified ? ' field-valid' : ''}`}
                       autoComplete="tel"
+                      disabled={phoneVerified}
                       aria-invalid={touched.phone && !!fieldErrors.phone}
                       aria-describedby={fieldErrors.phone ? 'signup-phone-error' : undefined}
                     />
+                    {/* Verified badge */}
+                    {phoneVerified && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-success fade-in" title="Phone verified">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </span>
+                    )}
+                    {/* Verify button — shown when phone is valid but not yet verified or OTP sent */}
+                    {isPhoneValid && !phoneVerified && !otpSent && (
+                      <button
+                        type="button"
+                        onClick={handleSendOtp}
+                        disabled={otpLoading}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[.7rem] font-semibold text-brand hover:text-brand-dark transition-colors disabled:opacity-50 bg-brand-soft px-2.5 py-1 rounded-lg fade-in"
+                      >
+                        {otpLoading ? 'Sending...' : 'Verify'}
+                      </button>
+                    )}
                   </div>
                   <FieldError field="phone" />
+                  {/* Change number link when verified */}
+                  {phoneVerified && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPhoneVerified(false)
+                        setOtpSent(false)
+                        setOtpValue('')
+                        setOtpError('')
+                      }}
+                      className="text-xs text-brand font-medium hover:underline mt-0.5 self-start"
+                    >
+                      Change number
+                    </button>
+                  )}
+
+                  {/* Inline OTP input — shown after OTP is sent */}
+                  {otpSent && !phoneVerified && (
+                    <div className="mt-2 p-3 bg-muted rounded-xl border border-default fade-in">
+                      <p className="text-xs text-secondary mb-2">
+                        Enter the 6-digit code sent to <span className="font-semibold text-primary">{signupData.phone}</span>
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          value={otpValue}
+                          onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, '')
+                            setOtpValue(digits)
+                            setOtpError('')
+                          }}
+                          placeholder="000000"
+                          className={`input-base flex-1 px-3 py-2.5 text-sm text-center tracking-[.3em] font-mono font-bold${otpError ? ' field-invalid' : ''}`}
+                          autoFocus
+                          aria-label="OTP code"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleVerifyOtp}
+                          disabled={otpValue.length !== 6 || otpLoading}
+                          className="btn-base btn-primary px-4 py-2.5 text-sm font-semibold disabled:opacity-50 shrink-0"
+                        >
+                          {otpLoading ? (
+                            <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                          ) : 'Confirm'}
+                        </button>
+                      </div>
+                      {otpError && <p className="text-xs text-error mt-1.5 fade-in">{otpError}</p>}
+                      <ResendTimer onResend={handleResendOtp} durationSeconds={30} maxResends={3} />
+                    </div>
+                  )}
                 </div>
 
                 {/* Password */}

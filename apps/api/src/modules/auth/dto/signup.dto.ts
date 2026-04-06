@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { Role } from '@/database/entities';
 
 export class SignupDto {
@@ -15,10 +15,9 @@ export class SignupDto {
   @MinLength(6)
   password!: string;
 
-  @IsOptional()
   @IsString()
-  @MaxLength(20)
-  phone?: string;
+  @Matches(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number' })
+  phone!: string;
 
   @IsOptional()
   @IsEnum(Role)

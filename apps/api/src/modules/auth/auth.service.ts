@@ -9,6 +9,7 @@ import { UsersService } from '@/modules/users/users.service';
 import { UserEntity, Role } from '@/database/entities';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
+import { OtpService } from './otp.service';
 
 const BCRYPT_SALT_ROUNDS = 12;
 
@@ -22,6 +23,7 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly otpService: OtpService,
   ) {}
 
   async signup(dto: SignupDto): Promise<AuthResponse> {
@@ -71,6 +73,16 @@ export class AuthService {
 
     const { password_hash: _, ...userWithoutPassword } = user;
     return { user: userWithoutPassword };
+  }
+
+  async sendOtp(phone: string): Promise<{ message: string }> {
+    this.otpService.generate(phone);
+    return { message: 'OTP sent successfully' };
+  }
+
+  async verifyOtp(phone: string, otp: string): Promise<{ verified: boolean }> {
+    this.otpService.verify(phone, otp);
+    return { verified: true };
   }
 
   private generateToken(user: UserEntity): string {

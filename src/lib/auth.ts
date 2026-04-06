@@ -27,9 +27,8 @@ export const signupSchema = z
     email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
     phone: z
       .string()
-      .regex(/^\+?\d{10,15}$/, 'Enter a valid phone number')
-      .optional()
-      .or(z.literal('')),
+      .min(1, 'Phone number is required')
+      .regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit Indian mobile number'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
   })
