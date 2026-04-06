@@ -2,7 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import { useAuthStore } from '../../store/useAuthStore'
+import { useLocationStore } from '../../store/useLocationStore'
+import { useUIStore } from '../../store/useUIStore'
 import { NavbarCategoryChips } from './NavbarCategoryChips'
+import { LocationPicker } from '../location/LocationPicker'
 import { useServiceSearch, type SearchResult } from '../../hooks/useServiceSearch'
 
 function getInitials(name: string): string {
@@ -214,6 +217,10 @@ export function Navbar() {
   const toggleCartDrawer = useStore(s => s.toggleCartDrawer)
   const showToast = useStore(s => s.showToast)
   const cartCount = useStore(s => s.getCartCount())
+  const location = useLocationStore(s => s.location)
+  const locationStatus = useLocationStore(s => s.status)
+  const detectCurrentLocation = useLocationStore(s => s.detectCurrentLocation)
+  const setLocationPickerOpen = useUIStore(s => s.setLocationPickerOpen)
   const [scrolled, setScrolled] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const prevCartRef = useRef(cartCount)
@@ -253,6 +260,13 @@ export function Navbar() {
       document.getElementById('navbar-search-mobile')?.focus()
     })
   }, [mobileSearchOpen])
+
+  // Auto-detect location on first visit
+  useEffect(() => {
+    if (!location && locationStatus === 'idle') {
+      detectCurrentLocation()
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false)
   const avatarMenuRef = useRef<HTMLDivElement>(null)
@@ -307,6 +321,7 @@ export function Navbar() {
             {/* Location selector — all screens, styled differently */}
             <button
               type="button"
+              onClick={() => setLocationPickerOpen(true)}
               className="flex items-center gap-1.5 min-w-0 px-1 py-1 rounded-xl hover:bg-muted transition-colors duration-150"
               aria-label="Change location"
             >
@@ -316,12 +331,20 @@ export function Navbar() {
               </svg>
               <div className="leading-tight text-left min-w-0">
                 <div className="flex items-center gap-1">
-                  <p className="text-[.8rem] font-semibold text-primary truncate">Koramangala</p>
-                  <svg className="w-3.5 h-3.5 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
+                  <p className="text-[.8rem] font-semibold text-primary truncate">
+                    {locationStatus === 'detecting' ? 'Detecting...' : location?.label ?? 'Set Location'}
+                  </p>
+                  {locationStatus === 'detecting' ? (
+                    <div className="w-3 h-3 shrink-0 border-[1.5px] border-brand border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-3.5 h-3.5 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  )}
                 </div>
-                <p className="hidden sm:block text-[.65rem] text-muted max-w-[160px] truncate">Bangalore, 5th Block</p>
+                <p className="hidden sm:block text-[.65rem] text-muted max-w-[160px] truncate">
+                  {location?.fullAddress ?? 'Tap to set location'}
+                </p>
               </div>
             </button>
           </div>
@@ -518,6 +541,9 @@ export function Navbar() {
           </div>
         </>
       )}
+
+      {/* Location picker modal */}
+      <LocationPicker />
     </>
   )
 }

@@ -6,6 +6,7 @@ interface UIStore {
   detailSheetOpen: boolean
   detailServiceId: number | null
   accountSheetOpen: boolean
+  locationPickerOpen: boolean
   toast: ToastState | null
 
   toggleCartDrawer: () => void
@@ -13,6 +14,7 @@ interface UIStore {
   closeDetailSheet: () => void
   showToast: (msg: string, type?: ToastType) => void
   setAccountSheetOpen: (open: boolean) => void
+  setLocationPickerOpen: (open: boolean) => void
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -20,12 +22,14 @@ export const useUIStore = create<UIStore>((set) => ({
   detailSheetOpen: false,
   detailServiceId: null,
   accountSheetOpen: false,
+  locationPickerOpen: false,
   toast: null,
   
   toggleCartDrawer: () => set(s => ({ cartDrawerOpen: !s.cartDrawerOpen })),
   openDetailSheet: (id) => set({ detailSheetOpen: true, detailServiceId: id }),
   closeDetailSheet: () => set({ detailSheetOpen: false }),
   setAccountSheetOpen: (open) => set({ accountSheetOpen: open }),
+  setLocationPickerOpen: (open) => set({ locationPickerOpen: open }),
 
   showToast: (msg, type = 'info') => {
     set({ toast: { msg, type } })

@@ -184,3 +184,13 @@ export interface PayoutRequest {
   requestedAt: string
   processedAt?: string
 }
+
+export interface LocationData {
+  label: string
+  fullAddress: string
+  lat: number
+  lng: number
+  placeId: string | null
+}
+
+export type LocationStatus = 'idle' | 'detecting' | 'resolved' | 'denied' | 'error'

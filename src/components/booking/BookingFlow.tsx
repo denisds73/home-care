@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import { useAuthStore } from '../../store/useAuthStore'
 import { bookingService } from '../../services/bookingService'
+import { useLocationStore } from '../../store/useLocationStore'
 import { CATEGORIES } from '../../data/categories'
 import { CONVENIENCE_FEE, GST_RATE } from '../../data/services'
 import type { PaymentMode, PaymentStatus, TimeSlot } from '../../types/domain'
@@ -58,6 +59,7 @@ function Step1({
   const cart = useStore(s => s.cart)
   const getCartTotal = useStore(s => s.getCartTotal)
   const getCartCount = useStore(s => s.getCartCount)
+  const savedLocation = useLocationStore(s => s.location)
   const [errors, setErrors] = useState<Record<string, string | undefined>>({})
   const [selectedSlot, setSelectedSlot] = useState(booking.time_slot || '')
 
@@ -131,6 +133,15 @@ function Step1({
             className={`input-base w-full px-4 py-2.5 text-sm ${errors.address ? 'border-red-400 ring-2 ring-red-100' : ''}`}
             placeholder="Enter your complete address" />
           {errors.address && <p className="text-xs text-error mt-1">{errors.address}</p>}
+          {savedLocation && booking.address !== savedLocation.fullAddress && (
+            <button
+              type="button"
+              onClick={() => setBooking(b => ({ ...b, address: savedLocation.fullAddress }))}
+              className="text-xs text-brand font-medium mt-1 hover:underline"
+            >
+              Use saved location
+            </button>
+          )}
         </div>
         <DatePicker
           id="booking-date"
@@ -316,7 +327,7 @@ export default function BookingFlow() {
     return {
       name: user?.name ?? '',
       phone: user?.phone ?? '',
-      address: '',
+      address: useLocationStore.getState().location?.fullAddress ?? '',
       date: '',
       time_slot: '',
     }
@@ -346,8 +357,8 @@ export default function BookingFlow() {
     customer_name: booking.name ?? '',
     phone: booking.phone ?? '',
     address: booking.address ?? '',
-    lat: 12.9716,
-    lng: 77.5946,
+    lat: useLocationStore.getState().location?.lat ?? 12.9716,
+    lng: useLocationStore.getState().location?.lng ?? 77.5946,
     category: cart[0]?.service.category ?? '',
     service_id: cart[0]?.service.id,
     service_name: cart.map(c => c.service.service_name).join(', '),
