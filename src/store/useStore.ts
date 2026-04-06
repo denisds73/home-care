@@ -12,6 +12,8 @@ import type {
   CategoryMeta,
   NewBookingPayload,
   Service,
+  ToastAction,
+  ToastItem,
   ToastState,
   ToastType,
 } from '../types/domain'
@@ -63,7 +65,9 @@ interface Store {
   openDetailSheet: (id: number) => void
   closeDetailSheet: () => void
   toast: ToastState | null
-  showToast: (msg: string, type?: ToastType) => void
+  toasts: ToastItem[]
+  showToast: (msg: string, type?: ToastType, action?: ToastAction) => void
+  dismissToast: (id: string) => void
 }
 
 const useStore = create<Store>()((set, get) => ({
@@ -195,9 +199,22 @@ const useStore = create<Store>()((set, get) => ({
   closeDetailSheet: () => set({ detailSheetOpen: false }),
 
   toast: null,
-  showToast: (msg, type = 'info') => {
-    set({ toast: { msg, type } })
-    setTimeout(() => set({ toast: null }), 3500)
+  toasts: [],
+  showToast: (msg, type = 'info', action?) => {
+    const duration = type === 'danger' ? 5000 : type === 'warning' ? 4000 : 3000
+    const id = `t-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+    const item: ToastItem = { id, msg, type, action, duration, createdAt: Date.now() }
+    set(s => ({
+      toast: { msg, type },
+      toasts: [...s.toasts.slice(-4), item], // max 5 visible
+    }))
+    setTimeout(() => get().dismissToast(id), duration)
+  },
+  dismissToast: (id) => {
+    set(s => {
+      const toasts = s.toasts.filter(t => t.id !== id)
+      return { toasts, toast: toasts.length ? { msg: toasts[toasts.length - 1].msg, type: toasts[toasts.length - 1].type } : null }
+    })
   },
 }))
 

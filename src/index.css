@@ -594,6 +594,20 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); } 20%, 40%, 60%, 80% { transform: translateX(4px); } }
 
+/* Toast animations */
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateY(-16px) scale(0.92); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastSlideOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-12px) scale(0.92); }
+}
+@keyframes toastRingDrain {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: 69.115; } /* 2 * PI * 11 */
+}
+
 .fade-in { animation: fadeIn .3s ease-out; }
 .slide-up { animation: slideUp .3s ease-out; }
 .scale-in { animation: scaleIn .2s ease-out; }

@@ -120,9 +120,23 @@ export interface CategoryMeta {
   color: string
 }
 
+export interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
 export interface ToastState {
   msg: string
   type: ToastType
+}
+
+export interface ToastItem {
+  id: string
+  msg: string
+  type: ToastType
+  action?: ToastAction
+  duration: number
+  createdAt: number
 }
 
 export interface Partner {
