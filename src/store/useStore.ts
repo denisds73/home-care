@@ -154,19 +154,23 @@ const useStore = create<Store>()((set, get) => ({
   addToCart: (serviceId) => {
     const svc = get().services.find(s => s.id === serviceId)
     if (!svc) return
-    const cart = [...get().cart]
-    const existing = cart.find(c => c.service.id === serviceId)
-    if (existing) existing.qty++
-    else cart.push({ service: svc, qty: 1 })
-    set({ cart })
+    const cart = get().cart
+    const exists = cart.some(c => c.service.id === serviceId)
+    if (exists) {
+      set({ cart: cart.map(c => c.service.id === serviceId ? { ...c, qty: c.qty + 1 } : c) })
+    } else {
+      set({ cart: [...cart, { service: svc, qty: 1 }] })
+    }
   },
   removeFromCart: (serviceId) => {
-    const cart = [...get().cart]
-    const idx = cart.findIndex(c => c.service.id === serviceId)
-    if (idx === -1) return
-    if (cart[idx].qty > 1) cart[idx].qty--
-    else cart.splice(idx, 1)
-    set({ cart })
+    const cart = get().cart
+    const item = cart.find(c => c.service.id === serviceId)
+    if (!item) return
+    if (item.qty > 1) {
+      set({ cart: cart.map(c => c.service.id === serviceId ? { ...c, qty: c.qty - 1 } : c) })
+    } else {
+      set({ cart: cart.filter(c => c.service.id !== serviceId) })
+    }
   },
   removeItemFromCart: (serviceId) => set({ cart: get().cart.filter(c => c.service.id !== serviceId) }),
   clearCart: () => set({ cart: [] }),

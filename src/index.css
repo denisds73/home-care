@@ -239,9 +239,7 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
   transition: background 0.2s ease, box-shadow 0.2s ease, backdrop-filter 0.2s ease;
 }
 .nav-shell--scrolled {
-  background: color-mix(in srgb, var(--color-background) 88%, transparent);
-  backdrop-filter: blur(12px) saturate(1.4);
-  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  background: var(--color-background);
   box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
 }
 
@@ -482,6 +480,91 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
   height: 6px;
   border-radius: 50%;
   background: var(--color-primary);
+}
+
+/* ====== CART ====== */
+
+/* Backdrop fade */
+@keyframes cartBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Cart item card */
+.cart-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  transition: box-shadow 0.2s ease;
+}
+@media (min-width: 640px) {
+  .cart-item {
+    gap: 12px;
+    padding: 12px;
+  }
+}
+.cart-item:hover {
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Staggered item entry — reuses existing fadeIn keyframe */
+.cart-item-enter {
+  animation: fadeIn 0.3s ease-out both;
+}
+
+/* Remove button */
+.cart-remove-btn {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 0;
+  transition: color 0.15s ease;
+}
+.cart-remove-btn:hover {
+  color: var(--color-error);
+}
+
+/* Empty state icon */
+.cart-empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary-soft) 0%, color-mix(in srgb, var(--color-primary-soft) 60%, #fff) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pricing footer */
+.cart-footer {
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: 16px;
+}
+@media (min-width: 768px) {
+  .cart-footer { padding: 20px; }
+}
+
+/* Floating cart bar — glassmorphism */
+@keyframes cartBarSlideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.cart-bar {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.08);
+  animation: cartBarSlideUp 0.3s ease-out;
 }
 
 /* Detail sheet inclusions */
