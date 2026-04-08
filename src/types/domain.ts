@@ -15,7 +15,34 @@ export type PaymentMode = 'PAY_NOW' | 'PAY_AFTER_SERVICE'
 export type PaymentStatus = 'SUCCESS' | 'FAILED' | 'PENDING'
 
 // ─── Role & Booking lifecycle contract ────────────────────────────
-export type Role = 'customer' | 'vendor' | 'admin'
+export type Role = 'customer' | 'vendor' | 'technician' | 'admin'
+
+export type TechnicianStatus = 'active' | 'inactive' | 'on_leave'
+
+export interface Technician {
+  id: string
+  vendor_id: string
+  full_name: string
+  phone: string
+  email: string
+  skills: CategoryId[]
+  status: TechnicianStatus
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateTechnicianPayload {
+  full_name: string
+  phone: string
+  email: string
+  password: string
+  skills: CategoryId[]
+  status?: TechnicianStatus
+}
+
+export type UpdateTechnicianPayload = Partial<
+  Omit<CreateTechnicianPayload, 'password'>
+>
 
 export type BookingStatus =
   | 'pending'
@@ -127,6 +154,9 @@ export interface Booking {
   cancelled_at?: string | null
   created_at: string
   updated_at: string
+  technician_id?: string | null
+  completion_otp?: string | null
+  completion_otp_expires_at?: string | null
 }
 
 /** Payload sent to POST /bookings — matches backend CreateBookingDto */
@@ -203,6 +233,7 @@ export interface User {
   paymentMethods?: PaymentMethod[]
   preferences?: UserPreferences
   vendor_id?: string | null
+  technician_id?: string | null
 }
 
 export interface CartLine {

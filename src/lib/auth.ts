@@ -7,12 +7,14 @@ export const TOKEN_KEY = 'homecare_token'
 export const LOGIN_ROUTES: Record<Role, string> = {
   customer: '/login',
   vendor: '/vendor/login',
+  technician: '/technician/login',
   admin: '/admin/login',
 }
 
 export const DASHBOARD_ROUTES: Record<Role, string> = {
   customer: '/app',
   vendor: '/vendor',
+  technician: '/technician',
   admin: '/admin',
 }
 

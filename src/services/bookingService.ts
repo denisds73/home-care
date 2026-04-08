@@ -122,12 +122,38 @@ export const bookingService = {
     return res.data
   },
 
-  complete: async (id: string): Promise<Booking> => {
+  complete: async (
+    id: string,
+    opts?: { otp?: string },
+  ): Promise<Booking> => {
+    const body = opts?.otp ? { otp: opts.otp } : {}
     const res = await api.post<Envelope<Booking>>(
       `/bookings/${id}/complete`,
-      {},
+      body,
     )
     return res.data
+  },
+
+  assignTechnician: async (
+    id: string,
+    technician_id: string,
+    note?: string,
+  ): Promise<Booking> => {
+    const res = await api.post<Envelope<Booking>>(
+      `/bookings/${id}/assign-technician`,
+      { technician_id, note },
+    )
+    return res.data
+  },
+
+  listForTechnician: async (query?: {
+    status?: BookingStatus
+  }): Promise<Booking[]> => {
+    const qs = toQuery({ status: query?.status })
+    const res = await api.get<Envelope<Booking[]>>(
+      `/technician/bookings${qs}`,
+    )
+    return res.data ?? []
   },
 
   // ----- Reviews -----
