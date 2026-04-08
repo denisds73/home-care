@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { bookingService } from '../../services/bookingService'
 import { StatusBadge } from '../../components/bookings/StatusBadge'
@@ -14,6 +14,43 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'completed', label: 'Completed' },
   { key: 'rejected', label: 'Rejected' },
 ]
+
+const VendorRequestCard = memo(function VendorRequestCard({
+  booking,
+}: {
+  booking: Booking
+}) {
+  return (
+    <Link
+      to={`/vendor/requests/${booking.booking_id}`}
+      className="glass-card p-4 block hover:shadow-md transition-shadow"
+      aria-label={`Open request ${booking.booking_id.slice(0, 8)}`}
+    >
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-primary truncate">
+            {booking.service_name}
+          </p>
+          <p className="text-xs text-muted mt-0.5">
+            #{booking.booking_id.slice(0, 8)} · {booking.customer_name}
+          </p>
+          <p className="text-xs text-secondary mt-1 truncate">
+            {booking.address}
+          </p>
+          <p className="text-xs text-secondary mt-1">
+            {formatDate(booking.preferred_date)} · {booking.time_slot}
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <StatusBadge status={booking.booking_status} />
+          <span className="font-brand font-bold text-brand text-base">
+            ₹{booking.price.toLocaleString('en-IN')}
+          </span>
+        </div>
+      </div>
+    </Link>
+  )
+})
 
 export default function VendorRequestsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -87,39 +124,20 @@ export default function VendorRequestsPage() {
         </div>
       ) : items.length === 0 ? (
         <div className="glass-card p-8 text-center">
-          <p className="text-sm text-muted">No requests in this category.</p>
+          <p className="text-sm text-muted">
+            No requests in this category.
+            {tab === 'assigned' && (
+              <>
+                {' '}
+                New assignments from admin will appear here.
+              </>
+            )}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
           {items.map((b) => (
-            <Link
-              key={b.booking_id}
-              to={`/vendor/requests/${b.booking_id}`}
-              className="glass-card p-4 block hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start justify-between gap-3 flex-wrap">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-primary truncate">
-                    {b.service_name}
-                  </p>
-                  <p className="text-xs text-muted mt-0.5">
-                    #{b.booking_id} · {b.customer_name}
-                  </p>
-                  <p className="text-xs text-secondary mt-1 truncate">
-                    {b.address}
-                  </p>
-                  <p className="text-xs text-secondary mt-1">
-                    {formatDate(b.preferred_date)} · {b.time_slot}
-                  </p>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <StatusBadge status={b.booking_status} />
-                  <span className="font-brand font-bold text-brand text-base">
-                    ₹{b.price.toLocaleString('en-IN')}
-                  </span>
-                </div>
-              </div>
-            </Link>
+            <VendorRequestCard key={b.booking_id} booking={b} />
           ))}
         </div>
       )}

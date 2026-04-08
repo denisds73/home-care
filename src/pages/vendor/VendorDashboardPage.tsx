@@ -90,6 +90,17 @@ export default function VendorDashboardPage() {
         ))}
       </div>
 
+      {!isLoading && !error && bookings.length === 0 && (
+        <div className="glass-card p-8 text-center">
+          <h2 className="font-brand text-base font-bold text-primary">
+            No requests yet
+          </h2>
+          <p className="text-muted text-sm mt-2">
+            Once an admin assigns bookings to your team they will appear here.
+          </p>
+        </div>
+      )}
+
       <div className="glass-card p-4 md:p-6">
         <h2 className="font-brand text-base font-bold text-primary mb-3">
           Quick actions

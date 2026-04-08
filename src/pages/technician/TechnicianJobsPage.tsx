@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { bookingService } from '../../services/bookingService'
 import { StatusBadge } from '../../components/bookings/StatusBadge'
@@ -12,6 +12,47 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'in_progress', label: 'In Progress' },
   { id: 'completed', label: 'Completed' },
 ]
+
+const TechnicianJobCard = memo(function TechnicianJobCard({
+  booking: b,
+}: {
+  booking: Booking
+}) {
+  return (
+    <Link
+      to={`/technician/jobs/${b.booking_id}`}
+      className="glass-card p-4 block hover:shadow-md transition-shadow"
+      aria-label={`Open job ${b.booking_id.slice(0, 8)}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-brand text-sm font-bold text-primary truncate">
+            {b.service_name}
+          </p>
+          <p className="text-xs text-muted mt-0.5">{b.customer_name}</p>
+        </div>
+        <StatusBadge status={b.booking_status} />
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted">
+        <p>
+          <span className="text-[10px] uppercase tracking-wider">When</span>
+          <br />
+          <span className="text-secondary font-medium">
+            {formatDate(b.preferred_date)} · {b.time_slot}
+          </span>
+        </p>
+        <p className="text-right">
+          <span className="text-[10px] uppercase tracking-wider">Amount</span>
+          <br />
+          <span className="font-brand font-bold text-brand">
+            ₹{b.price.toLocaleString('en-IN')}
+          </span>
+        </p>
+      </div>
+      <p className="text-xs text-muted mt-2 truncate">{b.address}</p>
+    </Link>
+  )
+})
 
 export default function TechnicianJobsPage() {
   const [tab, setTab] = useState<Tab>('accepted')
@@ -95,42 +136,7 @@ export default function TechnicianJobsPage() {
       ) : (
         <div className="space-y-3">
           {items.map((b) => (
-            <Link
-              key={b.booking_id}
-              to={`/technician/jobs/${b.booking_id}`}
-              className="glass-card p-4 block hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="font-brand text-sm font-bold text-primary truncate">
-                    {b.service_name}
-                  </p>
-                  <p className="text-xs text-muted mt-0.5">{b.customer_name}</p>
-                </div>
-                <StatusBadge status={b.booking_status} />
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted">
-                <p>
-                  <span className="text-[10px] uppercase tracking-wider">
-                    When
-                  </span>
-                  <br />
-                  <span className="text-secondary font-medium">
-                    {formatDate(b.preferred_date)} · {b.time_slot}
-                  </span>
-                </p>
-                <p className="text-right">
-                  <span className="text-[10px] uppercase tracking-wider">
-                    Amount
-                  </span>
-                  <br />
-                  <span className="font-brand font-bold text-brand">
-                    ₹{b.price.toLocaleString('en-IN')}
-                  </span>
-                </p>
-              </div>
-              <p className="text-xs text-muted mt-2 truncate">{b.address}</p>
-            </Link>
+            <TechnicianJobCard key={b.booking_id} booking={b} />
           ))}
         </div>
       )}
