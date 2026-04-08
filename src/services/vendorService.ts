@@ -66,12 +66,12 @@ export const vendorService = {
 
   // Vendor self-service
   getMe: async (): Promise<Vendor> => {
-    const res = await api.get<Envelope<Vendor>>('/vendors/me')
+    const res = await api.get<Envelope<Vendor>>('/vendor/me')
     return res.data
   },
 
   updateMe: async (payload: UpdateVendorPayload): Promise<Vendor> => {
-    const res = await api.patch<Envelope<Vendor>>('/vendors/me', payload)
+    const res = await api.patch<Envelope<Vendor>>('/vendor/me', payload)
     return res.data
   },
 

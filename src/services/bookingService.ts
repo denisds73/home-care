@@ -61,7 +61,7 @@ export const bookingService = {
 
   listForVendor: async (query?: { status?: BookingStatus }): Promise<Booking[]> => {
     const qs = toQuery({ status: query?.status })
-    const res = await api.get<Envelope<Booking[]>>(`/vendors/me/bookings${qs}`)
+    const res = await api.get<Envelope<Booking[]>>(`/vendor/bookings${qs}`)
     return res.data ?? []
   },
 

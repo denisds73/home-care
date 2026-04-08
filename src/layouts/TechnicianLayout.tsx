@@ -79,7 +79,7 @@ export default function TechnicianLayout() {
   const logout = useAuthStore((s) => s.logout)
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col">
+    <div className="theme-partner min-h-screen bg-surface flex flex-col">
       <ScrollToTop />
 
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100">

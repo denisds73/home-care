@@ -21,6 +21,7 @@
 
   --color-success: #16A34A;
   --color-error: #DC2626;
+  --color-error-soft: #FEE2E2;
 
   /* Backward compatibility for existing classes */
   --color-secondary: var(--color-text-primary);
@@ -36,6 +37,8 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
 * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--color-border) transparent; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
 
 /* Core theme utility classes */
 .text-primary { color: var(--color-text-primary); }
@@ -172,6 +175,11 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
 /* Glass cards (clean white) */
 .glass-card { background: #fff; border: 1px solid #E5E7EB; box-shadow: 0 2px 12px rgba(0,0,0,.04); border-radius: 16px; }
 .glass-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.08); transform: translateY(-2px); transition: all .2s; }
+/* Opt-out of lift hover for non-interactive containers */
+.glass-card.no-hover:hover { box-shadow: 0 2px 12px rgba(0,0,0,.04); transform: none; }
+@media (hover: none) {
+  .glass-card.no-hover:hover { box-shadow: 0 2px 12px rgba(0,0,0,.04); transform: none; }
+}
 .glass-how { background: #fff; border: 1px solid #E5E7EB; border-radius: 20px; padding: 24px 16px; box-shadow: 0 2px 12px rgba(0,0,0,.04); transition: all .25s ease; }
 .glass-how:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
 .how-step-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,.04); transition: box-shadow .25s ease; }
@@ -684,24 +692,76 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
   body { padding: 0 !important; }
 }
 
-/* ── Role theme tinting ── */
+/* ── Role theme tinting ──
+   Partner (Vendor + Technician): calm field-ops clarity.
+   Teal primary over cool slate surfaces, practical hierarchy.
+   Admin: authoritative ops console.
+   Indigo primary over neutral surfaces, denser rhythm, metric-forward. */
 .theme-partner {
-  --color-primary: #0D9488;
+  --color-primary: #0F766E;
   --color-primary-light: #14B8A6;
-  --color-primary-dark: #0F766E;
+  --color-primary-dark: #134E4A;
   --color-primary-soft: #CCFBF1;
-  --color-accent: #F59E0B;
-  --color-accent-strong: #D97706;
-  --color-accent-soft: #FEF3C7;
+  --color-accent: #0EA5E9;
+  --color-accent-strong: #0369A1;
+  --color-accent-soft: #E0F2FE;
+  --color-surface: #F1F5F9;
+  --color-card: #FFFFFF;
+  --color-muted: #E2E8F0;
+  --color-border: #CBD5E1;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748B;
+  --sidebar-bg: #0F172A;
+  --topbar-bg: #FFFFFF;
+  --topbar-border: #CBD5E1;
 }
 .theme-admin {
   --color-primary: #4338CA;
   --color-primary-light: #6366F1;
-  --color-primary-dark: #3730A3;
+  --color-primary-dark: #312E81;
   --color-primary-soft: #E0E7FF;
-  --color-accent: #EC4899;
-  --color-accent-strong: #DB2777;
-  --color-accent-soft: #FCE7F3;
+  --color-accent: #4F46E5;
+  --color-accent-strong: #3730A3;
+  --color-accent-soft: #EEF2FF;
+  --color-surface: #F8FAFC;
+  --color-card: #FFFFFF;
+  --color-muted: #F1F5F9;
+  --color-border: #E2E8F0;
+  --color-text-primary: #0B1020;
+  --color-text-secondary: #3F3F46;
+  --color-text-muted: #71717A;
+  --sidebar-bg: #0B1020;
+  --topbar-bg: #FFFFFF;
+  --topbar-border: #E4E4E7;
+}
+
+/* Scoped surface overrides for role themes */
+.theme-partner .sidebar,
+.theme-partner .sidebar-mobile { background: var(--sidebar-bg); }
+.theme-admin .sidebar,
+.theme-admin .sidebar-mobile { background: var(--sidebar-bg); }
+.theme-partner .dashboard-topbar,
+.theme-admin .dashboard-topbar {
+  background: var(--topbar-bg);
+  border-bottom-color: var(--topbar-border);
+}
+.theme-partner .dashboard-content,
+.theme-admin .dashboard-content { background: var(--color-surface); }
+.theme-partner .stat-card,
+.theme-admin .stat-card {
+  background: var(--color-card);
+  border-color: var(--color-border);
+}
+.theme-admin .stat-card { border-radius: 10px; padding: 16px; }
+.theme-admin .dashboard-topbar { height: 52px; }
+.theme-partner .sidebar-item.active {
+  border-left-color: var(--color-primary-light);
+  background: rgba(20,184,166,.12);
+}
+.theme-admin .sidebar-item.active {
+  border-left-color: var(--color-primary-light);
+  background: rgba(99,102,241,.14);
 }
 
 /* ── Dashboard sidebar ── */
