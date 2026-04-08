@@ -2,26 +2,31 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddVendorUserLink1712400001000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Add 'vendor' to users_role_enum if not present
+    // Rebuild users_role_enum: drop 'partner', add 'vendor'.
+    // Postgres forbids using a freshly-added enum value inside the same
+    // transaction (error 55P04), so we recreate the type instead of
+    // ALTER TYPE ... ADD VALUE. This also cleanly removes the dormant
+    // 'partner' value.
     await queryRunner.query(`
-      DO $$ BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM pg_enum
-          WHERE enumtypid = 'users_role_enum'::regtype
-            AND enumlabel = 'vendor'
-        ) THEN
-          ALTER TYPE "users_role_enum" ADD VALUE 'vendor';
-        END IF;
-      END $$;
+      ALTER TYPE "users_role_enum" RENAME TO "users_role_enum_old";
     `);
-
-    // Migrate any existing partner-role users to vendor
     await queryRunner.query(`
-      UPDATE "users" SET "role" = 'vendor' WHERE "role" = 'partner';
+      CREATE TYPE "users_role_enum" AS ENUM ('customer', 'vendor', 'admin');
     `);
-
-    // Note: Postgres cannot easily drop a value from an enum. We leave
-    // 'partner' unused in the enum; application-level Role no longer uses it.
+    // Migrate existing partner users → vendor while switching column type.
+    await queryRunner.query(`
+      ALTER TABLE "users"
+        ALTER COLUMN "role" DROP DEFAULT,
+        ALTER COLUMN "role" TYPE "users_role_enum"
+          USING (
+            CASE "role"::text
+              WHEN 'partner' THEN 'vendor'
+              ELSE "role"::text
+            END
+          )::"users_role_enum",
+        ALTER COLUMN "role" SET DEFAULT 'customer';
+    `);
+    await queryRunner.query(`DROP TYPE "users_role_enum_old";`);
 
     // Add users.vendor_id column + FK
     await queryRunner.query(`
