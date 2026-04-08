@@ -23,6 +23,15 @@ export interface AdminBookingFilters {
   category?: string
   vendor_id?: string
   search?: string
+  page?: number
+  limit?: number
+}
+
+export interface Paginated<T> {
+  items: T[]
+  total: number
+  page: number
+  limit: number
 }
 
 function toQuery(filters?: Record<string, string | undefined>): string {
@@ -56,12 +65,22 @@ export const bookingService = {
     return res.data ?? []
   },
 
-  listForAdmin: async (filters?: AdminBookingFilters): Promise<Booking[]> => {
-    const qs = toQuery(filters as Record<string, string | undefined>)
-    const res = await api.get<
-      Envelope<{ items: Booking[]; total: number; page: number; limit: number }>
-    >(`/admin/bookings${qs}`)
-    return res.data?.items ?? []
+  listForAdmin: async (
+    filters?: AdminBookingFilters,
+  ): Promise<Paginated<Booking>> => {
+    const normalised: Record<string, string | undefined> = {}
+    if (filters) {
+      for (const [k, v] of Object.entries(filters)) {
+        normalised[k] = v === undefined || v === null ? undefined : String(v)
+      }
+    }
+    const qs = toQuery(normalised)
+    const res = await api.get<Envelope<Paginated<Booking>>>(
+      `/admin/bookings${qs}`,
+    )
+    return (
+      res.data ?? { items: [], total: 0, page: filters?.page ?? 1, limit: filters?.limit ?? 20 }
+    )
   },
 
   getById: async (id: string): Promise<Booking> => {

@@ -58,4 +58,12 @@ export const technicianService = {
     const res = await api.get<Envelope<Technician>>('/technician/me')
     return res.data
   },
+
+  // Admin: list technicians for any vendor (admin dispatch).
+  listForVendorAsAdmin: async (vendorId: string): Promise<Technician[]> => {
+    const res = await api.get<Envelope<Technician[]>>(
+      `/admin/vendors/${vendorId}/technicians`,
+    )
+    return res.data ?? []
+  },
 }

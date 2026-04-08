@@ -19,12 +19,12 @@ export default function AdminDashboardPage() {
     try {
       setIsLoading(true)
       setError(null)
-      const [statsRes, items] = await Promise.all([
+      const [statsRes, page] = await Promise.all([
         adminService.getDashboardStats(),
-        bookingService.listForAdmin(),
+        bookingService.listForAdmin({ page: 1, limit: 5 }),
       ])
       setStats(statsRes.data)
-      setRecentBookings(items.slice(0, 5))
+      setRecentBookings(page.items)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard data')
     } finally {

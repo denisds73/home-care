@@ -34,7 +34,7 @@ beforeEach(() => {
 })
 
 describe('bookingService.listForAdmin', () => {
-  it('unwraps the paginated envelope to items[]', async () => {
+  it('returns the full paginated envelope', async () => {
     mockedApi.get.mockResolvedValueOnce({
       success: true,
       data: {
@@ -45,14 +45,19 @@ describe('bookingService.listForAdmin', () => {
       },
     })
     const result = await bookingService.listForAdmin()
-    expect(result).toHaveLength(2)
-    expect(result[0].booking_id).toBe('b1')
+    expect(result.items).toHaveLength(2)
+    expect(result.total).toBe(2)
+    expect(result.page).toBe(1)
+    expect(result.limit).toBe(20)
   })
 
-  it('returns [] when data is missing or empty', async () => {
+  it('returns a safe empty envelope when data is missing', async () => {
     mockedApi.get.mockResolvedValueOnce({ success: true, data: null })
-    const result = await bookingService.listForAdmin()
-    expect(result).toEqual([])
+    const result = await bookingService.listForAdmin({ page: 3, limit: 50 })
+    expect(result.items).toEqual([])
+    expect(result.total).toBe(0)
+    expect(result.page).toBe(3)
+    expect(result.limit).toBe(50)
   })
 
   it('serialises filters into query string', async () => {
@@ -64,12 +69,16 @@ describe('bookingService.listForAdmin', () => {
       status: 'pending',
       category: 'ac',
       search: 'Demo',
+      page: 2,
+      limit: 10,
     })
     const calledWith = mockedApi.get.mock.calls[0][0] as string
     expect(calledWith).toContain('/admin/bookings')
     expect(calledWith).toContain('status=pending')
     expect(calledWith).toContain('category=ac')
     expect(calledWith).toContain('search=Demo')
+    expect(calledWith).toContain('page=2')
+    expect(calledWith).toContain('limit=10')
   })
 })
 
