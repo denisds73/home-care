@@ -12,7 +12,7 @@ export enum NotificationType {
   BOOKING = 'booking',
   PAYMENT = 'payment',
   SYSTEM = 'system',
-  PARTNER = 'partner',
+  VENDOR = 'vendor',
 }
 
 @Entity('notifications')

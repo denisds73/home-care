@@ -8,13 +8,16 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { UserEntity } from './user.entity';
+import { VendorEntity } from './vendor.entity';
 
 export enum BookingStatus {
-  PENDING = 'Pending',
-  CONFIRMED = 'Confirmed',
-  IN_PROGRESS = 'In Progress',
-  COMPLETED = 'Completed',
-  CANCELLED = 'Cancelled',
+  PENDING = 'pending',
+  ASSIGNED = 'assigned',
+  ACCEPTED = 'accepted',
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+  REJECTED = 'rejected',
 }
 
 export enum PaymentMode {
@@ -88,12 +91,27 @@ export class BookingEntity {
   @Column({ type: 'enum', enum: BookingStatus, default: BookingStatus.PENDING })
   booking_status!: BookingStatus;
 
-  @Column('uuid', { nullable: true })
-  partner_id?: string;
+  @Column({ type: 'uuid', nullable: true })
+  vendor_id?: string | null;
 
-  @ManyToOne(() => UserEntity, { nullable: true })
-  @JoinColumn({ name: 'partner_id' })
-  partner?: UserEntity;
+  @ManyToOne(() => VendorEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'vendor_id' })
+  vendor?: VendorEntity | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  assigned_at?: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  accepted_at?: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  started_at?: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  completed_at?: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  cancelled_at?: Date | null;
 
   @CreateDateColumn()
   created_at!: Date;
