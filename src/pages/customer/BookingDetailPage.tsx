@@ -124,6 +124,18 @@ export default function BookingDetailPage() {
 
   const canCancel = CANCELLABLE.has(booking.booking_status)
   const canReview = booking.booking_status === 'completed' && !review
+  const showOtp =
+    booking.booking_status === 'in_progress' && !!booking.completion_otp
+
+  const copyOtp = async () => {
+    if (!booking.completion_otp) return
+    try {
+      await navigator.clipboard.writeText(booking.completion_otp)
+      showToast('OTP copied', 'success')
+    } catch {
+      showToast('Could not copy OTP', 'danger')
+    }
+  }
 
   return (
     <main className="min-h-screen bg-surface">
@@ -177,6 +189,31 @@ export default function BookingDetailPage() {
             </div>
           )}
         </div>
+
+        {showOtp && (
+          <div className="glass-card p-5 border-l-4 border-success">
+            <h2 className="font-brand text-base font-bold text-primary">
+              Your completion code
+            </h2>
+            <p className="text-xs text-muted mt-1 mb-3">
+              Share this code with the technician when the job is finished.
+            </p>
+            <p
+              className="font-brand text-3xl md:text-4xl font-bold text-primary tracking-widest text-center py-3"
+              aria-label={`OTP ${booking.completion_otp}`}
+            >
+              {booking.completion_otp}
+            </p>
+            <button
+              type="button"
+              onClick={copyOtp}
+              className="btn-base btn-secondary text-xs px-4 py-2 min-h-[40px] mt-2"
+              aria-label="Copy completion code"
+            >
+              Copy code
+            </button>
+          </div>
+        )}
 
         <div className="glass-card p-5">
           <h2 className="font-brand text-base font-bold text-primary mb-4">
