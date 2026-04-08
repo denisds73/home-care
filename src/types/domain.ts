@@ -115,6 +115,44 @@ export type NewBookingPayload = Omit<Booking, 'booking_id'> & {
   razorpay_order_id?: string | null
 }
 
+export interface Address {
+  id: string
+  label: 'Home' | 'Work' | 'Other'
+  line1: string
+  line2?: string
+  city: string
+  state: string
+  pincode: string
+  landmark?: string
+  isDefault: boolean
+}
+
+export type PaymentMethodType = 'card' | 'upi'
+
+export type PaymentBrand = 'visa' | 'mastercard' | 'rupay' | 'amex'
+
+export interface PaymentMethod {
+  id: string
+  type: PaymentMethodType
+  label: string
+  last4?: string
+  brand?: PaymentBrand
+  upiId?: string
+  isDefault: boolean
+}
+
+export interface NotificationPrefs {
+  email: boolean
+  sms: boolean
+  push: boolean
+  marketing: boolean
+}
+
+export interface UserPreferences {
+  notifications: NotificationPrefs
+  language: 'en' | 'hi'
+}
+
 export interface User {
   id: string
   name: string
@@ -122,6 +160,12 @@ export interface User {
   phone?: string
   role: Role
   avatar?: string
+  dob?: string
+  gender?: 'male' | 'female' | 'other'
+  memberSince?: string
+  addresses?: Address[]
+  paymentMethods?: PaymentMethod[]
+  preferences?: UserPreferences
 }
 
 export interface CartLine {

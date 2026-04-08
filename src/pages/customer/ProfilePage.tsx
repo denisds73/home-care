@@ -1,114 +1,111 @@
+import { useEffect, useRef, useState } from 'react'
 import { useAuthStore } from '../../store/useAuthStore'
 import useStore from '../../store/useStore'
+import { userService } from '../../services/userService'
+import { ProfileHero } from '../../components/profile/ProfileHero'
+import { ProfileTabs, type TabId } from '../../components/profile/ProfileTabs'
+import { PersonalInfoSection } from '../../components/profile/PersonalInfoSection'
+import { AddressesSection } from '../../components/profile/AddressesSection'
+import { PaymentMethodsSection } from '../../components/profile/PaymentMethodsSection'
+import { PreferencesSection } from '../../components/profile/PreferencesSection'
+import { SecuritySection } from '../../components/profile/SecuritySection'
+import { ProfileSkeleton } from '../../components/profile/ProfileSkeleton'
 
 export default function ProfilePage() {
-  const user = useAuthStore(state => state.user)
-  const showToast = useStore(state => state.showToast)
+  const user = useAuthStore((s) => s.user)
+  const isLoading = useAuthStore((s) => s.isLoading)
+  const restoreSession = useAuthStore((s) => s.restoreSession)
+  const updateUser = useAuthStore((s) => s.updateUser)
+  const bookings = useStore((s) => s.bookings)
 
-  const avatarLetter = (user?.name ?? 'U')[0].toUpperCase()
+  const [activeTab, setActiveTab] = useState<TabId>('personal')
+  const hydratedRef = useRef(false)
+
+  useEffect(() => {
+    if (!user) {
+      void restoreSession()
+    }
+  }, [user, restoreSession])
+
+  useEffect(() => {
+    if (!user || hydratedRef.current) return
+    hydratedRef.current = true
+    ;(async () => {
+      const [addressesResult, paymentsResult] = await Promise.allSettled([
+        userService.listAddresses(),
+        userService.listPaymentMethods(),
+      ])
+      const patch: Parameters<typeof updateUser>[0] = {}
+      if (addressesResult.status === 'fulfilled') {
+        patch.addresses = addressesResult.value
+      }
+      if (paymentsResult.status === 'fulfilled') {
+        patch.paymentMethods = paymentsResult.value
+      }
+      if (Object.keys(patch).length > 0) {
+        updateUser(patch)
+      }
+    })()
+  }, [user, updateUser])
+
+  const handleEditClick = () => {
+    setActiveTab('personal')
+    if (typeof document !== 'undefined') {
+      setTimeout(() => {
+        document
+          .getElementById('personal-info-heading')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 0)
+    }
+  }
+
+  if (!user) {
+    return (
+      <main className="min-h-screen bg-surface pb-16">
+        <ProfileSkeleton />
+        {isLoading && <span className="sr-only">Loading profile…</span>}
+      </main>
+    )
+  }
+
+  const bookingsCount = bookings.filter(
+    (b) => b.customer_name === user.name || b.phone === user.phone,
+  ).length
+  const addressesCount = user.addresses?.length ?? 0
 
   return (
-    <main className="min-h-screen bg-surface">
-      <div className="max-w-xl mx-auto px-4 py-6 md:py-8">
-        <header className="mb-6">
-          <h1 className="font-brand text-2xl md:text-3xl font-bold text-primary">My Profile</h1>
-          <p className="text-muted text-sm mt-1">Manage your personal information</p>
-        </header>
-
-        {/* Avatar + identity */}
-        <div className="flex flex-col items-center gap-3 mb-8">
-          <div
-            className="w-20 h-20 rounded-full bg-brand-soft flex items-center justify-center"
-            aria-label={`Avatar for ${user?.name}`}
-          >
-            <span className="font-brand text-3xl font-bold text-brand">{avatarLetter}</span>
-          </div>
-          <div className="text-center">
-            <p className="font-brand text-lg font-semibold text-primary">{user?.name}</p>
-            <p className="text-sm text-muted">{user?.email}</p>
-          </div>
+    <main className="min-h-screen bg-surface pb-16">
+      <div className="max-w-5xl mx-auto px-4 md:px-6 pt-6 md:pt-10">
+        <div style={{ animationDelay: '0ms' }} className="slide-up">
+          <ProfileHero
+            user={user}
+            bookingsCount={bookingsCount}
+            addressesCount={addressesCount}
+            onEdit={handleEditClick}
+          />
         </div>
+      </div>
 
-        {/* Profile details (read-only) */}
-        {/* TODO: Wire to user self-update endpoint when backend supports PATCH /users/me */}
-        <section className="glass-card p-5 md:p-6 mb-6">
-          <h2 className="font-brand text-base font-semibold text-primary mb-4">Personal Details</h2>
-          <div className="flex flex-col gap-4">
-            {/* Full name */}
-            <div className="flex flex-col gap-1">
-              <label htmlFor="fullName" className="text-sm font-medium text-secondary">
-                Full Name
-              </label>
-              <input
-                id="fullName"
-                type="text"
-                value={user?.name ?? ''}
-                readOnly
-                className="input-base px-3 py-2.5 text-sm w-full opacity-60 cursor-not-allowed"
-                aria-label="Full name (read-only)"
-              />
-            </div>
+      <div className="mt-6">
+        <ProfileTabs active={activeTab} onChange={setActiveTab} />
+      </div>
 
-            {/* Email */}
-            <div className="flex flex-col gap-1">
-              <label htmlFor="email" className="text-sm font-medium text-secondary">
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={user?.email ?? ''}
-                readOnly
-                className="input-base px-3 py-2.5 text-sm w-full opacity-60 cursor-not-allowed"
-                aria-label="Email address (read-only)"
-              />
-              <span className="text-xs text-muted">Email cannot be changed.</span>
-            </div>
-
-            {/* Phone */}
-            <div className="flex flex-col gap-1">
-              <label htmlFor="phone" className="text-sm font-medium text-secondary">
-                Phone Number
-              </label>
-              <input
-                id="phone"
-                type="tel"
-                value={user?.phone ?? ''}
-                readOnly
-                className="input-base px-3 py-2.5 text-sm w-full opacity-60 cursor-not-allowed"
-                aria-label="Phone number (read-only)"
-              />
-            </div>
-
-            <p className="text-xs text-muted">
-              Profile editing will be available soon. Contact support to update your details.
-            </p>
-          </div>
-        </section>
-
-        {/* Saved Addresses — no backend endpoint yet */}
-        <section className="glass-card p-5 md:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-brand text-base font-semibold text-primary">Saved Addresses</h2>
-            <button
-              className="btn-base btn-secondary px-3 py-1.5 text-sm"
-              onClick={() => showToast('Add address — coming soon.', 'info')}
-              aria-label="Add a new address"
-            >
-              + Add Address
-            </button>
-          </div>
-
-          {/* TODO: Wire to address CRUD endpoints when backend supports them */}
-          <div className="flex flex-col items-center justify-center py-10 text-center fade-in">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-muted mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
-            <h3 className="font-brand text-sm font-semibold text-primary">No saved addresses</h3>
-            <p className="text-muted text-xs mt-1">Your saved addresses will appear here.</p>
-          </div>
-        </section>
+      <div className="max-w-5xl mx-auto px-4 md:px-6 mt-6">
+        <div hidden={activeTab !== 'personal'}>
+          <PersonalInfoSection user={user} />
+        </div>
+        <div hidden={activeTab !== 'addresses'}>
+          <AddressesSection user={user} />
+        </div>
+        <div hidden={activeTab !== 'payments'}>
+          <PaymentMethodsSection user={user} />
+        </div>
+        <div hidden={activeTab !== 'preferences'}>
+          <PreferencesSection user={user} />
+        </div>
+        <div hidden={activeTab !== 'security'}>
+          <SecuritySection />
+        </div>
       </div>
     </main>
   )
