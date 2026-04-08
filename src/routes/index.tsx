@@ -106,7 +106,14 @@ export const router = createBrowserRouter([
       { path: 'services/:categoryId', element: <CategoryPage /> },
       { path: 'booking', element: withSuspense(BookingPage) },
       { path: 'bookings', element: withSuspense(MyBookingsPage) },
-      { path: 'profile', element: withSuspense(ProfilePage) },
+      {
+        path: 'profile',
+        element: (
+          <ProtectedRoute requiredRole="customer">
+            {withSuspense(ProfilePage)}
+          </ProtectedRoute>
+        ),
+      },
       { path: 'wallet', element: withSuspense(WalletPage) },
       { path: 'notifications', element: withSuspense(NotificationsPage) },
       { path: 'support', element: withSuspense(SupportPage) },

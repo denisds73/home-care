@@ -14,11 +14,13 @@ export default function ProtectedRoute({
 }: ProtectedRouteProps) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const isLoading = useAuthStore((s) => s.isLoading)
+  const hasHydrated = useAuthStore((s) => s.hasHydrated)
   const role = useAuthStore((s) => s.role)
   const location = useLocation()
 
-  // Show loading spinner while auth session is being restored
-  if (isLoading) {
+  // Wait for the persisted store to rehydrate before deciding anything,
+  // otherwise a refresh redirects to /login before state is restored.
+  if (!hasHydrated || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface">
         <div className="flex flex-col items-center gap-3">
