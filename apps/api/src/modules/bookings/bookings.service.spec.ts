@@ -107,6 +107,7 @@ interface ServiceHarness {
     technician: TechnicianEntity | null;
     events: BookingStatusEventEntity[];
   };
+  notificationsService: { create: jest.Mock };
 }
 
 function makeService(initial: {
@@ -120,10 +121,15 @@ function makeService(initial: {
     technician: initial.technician ?? null,
     events: [] as BookingStatusEventEntity[],
   };
-  const fakeRepo = {} as never;
+  const fakeRepo = {
+    findOne: jest.fn(async () => null),
+  } as never;
   const fakeDataSource = {
     transaction: async <T>(cb: (m: unknown) => Promise<T>): Promise<T> =>
       cb(makeFakeManager(store)),
+  } as never;
+  const notificationsService = {
+    create: jest.fn(async () => undefined),
   } as never;
   const service = new BookingsService(
     fakeRepo, // bookingsRepository
@@ -131,9 +137,11 @@ function makeService(initial: {
     fakeRepo, // reviewsRepository
     fakeRepo, // vendorsRepository
     fakeRepo, // techniciansRepository
+    fakeRepo, // usersRepository
     fakeDataSource,
+    notificationsService,
   );
-  return { service, store };
+  return { service, store, notificationsService };
 }
 
 const CUSTOMER: BookingActor = { id: 'cust-1', role: Role.CUSTOMER };

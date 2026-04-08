@@ -13,7 +13,9 @@ import {
   BookingStatus,
   BookingStatusEventEntity,
   BookingReviewEntity,
+  NotificationType,
   Role,
+  UserEntity,
   VendorEntity,
   TechnicianEntity,
 } from '@/database/entities';
@@ -26,6 +28,7 @@ import {
   applyTransition,
   canTransition,
 } from './lifecycle';
+import { NotificationsService } from '@/modules/notifications/notifications.service';
 
 export interface BookingActor {
   id: string;
@@ -55,8 +58,52 @@ export class BookingsService {
     private readonly vendorsRepository: Repository<VendorEntity>,
     @InjectRepository(TechnicianEntity)
     private readonly techniciansRepository: Repository<TechnicianEntity>,
+    @InjectRepository(UserEntity)
+    private readonly usersRepository: Repository<UserEntity>,
     private readonly dataSource: DataSource,
+    private readonly notificationsService: NotificationsService,
   ) {}
+
+  /**
+   * Best-effort notification emission. Runs AFTER the lifecycle transaction
+   * commits so a notification failure never rolls back the state change.
+   * Errors are logged and swallowed.
+   */
+  private async notify(
+    userId: string | null | undefined,
+    title: string,
+    description: string,
+  ): Promise<void> {
+    if (!userId) return;
+    try {
+      await this.notificationsService.create(
+        userId,
+        NotificationType.BOOKING,
+        title,
+        description,
+      );
+    } catch (err) {
+      console.error('[notify] failed to create notification', err);
+    }
+  }
+
+  private async findUserByVendorId(
+    vendorId: string | null | undefined,
+  ): Promise<UserEntity | null> {
+    if (!vendorId) return null;
+    return this.usersRepository.findOne({
+      where: { vendor_id: vendorId, role: Role.VENDOR },
+    });
+  }
+
+  private async findUserByTechnicianId(
+    technicianId: string | null | undefined,
+  ): Promise<UserEntity | null> {
+    if (!technicianId) return null;
+    return this.usersRepository.findOne({
+      where: { technician_id: technicianId, role: Role.TECHNICIAN },
+    });
+  }
 
   async create(
     customerId: string,
@@ -176,7 +223,7 @@ export class BookingsService {
       throw new ForbiddenException('Only vendors or admins can dispatch technicians');
     }
 
-    return this.dataSource.transaction(async (manager) => {
+    const saved = await this.dataSource.transaction(async (manager) => {
       const booking = await manager.findOne(BookingEntity, {
         where: { booking_id: bookingId },
       });
@@ -221,12 +268,12 @@ export class BookingsService {
       }
 
       booking.technician_id = technician.id;
-      const saved = await manager.save(booking);
+      const savedBooking = await manager.save(booking);
 
       const eventRow = manager.create(BookingStatusEventEntity, {
-        booking_id: saved.booking_id,
-        from_status: saved.booking_status,
-        to_status: saved.booking_status,
+        booking_id: savedBooking.booking_id,
+        from_status: savedBooking.booking_status,
+        to_status: savedBooking.booking_status,
         event: 'assign',
         actor_user_id: actor.id,
         actor_role: actor.role,
@@ -234,8 +281,23 @@ export class BookingsService {
       });
       await manager.save(eventRow);
 
-      return this.stripOtpForActor(saved, actor);
+      return savedBooking;
     });
+
+    // Post-commit notifications
+    const techUser = await this.findUserByTechnicianId(saved.technician_id);
+    const svc = `${saved.service_name} (#${saved.booking_id.slice(0, 8)})`;
+    await this.notify(
+      techUser?.id,
+      'New job dispatched',
+      `You've been assigned to ${svc}. Tap to see the customer details.`,
+    );
+    await this.notify(
+      saved.customer_id,
+      'Technician on the way',
+      `A technician has been assigned to ${svc}.`,
+    );
+    return this.stripOtpForActor(saved, actor);
   }
 
   async getEvents(
@@ -255,7 +317,7 @@ export class BookingsService {
     actor: BookingActor,
     opts: TransitionOptions = {},
   ): Promise<BookingEntity> {
-    return this.dataSource.transaction(async (manager) => {
+    const saved = await this.dataSource.transaction(async (manager) => {
       const booking = await manager.findOne(BookingEntity, {
         where: { booking_id: bookingId },
       });
@@ -368,8 +430,96 @@ export class BookingsService {
       });
       await manager.save(eventRow);
 
-      return this.stripOtpForActor(saved, actor);
+      return saved;
     });
+
+    await this.emitLifecycleNotification(saved, event, actor);
+    return this.stripOtpForActor(saved, actor);
+  }
+
+  /**
+   * Fan-out notification for a transition. Customer is notified on vendor /
+   * technician actions, vendor is notified on admin assign, technician on
+   * vendor dispatch. Cancellation routes to the "other" party.
+   */
+  private async emitLifecycleNotification(
+    booking: BookingEntity,
+    event: BookingEvent,
+    actor: BookingActor,
+  ): Promise<void> {
+    const svc = `${booking.service_name} (#${booking.booking_id.slice(0, 8)})`;
+    const customerId = booking.customer_id;
+
+    if (event === 'assign') {
+      const vendorUser = await this.findUserByVendorId(booking.vendor_id);
+      await this.notify(
+        vendorUser?.id,
+        'New booking assigned',
+        `${svc} has been assigned to your team. Please review and accept.`,
+      );
+      return;
+    }
+
+    if (event === 'accept') {
+      await this.notify(
+        customerId,
+        'Booking accepted',
+        `A vendor has accepted ${svc}. They will arrive at the scheduled time.`,
+      );
+      return;
+    }
+
+    if (event === 'reject') {
+      await this.notify(
+        customerId,
+        'Booking returned to queue',
+        `${svc} was rejected by the vendor. We are reassigning it.`,
+      );
+      return;
+    }
+
+    if (event === 'start') {
+      await this.notify(
+        customerId,
+        'Technician has started',
+        `Work on ${svc} has started. Share the 6-digit OTP shown in your booking to complete the job.`,
+      );
+      return;
+    }
+
+    if (event === 'complete') {
+      await this.notify(
+        customerId,
+        'Service completed',
+        `${svc} is complete. Tap to leave a review.`,
+      );
+      return;
+    }
+
+    if (event === 'cancel') {
+      if (actor.role === Role.CUSTOMER) {
+        const vendorUser = await this.findUserByVendorId(booking.vendor_id);
+        await this.notify(
+          vendorUser?.id,
+          'Booking cancelled by customer',
+          `${svc} has been cancelled by the customer.`,
+        );
+      } else {
+        await this.notify(
+          customerId,
+          'Booking cancelled',
+          `${svc} has been cancelled.`,
+        );
+      }
+      // Also notify the assigned technician (if any) so they drop the job
+      const techUser = await this.findUserByTechnicianId(booking.technician_id);
+      await this.notify(
+        techUser?.id,
+        'Job cancelled',
+        `${svc} has been cancelled.`,
+      );
+      return;
+    }
   }
 
   async createReview(
