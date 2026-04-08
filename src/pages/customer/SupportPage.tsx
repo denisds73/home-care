@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import useStore from '../../store/useStore'
+import Dropdown from '../../components/common/Dropdown'
 
 const FAQ_ITEMS = [
   {
@@ -90,23 +91,19 @@ export default function SupportPage() {
               maxLength={100}
             />
           </div>
-          <div>
-            <label htmlFor="support-category" className="text-xs font-semibold text-secondary block mb-1">
-              Category
-            </label>
-            <select
-              id="support-category"
-              className="input-base w-full py-2.5 px-4 text-sm"
-              value={category}
-              onChange={e => setCategory(e.target.value)}
-            >
-              <option value="">Select category</option>
-              <option value="booking">Booking Issue</option>
-              <option value="payment">Payment / Refund</option>
-              <option value="service">Service Quality</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
+          <Dropdown
+            options={[
+              { value: 'booking', label: 'Booking Issue' },
+              { value: 'payment', label: 'Payment / Refund' },
+              { value: 'service', label: 'Service Quality' },
+              { value: 'other', label: 'Other' },
+            ]}
+            value={category}
+            onChange={setCategory}
+            placeholder="Select category"
+            label="Category"
+            id="support-category"
+          />
           <div>
             <label htmlFor="support-desc" className="text-xs font-semibold text-secondary block mb-1">
               Description

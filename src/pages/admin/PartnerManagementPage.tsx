@@ -3,6 +3,7 @@ import { adminService } from '../../services/adminService'
 import { CATEGORIES } from '../../data/categories'
 import useStore from '../../store/useStore'
 import type { Partner, PartnerStatus } from '../../types/domain'
+import Dropdown from '../../components/common/Dropdown'
 
 export default function PartnerManagementPage() {
   const showToast = useStore(s => s.showToast)
@@ -90,16 +91,18 @@ export default function PartnerManagementPage() {
       </div>
 
       <div className="flex gap-3">
-        <select
-          className="input-base py-2 px-3 text-sm"
+        <Dropdown
+          options={[
+            { value: '', label: 'All Statuses' },
+            { value: 'pending', label: 'Pending' },
+            { value: 'approved', label: 'Approved' },
+            { value: 'suspended', label: 'Suspended' },
+          ]}
           value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value as PartnerStatus | '')}
-        >
-          <option value="">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="suspended">Suspended</option>
-        </select>
+          onChange={v => setStatusFilter(v as PartnerStatus | '')}
+          placeholder="All Statuses"
+          className="min-w-[160px]"
+        />
       </div>
 
       {isLoading ? (

@@ -4,6 +4,7 @@ import { userService } from '../../services/userService'
 import { useAuthStore } from '../../store/useAuthStore'
 import useStore from '../../store/useStore'
 import { PhoneVerifyModal } from './PhoneVerifyModal'
+import Dropdown from '../common/Dropdown'
 
 interface PersonalInfoSectionProps {
   user: User
@@ -301,19 +302,18 @@ export const PersonalInfoSection = memo(
               />
             </Field>
             <Field id="pf-gender" label="Gender">
-              <select
-                id="pf-gender"
+              <Dropdown
+                options={[
+                  { value: '', label: 'Prefer not to say' },
+                  { value: 'male', label: 'Male' },
+                  { value: 'female', label: 'Female' },
+                  { value: 'other', label: 'Other' },
+                ]}
                 value={form.gender}
-                onChange={(e) =>
-                  handleChange('gender', e.target.value as Gender | '')
-                }
-                className="input-base w-full px-3 py-2.5 text-sm"
-              >
-                <option value="">Prefer not to say</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
+                onChange={(v) => handleChange('gender', v as Gender | '')}
+                placeholder="Prefer not to say"
+                id="pf-gender"
+              />
             </Field>
           </form>
         )}

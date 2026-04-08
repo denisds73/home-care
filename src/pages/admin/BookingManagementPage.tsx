@@ -4,6 +4,7 @@ import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
 import { formatDate, statusClass, getValidTransitions } from '../../data/helpers'
 import type { BookingStatus, CategoryId, Booking } from '../../types/domain'
+import Dropdown from '../../components/common/Dropdown'
 
 export default function BookingManagementPage() {
   const showToast = useStore(s => s.showToast)
@@ -63,30 +64,33 @@ export default function BookingManagementPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
-          <select
-            className="input-base py-2 px-3 text-sm"
+          <Dropdown
+            options={[
+              { value: '', label: 'All Statuses' },
+              { value: 'Pending', label: 'Pending' },
+              { value: 'Confirmed', label: 'Confirmed' },
+              { value: 'In Progress', label: 'In Progress' },
+              { value: 'Completed', label: 'Completed' },
+              { value: 'Cancelled', label: 'Cancelled' },
+            ]}
             value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value as BookingStatus | '')}
-          >
-            <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Confirmed">Confirmed</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
-          <select
-            className="input-base py-2 px-3 text-sm"
+            onChange={v => setStatusFilter(v as BookingStatus | '')}
+            searchable
+            placeholder="All Statuses"
+            className="min-w-[160px]"
+          />
+          <Dropdown
+            options={[
+              { value: '', label: 'All Categories' },
+              ...CATEGORIES.map(c => ({ value: c.id, label: c.name })),
+            ]}
             value={categoryFilter}
-            onChange={e => setCategoryFilter(e.target.value as CategoryId | '')}
-          >
-            <option value="">All Categories</option>
-            {CATEGORIES.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            onChange={v => setCategoryFilter(v as CategoryId | '')}
+            placeholder="All Categories"
+            searchable
+            searchPlaceholder="Search category..."
+            className="min-w-[170px]"
+          />
         </div>
       </div>
 
@@ -140,22 +144,14 @@ export default function BookingManagementPage() {
                       </td>
                       <td className="p-3">
                         {getValidTransitions(b.booking_status).length > 0 && (
-                          <select
+                          <Dropdown
                             key={`${b.booking_id}-${b.booking_status}`}
-                            className="input-base py-1 px-2 text-xs max-w-[140px]"
-                            defaultValue=""
-                            aria-label={`Change status for ${b.booking_id}`}
-                            onChange={e => {
-                              if (e.target.value) handleStatusChange(b.booking_id, e.target.value as BookingStatus)
-                            }}
-                          >
-                            <option value="">Change...</option>
-                            {getValidTransitions(b.booking_status).map(s => (
-                              <option key={s} value={s}>
-                                {s}
-                              </option>
-                            ))}
-                          </select>
+                            options={getValidTransitions(b.booking_status).map(s => ({ value: s, label: s }))}
+                            value=""
+                            onChange={v => handleStatusChange(b.booking_id, v as BookingStatus)}
+                            placeholder="Change..."
+                            className="max-w-[140px]"
+                          />
                         )}
                       </td>
                     </tr>
