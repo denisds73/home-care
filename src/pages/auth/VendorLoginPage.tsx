@@ -61,7 +61,7 @@ export default function VendorLoginPage() {
       else passwordRef.current?.focus()
       return
     }
-    await login(form.email, form.password)
+    await login(form.email, form.password, 'vendor')
     navigate(returnTo ?? '/vendor', { replace: true })
   }
 

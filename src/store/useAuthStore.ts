@@ -10,8 +10,13 @@ import { getStoredToken, setStoredToken, clearStoredToken } from '../lib/auth'
  * provisioned as sub-users under a vendor organization, so the backend may
  * return `role: 'vendor'` for them while still populating `technician_id`.
  * For routing/portal selection we must treat those users as technicians.
+ *
+ * A `portalHint` (passed by the login page that initiated the sign-in)
+ * takes precedence — logging in via `/technician/login` always yields the
+ * technician role, regardless of what the backend reports.
  */
-function resolveRole(user: User): Role {
+function resolveRole(user: User, portalHint?: Role): Role {
+  if (portalHint) return portalHint
   if (user.technician_id) return 'technician'
   return user.role
 }
@@ -44,8 +49,7 @@ export const useAuthStore = create<AuthState>()(
       hasHydrated: false,
       error: null,
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      login: async (email, password, _role?) => {
+      login: async (email, password, portalHint?) => {
         set({ isLoading: true, error: null })
         try {
           const result = await authService.login({ email, password })
@@ -54,7 +58,7 @@ export const useAuthStore = create<AuthState>()(
           set({
             user,
             token,
-            role: resolveRole(user),
+            role: resolveRole(user, portalHint),
             isAuthenticated: true,
             isLoading: false,
             error: null,

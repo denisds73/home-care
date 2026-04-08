@@ -61,7 +61,7 @@ export default function AdminLoginPage() {
       return
     }
 
-    await login(form.email, form.password)
+    await login(form.email, form.password, 'admin')
     const dest = returnTo ?? DASHBOARD_ROUTES['admin'] ?? '/admin'
     navigate(dest, { replace: true })
   }

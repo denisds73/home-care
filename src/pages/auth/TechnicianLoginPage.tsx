@@ -60,7 +60,7 @@ export default function TechnicianLoginPage() {
       else passwordRef.current?.focus()
       return
     }
-    await login(form.email, form.password)
+    await login(form.email, form.password, 'technician')
     navigate(returnTo ?? '/technician', { replace: true })
   }
 
