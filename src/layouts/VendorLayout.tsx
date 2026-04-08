@@ -8,6 +8,7 @@ import {
   GridIcon,
   BriefcaseIcon,
   UserIcon,
+  UsersIcon,
 } from '../components/common/Icons'
 import type { NavGroup } from './DashboardSidebar'
 
@@ -16,6 +17,7 @@ const VENDOR_NAV: NavGroup[] = [
     items: [
       { icon: <GridIcon />, label: 'Dashboard', to: '/vendor' },
       { icon: <BriefcaseIcon />, label: 'Requests', to: '/vendor/requests' },
+      { icon: <UsersIcon />, label: 'Technicians', to: '/vendor/technicians' },
       { icon: <UserIcon />, label: 'Profile', to: '/vendor/profile' },
     ],
   },
@@ -24,6 +26,8 @@ const VENDOR_NAV: NavGroup[] = [
 const PAGE_TITLES: Record<string, string> = {
   '/vendor': 'Dashboard',
   '/vendor/requests': 'Service Requests',
+  '/vendor/technicians': 'Technicians',
+  '/vendor/technicians/new': 'Add Technician',
   '/vendor/profile': 'Company Profile',
 }
 
