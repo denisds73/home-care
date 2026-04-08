@@ -90,6 +90,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
+      vendor_id: user.vendor_id ?? null,
     };
     return this.jwtService.sign(payload);
   }

@@ -4,8 +4,7 @@ import {
   BookingEntity,
   ServiceEntity,
   UserEntity,
-  PartnerEntity,
-  PayoutRequestEntity,
+  VendorEntity,
 } from '@/database/entities';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
@@ -16,8 +15,7 @@ import { AdminService } from './admin.service';
       BookingEntity,
       ServiceEntity,
       UserEntity,
-      PartnerEntity,
-      PayoutRequestEntity,
+      VendorEntity,
     ]),
   ],
   controllers: [AdminController],
