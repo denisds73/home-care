@@ -28,6 +28,9 @@ const WalletPage = lazy(() => import('../pages/customer/WalletPage'))
 const NotificationsPage = lazy(() => import('../pages/customer/NotificationsPage'))
 const SupportPage = lazy(() => import('../pages/customer/SupportPage'))
 
+// NotificationsPage is generic and reused across all authenticated portals.
+const SharedNotificationsPage = NotificationsPage
+
 // Vendor pages
 const VendorDashboardPage = lazy(() => import('../pages/vendor/VendorDashboardPage'))
 const VendorRequestsPage = lazy(() => import('../pages/vendor/VendorRequestsPage'))
@@ -160,6 +163,7 @@ export const router = createBrowserRouter([
       { path: 'technicians', element: withSuspense(TechniciansListPage) },
       { path: 'technicians/new', element: withSuspense(TechnicianCreatePage) },
       { path: 'technicians/:id', element: withSuspense(TechnicianEditPage) },
+      { path: 'notifications', element: withSuspense(SharedNotificationsPage) },
       { path: 'profile', element: withSuspense(VendorProfilePage) },
     ],
   },
@@ -178,6 +182,7 @@ export const router = createBrowserRouter([
       { index: true, element: withSuspense(TechnicianDashboardPage) },
       { path: 'jobs', element: withSuspense(TechnicianJobsPage) },
       { path: 'jobs/:id', element: withSuspense(TechnicianJobDetailPage) },
+      { path: 'notifications', element: withSuspense(SharedNotificationsPage) },
       { path: 'profile', element: withSuspense(TechnicianProfilePage) },
     ],
   },
@@ -202,6 +207,7 @@ export const router = createBrowserRouter([
       { path: 'vendors/new', element: withSuspense(VendorCreatePage) },
       { path: 'vendors/:id', element: withSuspense(VendorDetailPage) },
       { path: 'finance', element: withSuspense(FinancePage) },
+      { path: 'notifications', element: withSuspense(SharedNotificationsPage) },
       { path: 'settings', element: withSuspense(SettingsPage) },
     ],
   },

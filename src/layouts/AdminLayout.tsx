@@ -12,6 +12,7 @@ import {
   WalletIcon,
   SettingsIcon,
   BriefcaseIcon,
+  BellIcon,
 } from '../components/common/Icons'
 import type { NavGroup } from './DashboardSidebar'
 
@@ -32,6 +33,7 @@ const ADMIN_NAV: NavGroup[] = [
       { icon: <UsersIcon />, label: 'Users', to: '/admin/users' },
       { icon: <BriefcaseIcon />, label: 'Vendors', to: '/admin/vendors' },
       { icon: <WalletIcon />, label: 'Finance', to: '/admin/finance' },
+      { icon: <BellIcon />, label: 'Notifications', to: '/admin/notifications' },
     ],
   },
 ]
@@ -47,6 +49,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/users': 'User Management',
   '/admin/vendors': 'Vendor Onboarding',
   '/admin/finance': 'Finance & Payouts',
+  '/admin/notifications': 'Notifications',
   '/admin/settings': 'Settings',
 }
 

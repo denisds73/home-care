@@ -9,6 +9,7 @@ import {
   BriefcaseIcon,
   UserIcon,
   UsersIcon,
+  BellIcon,
 } from '../components/common/Icons'
 import type { NavGroup } from './DashboardSidebar'
 
@@ -18,6 +19,7 @@ const VENDOR_NAV: NavGroup[] = [
       { icon: <GridIcon />, label: 'Dashboard', to: '/vendor' },
       { icon: <BriefcaseIcon />, label: 'Requests', to: '/vendor/requests' },
       { icon: <UsersIcon />, label: 'Technicians', to: '/vendor/technicians' },
+      { icon: <BellIcon />, label: 'Notifications', to: '/vendor/notifications' },
       { icon: <UserIcon />, label: 'Profile', to: '/vendor/profile' },
     ],
   },
@@ -28,6 +30,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/vendor/requests': 'Service Requests',
   '/vendor/technicians': 'Technicians',
   '/vendor/technicians/new': 'Add Technician',
+  '/vendor/notifications': 'Notifications',
   '/vendor/profile': 'Company Profile',
 }
 
