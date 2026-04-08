@@ -19,12 +19,18 @@ import { Role, UserEntity, BookingStatus } from '@/database/entities';
 import { BookingsService, BookingActor } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { AssignBookingDto } from './dto/assign-booking.dto';
+import { AssignTechnicianDto } from './dto/assign-technician.dto';
 import { TransitionNoteDto } from './dto/transition-note.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { BookingFiltersDto } from './dto/booking-filters.dto';
 
 function toActor(user: UserEntity): BookingActor {
-  return { id: user.id, role: user.role, vendor_id: user.vendor_id ?? null };
+  return {
+    id: user.id,
+    role: user.role,
+    vendor_id: user.vendor_id ?? null,
+    technician_id: user.technician_id ?? null,
+  };
 }
 
 @ApiTags('bookings')
@@ -110,7 +116,7 @@ export class BookingsController {
   }
 
   @Post('bookings/:id/start')
-  @Roles(Role.VENDOR, Role.ADMIN)
+  @Roles(Role.VENDOR, Role.TECHNICIAN, Role.ADMIN)
   @ApiOperation({ summary: 'Start a booking' })
   async start(
     @Param('id', ParseUUIDPipe) id: string,
@@ -123,7 +129,7 @@ export class BookingsController {
   }
 
   @Post('bookings/:id/complete')
-  @Roles(Role.VENDOR, Role.ADMIN)
+  @Roles(Role.VENDOR, Role.TECHNICIAN, Role.ADMIN)
   @ApiOperation({ summary: 'Complete a booking' })
   async complete(
     @Param('id', ParseUUIDPipe) id: string,
@@ -132,7 +138,37 @@ export class BookingsController {
   ) {
     return this.bookingsService.transition(id, 'complete', toActor(user), {
       note: dto.note,
+      otp: dto.otp,
     });
+  }
+
+  @Post('bookings/:id/assign-technician')
+  @Roles(Role.VENDOR, Role.ADMIN)
+  @ApiOperation({ summary: 'Dispatch a technician to a booking' })
+  async assignTechnician(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AssignTechnicianDto,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return this.bookingsService.assignTechnician(
+      id,
+      toActor(user),
+      dto.technician_id,
+      dto.note,
+    );
+  }
+
+  @Get('technician/bookings')
+  @Roles(Role.TECHNICIAN)
+  @ApiOperation({ summary: 'List bookings assigned to current technician' })
+  async getTechnicianBookings(
+    @CurrentUser() user: UserEntity,
+    @Query('status') status?: BookingStatus,
+  ) {
+    if (!user.technician_id) {
+      return [];
+    }
+    return this.bookingsService.findByTechnician(user.technician_id, { status });
   }
 
   @Post('bookings/:id/cancel')

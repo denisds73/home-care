@@ -39,7 +39,7 @@ export const ALLOWED_TRANSITIONS: TransitionMap = {
   [BookingStatus.ACCEPTED]: {
     start: {
       next: BookingStatus.IN_PROGRESS,
-      allowedRoles: [Role.VENDOR, Role.ADMIN],
+      allowedRoles: [Role.VENDOR, Role.TECHNICIAN, Role.ADMIN],
     },
     cancel: {
       next: BookingStatus.CANCELLED,
@@ -49,7 +49,7 @@ export const ALLOWED_TRANSITIONS: TransitionMap = {
   [BookingStatus.IN_PROGRESS]: {
     complete: {
       next: BookingStatus.COMPLETED,
-      allowedRoles: [Role.VENDOR, Role.ADMIN],
+      allowedRoles: [Role.VENDOR, Role.TECHNICIAN, Role.ADMIN],
     },
     cancel: { next: BookingStatus.CANCELLED, allowedRoles: [Role.ADMIN] },
   },

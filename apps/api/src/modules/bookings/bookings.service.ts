@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { randomInt } from 'crypto';
 import {
   BookingEntity,
   BookingStatus,
@@ -14,6 +15,7 @@ import {
   BookingReviewEntity,
   Role,
   VendorEntity,
+  TechnicianEntity,
 } from '@/database/entities';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -29,12 +31,16 @@ export interface BookingActor {
   id: string;
   role: Role;
   vendor_id?: string | null;
+  technician_id?: string | null;
 }
 
 interface TransitionOptions {
   note?: string;
   vendor_id?: string;
+  otp?: string;
 }
+
+const OTP_TTL_MS = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class BookingsService {
@@ -47,6 +53,8 @@ export class BookingsService {
     private readonly reviewsRepository: Repository<BookingReviewEntity>,
     @InjectRepository(VendorEntity)
     private readonly vendorsRepository: Repository<VendorEntity>,
+    @InjectRepository(TechnicianEntity)
+    private readonly techniciansRepository: Repository<TechnicianEntity>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -97,6 +105,23 @@ export class BookingsService {
     });
   }
 
+  async findByTechnician(
+    technicianId: string,
+    filters: { status?: BookingStatus } = {},
+  ): Promise<BookingEntity[]> {
+    const items = await this.bookingsRepository.find({
+      where: {
+        technician_id: technicianId,
+        ...(filters.status ? { booking_status: filters.status } : {}),
+      },
+      order: { created_at: 'DESC' },
+    });
+    // Technicians see the OTP so they can't read it off the customer screen
+    // — but they must have it entered by the customer during completion.
+    // Strip it from list views; only reveal on individual booking detail.
+    return items.map((b) => ({ ...b, completion_otp: null }) as BookingEntity);
+  }
+
   async findAllAdmin(filters: BookingFiltersDto): Promise<{
     items: BookingEntity[];
     total: number;
@@ -138,7 +163,79 @@ export class BookingsService {
     }
 
     this.assertCanRead(booking, actor);
-    return booking;
+    return this.stripOtpForActor(booking, actor);
+  }
+
+  async assignTechnician(
+    bookingId: string,
+    actor: BookingActor,
+    technicianId: string,
+    note?: string,
+  ): Promise<BookingEntity> {
+    if (actor.role !== Role.VENDOR && actor.role !== Role.ADMIN) {
+      throw new ForbiddenException('Only vendors or admins can dispatch technicians');
+    }
+
+    return this.dataSource.transaction(async (manager) => {
+      const booking = await manager.findOne(BookingEntity, {
+        where: { booking_id: bookingId },
+      });
+      if (!booking) throw new NotFoundException('Booking not found');
+
+      if (actor.role === Role.VENDOR) {
+        if (!actor.vendor_id) {
+          throw new ForbiddenException('Vendor profile not linked to user');
+        }
+        if (booking.vendor_id !== actor.vendor_id) {
+          throw new ForbiddenException('Booking not assigned to your vendor');
+        }
+      }
+
+      if (
+        booking.booking_status !== BookingStatus.ACCEPTED &&
+        booking.booking_status !== BookingStatus.IN_PROGRESS
+      ) {
+        throw new BadRequestException(
+          'Technicians can only be dispatched on accepted or in-progress bookings',
+        );
+      }
+
+      if (
+        booking.booking_status === BookingStatus.IN_PROGRESS &&
+        booking.technician_id &&
+        booking.technician_id !== technicianId
+      ) {
+        throw new ConflictException(
+          'Cannot reassign technician once the job is in progress',
+        );
+      }
+
+      const technician = await manager.findOne(TechnicianEntity, {
+        where: { id: technicianId },
+      });
+      if (!technician) throw new NotFoundException('Technician not found');
+      if (booking.vendor_id && technician.vendor_id !== booking.vendor_id) {
+        throw new ForbiddenException(
+          'Technician does not belong to the booking vendor',
+        );
+      }
+
+      booking.technician_id = technician.id;
+      const saved = await manager.save(booking);
+
+      const eventRow = manager.create(BookingStatusEventEntity, {
+        booking_id: saved.booking_id,
+        from_status: saved.booking_status,
+        to_status: saved.booking_status,
+        event: 'assign',
+        actor_user_id: actor.id,
+        actor_role: actor.role,
+        note: `technician:${technician.full_name}${note ? ' — ' + note : ''}`,
+      });
+      await manager.save(eventRow);
+
+      return this.stripOtpForActor(saved, actor);
+    });
   }
 
   async getEvents(
@@ -179,6 +276,16 @@ export class BookingsService {
             throw new ForbiddenException('Booking not assigned to your vendor');
           }
         }
+        if (actor.role === Role.TECHNICIAN) {
+          if (!actor.technician_id) {
+            throw new ForbiddenException(
+              'Technician profile not linked to user',
+            );
+          }
+          if (booking.technician_id !== actor.technician_id) {
+            throw new ForbiddenException('Booking not assigned to you');
+          }
+        }
       }
 
       if (!canTransition(booking.booking_status, event, actor.role)) {
@@ -212,10 +319,39 @@ export class BookingsService {
       if (event === 'accept') booking.accepted_at = now;
       if (event === 'reject') {
         booking.vendor_id = null;
+        booking.technician_id = null;
         booking.assigned_at = null;
       }
-      if (event === 'start') booking.started_at = now;
-      if (event === 'complete') booking.completed_at = now;
+      if (event === 'start') {
+        if (!booking.technician_id) {
+          throw new BadRequestException(
+            'Assign a technician before starting the job',
+          );
+        }
+        booking.started_at = now;
+        booking.completion_otp = randomInt(0, 1_000_000)
+          .toString()
+          .padStart(6, '0');
+        booking.completion_otp_expires_at = new Date(now.getTime() + OTP_TTL_MS);
+      }
+      if (event === 'complete') {
+        if (actor.role === Role.TECHNICIAN) {
+          if (!opts.otp) {
+            throw new BadRequestException('OTP required to complete the job');
+          }
+          if (
+            !booking.completion_otp ||
+            booking.completion_otp !== opts.otp ||
+            !booking.completion_otp_expires_at ||
+            booking.completion_otp_expires_at.getTime() < now.getTime()
+          ) {
+            throw new BadRequestException('Invalid or expired OTP');
+          }
+        }
+        booking.completed_at = now;
+        booking.completion_otp = null;
+        booking.completion_otp_expires_at = null;
+      }
       if (event === 'cancel') booking.cancelled_at = now;
 
       booking.booking_status = next;
@@ -232,7 +368,7 @@ export class BookingsService {
       });
       await manager.save(eventRow);
 
-      return saved;
+      return this.stripOtpForActor(saved, actor);
     });
   }
 
@@ -294,7 +430,34 @@ export class BookingsService {
     ) {
       return;
     }
+    if (
+      actor.role === Role.TECHNICIAN &&
+      actor.technician_id &&
+      booking.technician_id === actor.technician_id
+    ) {
+      return;
+    }
     throw new ForbiddenException('You do not have access to this booking');
+  }
+
+  /**
+   * Completion OTP is only visible to the booking's customer while the job
+   * is in progress. Everyone else sees null.
+   */
+  private stripOtpForActor(
+    booking: BookingEntity,
+    actor: BookingActor,
+  ): BookingEntity {
+    const canSeeOtp =
+      actor.role === Role.CUSTOMER &&
+      booking.customer_id === actor.id &&
+      booking.booking_status === BookingStatus.IN_PROGRESS;
+    if (canSeeOtp) return booking;
+    return {
+      ...booking,
+      completion_otp: null,
+      completion_otp_expires_at: null,
+    } as BookingEntity;
   }
 }
 

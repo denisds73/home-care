@@ -9,6 +9,7 @@ interface JwtPayload {
   email: string;
   role: string;
   vendor_id?: string | null;
+  technician_id?: string | null;
 }
 
 @Injectable()

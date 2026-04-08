@@ -5,6 +5,7 @@ import {
   BookingStatusEventEntity,
   BookingReviewEntity,
   VendorEntity,
+  TechnicianEntity,
 } from '@/database/entities';
 import { BookingsController } from './bookings.controller';
 import { BookingsService } from './bookings.service';
@@ -16,6 +17,7 @@ import { BookingsService } from './bookings.service';
       BookingStatusEventEntity,
       BookingReviewEntity,
       VendorEntity,
+      TechnicianEntity,
     ]),
   ],
   controllers: [BookingsController],
