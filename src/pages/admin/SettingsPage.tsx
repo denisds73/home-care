@@ -74,8 +74,8 @@ export default function SettingsPage() {
         <div className="space-y-4">
           <label className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-primary">Auto-assign Partners</p>
-              <p className="text-xs text-muted">Automatically assign nearest available partner to new bookings</p>
+              <p className="text-sm font-medium text-primary">Auto-assign Vendors</p>
+              <p className="text-xs text-muted">Automatically assign nearest active vendor to new bookings</p>
             </div>
             <button
               type="button"

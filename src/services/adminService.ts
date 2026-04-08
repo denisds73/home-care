@@ -1,10 +1,10 @@
 import { api } from './api'
-import type { Booking, BookingStatus, Partner, PartnerStatus, PayoutRequest, Service } from '../types/domain'
+import type { Booking, BookingStatus, Service } from '../types/domain'
 
 export interface AdminStats {
   totalRevenue: number
   totalBookings: number
-  activePartners: number
+  activeVendors: number
   totalUsers: number
   avgRating: number
   pendingApprovals: number
@@ -52,14 +52,6 @@ export const adminService = {
   updateUserStatus: (id: string, status: 'active' | 'suspended') =>
     api.patch<{ data: AdminUser }>(`/admin/users/${id}/status`, { status }),
 
-  // Partners
-  getPartners: () => api.get<{ data: Partner[] }>('/admin/partners'),
-  updatePartnerStatus: (id: string, status: PartnerStatus) =>
-    api.patch<{ data: Partner }>(`/admin/partners/${id}/status`, { status }),
-
   // Finance
   getFinanceSummary: () => api.get<{ data: FinanceSummary }>('/admin/finance'),
-  getPayoutRequests: () => api.get<{ data: PayoutRequest[] }>('/admin/finance/payouts'),
-  processPayoutRequest: (id: string, status: 'processed' | 'rejected') =>
-    api.patch<{ data: PayoutRequest }>(`/admin/finance/payouts/${id}`, { status }),
 }

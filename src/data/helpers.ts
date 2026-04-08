@@ -12,7 +12,21 @@ export function getCategoryIcon(id: CategoryId | string): string {
 }
 
 export function statusClass(s: string): string {
-  return s.toLowerCase().replace(/\s+/g, '-')
+  return s.toLowerCase().replace(/[\s_]+/g, '-')
+}
+
+const STATUS_LABELS: Record<BookingStatus, string> = {
+  pending: 'Pending',
+  assigned: 'Assigned',
+  accepted: 'Accepted',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+  rejected: 'Rejected',
+}
+
+export function bookingStatusLabel(s: BookingStatus | string): string {
+  return STATUS_LABELS[s as BookingStatus] ?? String(s)
 }
 
 export function paymentBadgeClass(s: PaymentStatus): 'success' | 'failed' | 'pay-pending' {
@@ -51,12 +65,14 @@ export function generateRazorpayId(): string {
 
 export function getValidTransitions(current: BookingStatus | string): BookingStatus[] {
   switch (current) {
-    case 'Pending': return ['Pending', 'Confirmed', 'Cancelled']
-    case 'Confirmed': return ['Confirmed', 'In Progress', 'Cancelled']
-    case 'In Progress': return ['In Progress', 'Completed', 'Cancelled']
-    case 'Completed': return ['Completed']
-    case 'Cancelled': return ['Cancelled']
-    default: return ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled']
+    case 'pending': return ['pending', 'assigned', 'cancelled']
+    case 'assigned': return ['assigned', 'accepted', 'rejected', 'cancelled']
+    case 'accepted': return ['accepted', 'in_progress', 'cancelled']
+    case 'in_progress': return ['in_progress', 'completed', 'cancelled']
+    case 'completed': return ['completed']
+    case 'cancelled': return ['cancelled']
+    case 'rejected': return ['rejected']
+    default: return ['pending', 'assigned', 'accepted', 'in_progress', 'completed', 'cancelled', 'rejected']
   }
 }
 

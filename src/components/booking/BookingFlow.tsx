@@ -413,7 +413,7 @@ export default function BookingFlow() {
         ...payload,
         payment_status: created.payment_status ?? 'PENDING',
         razorpay_order_id: created.razorpay_order_id ?? null,
-        booking_status: created.booking_status ?? 'Pending',
+        booking_status: created.booking_status ?? 'pending',
         created_at: created.created_at ?? new Date().toISOString(),
         updated_at: created.updated_at ?? new Date().toISOString(),
       })

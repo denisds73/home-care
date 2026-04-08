@@ -14,24 +14,53 @@ export type PaymentMode = 'PAY_NOW' | 'PAY_AFTER_SERVICE'
 
 export type PaymentStatus = 'SUCCESS' | 'FAILED' | 'PENDING'
 
+// ─── Role & Booking lifecycle contract ────────────────────────────
+export type Role = 'customer' | 'vendor' | 'admin'
+
 export type BookingStatus =
-  | 'Pending'
-  | 'Confirmed'
-  | 'In Progress'
-  | 'Completed'
-  | 'Cancelled'
+  | 'pending'
+  | 'assigned'
+  | 'accepted'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+  | 'rejected'
+
+export type BookingEvent =
+  | 'assign'
+  | 'accept'
+  | 'reject'
+  | 'start'
+  | 'complete'
+  | 'cancel'
+
+export interface BookingStatusEvent {
+  id: string
+  booking_id: string
+  from_status: BookingStatus | null
+  to_status: BookingStatus
+  event: BookingEvent | 'create'
+  actor_user_id: string
+  actor_role: Role
+  note?: string
+  created_at: string
+}
+
+export interface BookingReview {
+  id: string
+  booking_id: string
+  customer_id: string
+  vendor_id: string
+  rating: 1 | 2 | 3 | 4 | 5
+  comment?: string
+  created_at: string
+}
 
 export type ToastType = 'success' | 'danger' | 'warning' | 'info'
 
-export type Role = 'customer' | 'partner' | 'admin'
-
-export type PartnerStatus = 'pending' | 'approved' | 'suspended'
-
-export type JobStatus = 'new' | 'accepted' | 'in_progress' | 'completed' | 'declined'
-
 export type TransactionType = 'credit' | 'debit'
 
-export type NotificationType = 'booking' | 'payment' | 'system' | 'partner'
+export type NotificationType = 'booking' | 'payment' | 'system' | 'vendor'
 
 export interface ServiceFaq {
   question: string
@@ -89,6 +118,13 @@ export interface Booking {
   payment_status: PaymentStatus
   razorpay_order_id: string | null
   booking_status: BookingStatus
+  vendor_id?: string | null
+  customer_id?: string | null
+  assigned_at?: string | null
+  accepted_at?: string | null
+  started_at?: string | null
+  completed_at?: string | null
+  cancelled_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -166,6 +202,7 @@ export interface User {
   addresses?: Address[]
   paymentMethods?: PaymentMethod[]
   preferences?: UserPreferences
+  vendor_id?: string | null
 }
 
 export interface CartLine {
@@ -200,38 +237,6 @@ export interface ToastItem {
   createdAt: number
 }
 
-export interface Partner {
-  id: string
-  name: string
-  email: string
-  phone: string
-  avatar?: string
-  skills: CategoryId[]
-  rating: number
-  completedJobs: number
-  status: PartnerStatus
-  serviceArea: string
-  isOnline: boolean
-  joinedAt: string
-  earnings: number
-}
-
-export interface Job {
-  id: string
-  bookingId: string
-  partnerId: string
-  customerName: string
-  phone: string
-  address: string
-  category: CategoryId
-  serviceName: string
-  price: number
-  preferredDate: string
-  timeSlot: TimeSlot | string
-  status: JobStatus
-  createdAt: string
-}
-
 export interface Transaction {
   id: string
   amount: number
@@ -250,16 +255,6 @@ export interface Notification {
   read: boolean
 }
 
-export interface PayoutRequest {
-  id: string
-  partnerId: string
-  partnerName: string
-  amount: number
-  status: 'pending' | 'processed' | 'rejected'
-  requestedAt: string
-  processedAt?: string
-}
-
 export interface LocationData {
   label: string
   fullAddress: string
@@ -269,3 +264,59 @@ export interface LocationData {
 }
 
 export type LocationStatus = 'idle' | 'detecting' | 'resolved' | 'denied' | 'error'
+
+// ─── Vendor ─────────────────────────────────────────────────────────
+
+export type VendorStatus = 'pending' | 'active' | 'suspended' | 'rejected'
+
+export interface VendorCategoryRef {
+  id: string
+  name: string
+}
+
+export interface Vendor {
+  id: string
+  company_name: string
+  contact_number: string
+  email: string
+  city: string
+  pin_codes: string[]
+  gst_number: string
+  gst_verified: boolean
+  status: VendorStatus
+  categories: VendorCategoryRef[]
+  notes?: string | null
+  onboarded_by_id?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateVendorPayload {
+  company_name: string
+  contact_number: string
+  email: string
+  city: string
+  pin_codes: string[]
+  gst_number: string
+  gst_verified?: boolean
+  category_ids: string[]
+  notes?: string
+}
+
+export type UpdateVendorPayload = Partial<CreateVendorPayload>
+
+export interface VendorListQuery {
+  status?: VendorStatus
+  city?: string
+  category_id?: string
+  search?: string
+  page?: number
+  limit?: number
+}
+
+export interface PaginatedVendors {
+  items: Vendor[]
+  total: number
+  page: number
+  limit: number
+}

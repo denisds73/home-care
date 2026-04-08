@@ -9,9 +9,9 @@ import {
   ClipboardIcon,
   PackageIcon,
   UsersIcon,
-  WrenchIcon,
   WalletIcon,
   SettingsIcon,
+  BriefcaseIcon,
 } from '../components/common/Icons'
 import type { NavGroup } from './DashboardSidebar'
 
@@ -30,7 +30,7 @@ const ADMIN_NAV: NavGroup[] = [
     section: 'Management',
     items: [
       { icon: <UsersIcon />, label: 'Users', to: '/admin/users' },
-      { icon: <WrenchIcon />, label: 'Partners', to: '/admin/partners' },
+      { icon: <BriefcaseIcon />, label: 'Vendors', to: '/admin/vendors' },
       { icon: <WalletIcon />, label: 'Finance', to: '/admin/finance' },
     ],
   },
@@ -45,7 +45,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/bookings': 'Booking Management',
   '/admin/catalog': 'Service Catalog',
   '/admin/users': 'User Management',
-  '/admin/partners': 'Partner Management',
+  '/admin/vendors': 'Vendor Onboarding',
   '/admin/finance': 'Finance & Payouts',
   '/admin/settings': 'Settings',
 }

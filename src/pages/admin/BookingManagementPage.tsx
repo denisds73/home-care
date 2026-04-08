@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { adminService } from '../../services/adminService'
+import { bookingService } from '../../services/bookingService'
+import { vendorService } from '../../services/vendorService'
 import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
-import { formatDate, statusClass, getValidTransitions } from '../../data/helpers'
-import type { BookingStatus, CategoryId, Booking } from '../../types/domain'
+import { formatDate, statusClass, getValidTransitions, bookingStatusLabel } from '../../data/helpers'
+import type { BookingStatus, CategoryId, Booking, Vendor } from '../../types/domain'
 
 export default function BookingManagementPage() {
   const showToast = useStore(s => s.showToast)
@@ -15,6 +17,25 @@ export default function BookingManagementPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<BookingStatus | ''>('')
   const [categoryFilter, setCategoryFilter] = useState<CategoryId | ''>('')
+  const [activeVendors, setActiveVendors] = useState<Vendor[]>([])
+
+  useEffect(() => {
+    vendorService
+      .listActive()
+      .then(setActiveVendors)
+      .catch(() => setActiveVendors([]))
+  }, [])
+
+  const handleAssign = async (bookingId: string, vendorId: string) => {
+    if (!vendorId) return
+    try {
+      await bookingService.assign(bookingId, vendorId)
+      showToast('Vendor assigned', 'success')
+      await loadBookings()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to assign', 'danger')
+    }
+  }
 
   const loadBookings = useCallback(async () => {
     try {
@@ -69,11 +90,13 @@ export default function BookingManagementPage() {
             onChange={e => setStatusFilter(e.target.value as BookingStatus | '')}
           >
             <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Confirmed">Confirmed</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
+            <option value="pending">Pending</option>
+            <option value="assigned">Assigned</option>
+            <option value="accepted">Accepted</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="rejected">Rejected</option>
           </select>
           <select
             className="input-base py-2 px-3 text-sm"
@@ -125,6 +148,7 @@ export default function BookingManagementPage() {
                     <th className="p-3">Amount</th>
                     <th className="p-3">Status</th>
                     <th className="p-3">Action</th>
+                    <th className="p-3">Assign</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -136,7 +160,7 @@ export default function BookingManagementPage() {
                       <td className="p-3 text-muted">{formatDate(b.preferred_date)}</td>
                       <td className="p-3">₹{b.price.toLocaleString()}</td>
                       <td className="p-3">
-                        <span className={`badge badge-${statusClass(b.booking_status)}`}>{b.booking_status}</span>
+                        <span className={`badge badge-${statusClass(b.booking_status)}`}>{bookingStatusLabel(b.booking_status)}</span>
                       </td>
                       <td className="p-3">
                         {getValidTransitions(b.booking_status).length > 0 && (
@@ -152,9 +176,33 @@ export default function BookingManagementPage() {
                             <option value="">Change...</option>
                             {getValidTransitions(b.booking_status).map(s => (
                               <option key={s} value={s}>
-                                {s}
+                                {bookingStatusLabel(s)}
                               </option>
                             ))}
+                          </select>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        {(b.booking_status === 'pending' || b.booking_status === 'rejected') && (
+                          <select
+                            key={`${b.booking_id}-assign`}
+                            className="input-base py-1 px-2 text-xs max-w-[160px]"
+                            defaultValue=""
+                            aria-label={`Assign vendor for ${b.booking_id}`}
+                            onChange={e => handleAssign(b.booking_id, e.target.value)}
+                          >
+                            <option value="">Assign vendor…</option>
+                            {activeVendors
+                              .filter(v =>
+                                v.categories.length === 0 ||
+                                v.categories.some(c => c.name.toLowerCase() === String(b.category).toLowerCase()) ||
+                                true,
+                              )
+                              .map(v => (
+                                <option key={v.id} value={v.id}>
+                                  {v.company_name}
+                                </option>
+                              ))}
                           </select>
                         )}
                       </td>

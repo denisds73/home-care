@@ -1,17 +1,18 @@
 import { z } from 'zod'
+import type { Role } from '../types/domain'
 
 // Constants
 export const TOKEN_KEY = 'homecare_token'
 
-export const LOGIN_ROUTES: Record<string, string> = {
+export const LOGIN_ROUTES: Record<Role, string> = {
   customer: '/login',
-  partner: '/partner/login',
+  vendor: '/vendor/login',
   admin: '/admin/login',
 }
 
-export const DASHBOARD_ROUTES: Record<string, string> = {
+export const DASHBOARD_ROUTES: Record<Role, string> = {
   customer: '/app',
-  partner: '/partner',
+  vendor: '/vendor',
   admin: '/admin',
 }
 

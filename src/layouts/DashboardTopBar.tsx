@@ -41,7 +41,7 @@ export const DashboardTopBar = memo(
         {/* Page title */}
         <h1 className="text-base font-semibold text-primary flex-1">{title}</h1>
 
-        {/* Availability toggle (partner only) */}
+        {/* Availability toggle (vendor only) */}
         {availabilityToggle && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-secondary hidden sm:inline">

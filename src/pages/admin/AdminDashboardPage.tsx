@@ -3,7 +3,7 @@ import { adminService } from '../../services/adminService'
 import type { AdminStats } from '../../services/adminService'
 import type { Booking } from '../../types/domain'
 import { monthlyRevenue } from '../../data/mockData'
-import { formatDate, statusClass } from '../../data/helpers'
+import { formatDate, statusClass, bookingStatusLabel } from '../../data/helpers'
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<AdminStats | null>(null)
@@ -75,10 +75,10 @@ export default function AdminDashboardPage() {
     ? [
         { label: 'Total Revenue', value: `₹${(stats.totalRevenue / 100000).toFixed(2)}L`, sub: 'All time', border: 'stat-border-success' },
         { label: 'Total Bookings', value: stats.totalBookings.toLocaleString(), sub: 'All time', border: 'stat-border-primary' },
-        { label: 'Active Partners', value: String(stats.activePartners), sub: 'Currently active', border: 'stat-border-info' },
+        { label: 'Active Vendors', value: String(stats.activeVendors), sub: 'Currently active', border: 'stat-border-info' },
         { label: 'Total Users', value: stats.totalUsers.toLocaleString(), sub: 'Registered', border: 'stat-border-warning' },
         { label: 'Avg Rating', value: String(stats.avgRating), sub: 'Platform average', border: 'stat-border-success' },
-        { label: 'Pending Approvals', value: String(stats.pendingApprovals), sub: 'Partners awaiting review', border: 'stat-border-warning' },
+        { label: 'Pending Approvals', value: String(stats.pendingApprovals), sub: 'Vendors awaiting review', border: 'stat-border-warning' },
       ]
     : []
 
@@ -148,7 +148,7 @@ export default function AdminDashboardPage() {
                   <td className="px-4 py-3 text-secondary hidden md:table-cell">{formatDate(b.preferred_date)}</td>
                   <td className="px-4 py-3">
                     <span className={`badge badge-${statusClass(b.booking_status)}`}>
-                      {b.booking_status}
+                      {bookingStatusLabel(b.booking_status)}
                     </span>
                   </td>
                 </tr>

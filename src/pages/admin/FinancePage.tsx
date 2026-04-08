@@ -2,15 +2,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { adminService } from '../../services/adminService'
 import type { FinanceSummary } from '../../services/adminService'
 import { monthlyRevenue } from '../../data/mockData'
-import { formatDate } from '../../data/helpers'
-import useStore from '../../store/useStore'
-import type { PayoutRequest } from '../../types/domain'
 
 export default function FinancePage() {
-  const showToast = useStore(s => s.showToast)
-
   const [summary, setSummary] = useState<FinanceSummary | null>(null)
-  const [payouts, setPayouts] = useState<PayoutRequest[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -21,12 +15,8 @@ export default function FinancePage() {
     try {
       setIsLoading(true)
       setError(null)
-      const [summaryRes, payoutsRes] = await Promise.all([
-        adminService.getFinanceSummary(),
-        adminService.getPayoutRequests(),
-      ])
+      const summaryRes = await adminService.getFinanceSummary()
       setSummary(summaryRes.data)
-      setPayouts(payoutsRes.data ?? [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load finance data')
     } finally {
@@ -38,22 +28,12 @@ export default function FinancePage() {
     loadData()
   }, [loadData])
 
-  const processPayoutRequest = async (id: string, status: 'processed' | 'rejected') => {
-    try {
-      await adminService.processPayoutRequest(id, status)
-      showToast(`Payout ${status}`, status === 'processed' ? 'success' : 'warning')
-      await loadData()
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to process payout', 'danger')
-    }
-  }
-
   if (isLoading) {
     return (
       <div className="fade-in space-y-6">
         <div>
           <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">Finance & Payouts</h1>
-          <p className="text-muted text-sm mt-1">Revenue, commissions, and partner payout management.</p>
+          <p className="text-muted text-sm mt-1">Revenue, commissions, and vendor payout overview.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -91,7 +71,7 @@ export default function FinancePage() {
     <div className="fade-in space-y-6">
       <div>
         <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">Finance & Payouts</h1>
-        <p className="text-muted text-sm mt-1">Revenue, commissions, and partner payout management.</p>
+        <p className="text-muted text-sm mt-1">Revenue, commissions, and vendor payout overview.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -151,72 +131,6 @@ export default function FinancePage() {
         </div>
       </div>
 
-      {/* Payout Requests */}
-      <div className="glass-card p-5">
-        <h2 className="text-sm font-semibold text-primary mb-4">Payout Requests</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs text-muted">
-                <th className="pb-2 pr-4">Partner</th>
-                <th className="pb-2 pr-4">Amount</th>
-                <th className="pb-2 pr-4">Requested</th>
-                <th className="pb-2 pr-4">Status</th>
-                <th className="pb-2">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {payouts.map(p => (
-                <tr key={p.id} className="border-t border-gray-50">
-                  <td className="py-2.5 pr-4 font-medium">{p.partnerName}</td>
-                  <td className="py-2.5 pr-4">₹{p.amount.toLocaleString()}</td>
-                  <td className="py-2.5 pr-4 text-muted">{formatDate(p.requestedAt)}</td>
-                  <td className="py-2.5 pr-4">
-                    <span
-                      className={`badge ${
-                        p.status === 'processed'
-                          ? 'badge-confirmed'
-                          : p.status === 'pending'
-                            ? 'badge-pending'
-                            : 'badge-cancelled'
-                      }`}
-                    >
-                      {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="py-2.5">
-                    {p.status === 'pending' && (
-                      <div className="flex gap-2 flex-wrap">
-                        <button
-                          type="button"
-                          onClick={() => processPayoutRequest(p.id, 'processed')}
-                          className="text-xs text-success font-semibold min-h-[44px]"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => processPayoutRequest(p.id, 'rejected')}
-                          className="text-xs text-error font-semibold min-h-[44px]"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {payouts.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-sm text-muted">
-                    No payout requests
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
   )
 }

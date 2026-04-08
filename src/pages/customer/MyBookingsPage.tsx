@@ -1,15 +1,15 @@
 import { useState, useEffect, type ComponentType } from 'react'
 import useStore from '../../store/useStore'
 import { formatDate } from '../../data/helpers'
-import { statusClass } from '../../data/helpers'
+import { statusClass, bookingStatusLabel } from '../../data/helpers'
 import { CalendarDaysIcon, CheckCircleIcon, BanIcon } from '../../components/common/Icons'
 import type { Booking, BookingStatus } from '../../types/domain'
 
 type Tab = 'upcoming' | 'past' | 'cancelled'
 
-const UPCOMING_STATUSES: BookingStatus[] = ['Pending', 'Confirmed', 'In Progress']
-const PAST_STATUSES: BookingStatus[] = ['Completed']
-const CANCELLED_STATUSES: BookingStatus[] = ['Cancelled']
+const UPCOMING_STATUSES: BookingStatus[] = ['pending', 'assigned', 'accepted', 'in_progress']
+const PAST_STATUSES: BookingStatus[] = ['completed']
+const CANCELLED_STATUSES: BookingStatus[] = ['cancelled', 'rejected']
 
 function filterByTab(bookings: Booking[], tab: Tab): Booking[] {
   if (tab === 'upcoming') return bookings.filter(b => UPCOMING_STATUSES.includes(b.booking_status))
@@ -36,7 +36,7 @@ function BookingCard({ booking, tab, onCancel, onReschedule, isCancelling }: Boo
           <p className="text-xs text-muted mt-0.5">#{booking.booking_id}</p>
         </div>
         <span className={`badge badge-${statusClass(booking.booking_status)} flex-shrink-0`}>
-          {booking.booking_status}
+          {bookingStatusLabel(booking.booking_status)}
         </span>
       </div>
 
@@ -120,7 +120,7 @@ export default function MyBookingsPage() {
     try {
       const { cancelBooking } = await import('../../services/bookingService').then(m => m.bookingService)
       await cancelBooking(id)
-      updateBookingStatus(id, 'Cancelled')
+      updateBookingStatus(id, 'cancelled')
       showToast('Booking cancelled successfully.', 'success')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to cancel booking'
