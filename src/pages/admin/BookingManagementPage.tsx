@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react'
-import { adminService } from '../../services/adminService'
 import { bookingService } from '../../services/bookingService'
 import { vendorService } from '../../services/vendorService'
 import useStore from '../../store/useStore'
@@ -41,12 +40,22 @@ export default function BookingManagementPage() {
     try {
       setIsLoading(true)
       setError(null)
-      const filters: Record<string, string> = {}
-      if (statusFilter) filters.status = statusFilter
-      if (categoryFilter) filters.category = categoryFilter
-      if (search) filters.search = search
-      const result = await adminService.getBookings(filters)
-      setBookings(result.data ?? [])
+      const items = await bookingService.listForAdmin({
+        status: statusFilter || undefined,
+        category: categoryFilter || undefined,
+        search: search || undefined,
+      })
+      const term = search.trim().toLowerCase()
+      setBookings(
+        term
+          ? items.filter(
+              b =>
+                b.booking_id.toLowerCase().includes(term) ||
+                b.customer_name.toLowerCase().includes(term) ||
+                b.service_name.toLowerCase().includes(term),
+            )
+          : items,
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load bookings')
     } finally {
@@ -60,7 +69,26 @@ export default function BookingManagementPage() {
 
   const handleStatusChange = async (bookingId: string, status: BookingStatus) => {
     try {
-      await adminService.updateBookingStatus(bookingId, status)
+      switch (status) {
+        case 'accepted':
+          await bookingService.accept(bookingId)
+          break
+        case 'in_progress':
+          await bookingService.start(bookingId)
+          break
+        case 'completed':
+          await bookingService.complete(bookingId)
+          break
+        case 'cancelled':
+          await bookingService.cancel(bookingId)
+          break
+        case 'rejected':
+          await bookingService.reject(bookingId)
+          break
+        default:
+          showToast(`Use the Assign column to move to ${status}`, 'danger')
+          return
+      }
       showToast(`Booking ${bookingId} → ${status}`, 'success')
       await loadBookings()
     } catch (err) {

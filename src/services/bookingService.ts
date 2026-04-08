@@ -58,8 +58,10 @@ export const bookingService = {
 
   listForAdmin: async (filters?: AdminBookingFilters): Promise<Booking[]> => {
     const qs = toQuery(filters as Record<string, string | undefined>)
-    const res = await api.get<Envelope<Booking[]>>(`/admin/bookings${qs}`)
-    return res.data ?? []
+    const res = await api.get<
+      Envelope<{ items: Booking[]; total: number; page: number; limit: number }>
+    >(`/admin/bookings${qs}`)
+    return res.data?.items ?? []
   },
 
   getById: async (id: string): Promise<Booking> => {

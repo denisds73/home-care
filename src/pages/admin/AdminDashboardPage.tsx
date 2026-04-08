@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { adminService } from '../../services/adminService'
+import { bookingService } from '../../services/bookingService'
 import type { AdminStats } from '../../services/adminService'
 import type { Booking } from '../../types/domain'
 import { monthlyRevenue } from '../../data/mockData'
@@ -18,12 +19,12 @@ export default function AdminDashboardPage() {
     try {
       setIsLoading(true)
       setError(null)
-      const [statsRes, bookingsRes] = await Promise.all([
+      const [statsRes, items] = await Promise.all([
         adminService.getDashboardStats(),
-        adminService.getBookings(),
+        bookingService.listForAdmin(),
       ])
       setStats(statsRes.data)
-      setRecentBookings((bookingsRes.data ?? []).slice(0, 5))
+      setRecentBookings(items.slice(0, 5))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard data')
     } finally {
