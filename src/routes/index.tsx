@@ -46,6 +46,7 @@ const TechnicianProfilePage = lazy(() => import('../pages/technician/TechnicianP
 // Admin pages
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'))
 const BookingManagementPage = lazy(() => import('../pages/admin/BookingManagementPage'))
+const AdminBookingDetailPage = lazy(() => import('../pages/admin/AdminBookingDetailPage'))
 const CatalogPage = lazy(() => import('../pages/admin/CatalogPage'))
 const UserManagementPage = lazy(() => import('../pages/admin/UserManagementPage'))
 const FinancePage = lazy(() => import('../pages/admin/FinancePage'))
@@ -194,6 +195,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: withSuspense(AdminDashboardPage) },
       { path: 'bookings', element: withSuspense(BookingManagementPage) },
+      { path: 'bookings/:id', element: withSuspense(AdminBookingDetailPage) },
       { path: 'catalog', element: withSuspense(CatalogPage) },
       { path: 'users', element: withSuspense(UserManagementPage) },
       { path: 'vendors', element: withSuspense(VendorListPage) },

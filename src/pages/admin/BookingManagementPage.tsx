@@ -1,15 +1,22 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { bookingService } from '../../services/bookingService'
 import { vendorService } from '../../services/vendorService'
+import { Pagination } from '../../components/common/Pagination'
+import { StatusBadge } from '../../components/bookings/StatusBadge'
 import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
-import { formatDate, statusClass, getValidTransitions, bookingStatusLabel } from '../../data/helpers'
+import { formatDate } from '../../data/helpers'
 import type { BookingStatus, CategoryId, Booking, Vendor } from '../../types/domain'
+
+const PAGE_LIMIT = 20
 
 export default function BookingManagementPage() {
   const showToast = useStore(s => s.showToast)
 
   const [bookings, setBookings] = useState<Booking[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -40,67 +47,47 @@ export default function BookingManagementPage() {
     try {
       setIsLoading(true)
       setError(null)
-      const items = await bookingService.listForAdmin({
+      const result = await bookingService.listForAdmin({
         status: statusFilter || undefined,
         category: categoryFilter || undefined,
         search: search || undefined,
+        page,
+        limit: PAGE_LIMIT,
       })
       const term = search.trim().toLowerCase()
-      setBookings(
-        term
-          ? items.filter(
-              b =>
-                b.booking_id.toLowerCase().includes(term) ||
-                b.customer_name.toLowerCase().includes(term) ||
-                b.service_name.toLowerCase().includes(term),
-            )
-          : items,
-      )
+      const filtered = term
+        ? result.items.filter(
+            b =>
+              b.booking_id.toLowerCase().includes(term) ||
+              b.customer_name.toLowerCase().includes(term) ||
+              b.service_name.toLowerCase().includes(term),
+          )
+        : result.items
+      setBookings(filtered)
+      setTotal(result.total)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load bookings')
     } finally {
       setIsLoading(false)
     }
-  }, [statusFilter, categoryFilter, search])
+  }, [statusFilter, categoryFilter, search, page])
 
   useEffect(() => {
     loadBookings()
   }, [loadBookings])
 
-  const handleStatusChange = async (bookingId: string, status: BookingStatus) => {
-    try {
-      switch (status) {
-        case 'accepted':
-          await bookingService.accept(bookingId)
-          break
-        case 'in_progress':
-          await bookingService.start(bookingId)
-          break
-        case 'completed':
-          await bookingService.complete(bookingId)
-          break
-        case 'cancelled':
-          await bookingService.cancel(bookingId)
-          break
-        case 'rejected':
-          await bookingService.reject(bookingId)
-          break
-        default:
-          showToast(`Use the Assign column to move to ${status}`, 'danger')
-          return
-      }
-      showToast(`Booking ${bookingId} → ${status}`, 'success')
-      await loadBookings()
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to update status', 'danger')
-    }
-  }
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setPage(1)
+  }, [statusFilter, categoryFilter, search])
 
   return (
     <div className="fade-in space-y-6">
       <div>
         <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">Booking Management</h1>
-        <p className="text-muted text-sm mt-1">View, filter, and manage all bookings.</p>
+        <p className="text-muted text-sm mt-1">
+          Click any row to open the full detail workspace.
+        </p>
       </div>
 
       <div className="glass-card p-4">
@@ -116,6 +103,7 @@ export default function BookingManagementPage() {
             className="input-base py-2 px-3 text-sm"
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value as BookingStatus | '')}
+            aria-label="Filter by status"
           >
             <option value="">All Statuses</option>
             <option value="pending">Pending</option>
@@ -130,6 +118,7 @@ export default function BookingManagementPage() {
             className="input-base py-2 px-3 text-sm"
             value={categoryFilter}
             onChange={e => setCategoryFilter(e.target.value as CategoryId | '')}
+            aria-label="Filter by category"
           >
             <option value="">All Categories</option>
             {CATEGORIES.map(c => (
@@ -144,7 +133,11 @@ export default function BookingManagementPage() {
       {error && (
         <div className="glass-card p-6 text-center">
           <p className="text-error text-sm mb-3">{error}</p>
-          <button type="button" onClick={loadBookings} className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px]">
+          <button
+            type="button"
+            onClick={loadBookings}
+            className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px]"
+          >
             Retry
           </button>
         </div>
@@ -175,62 +168,42 @@ export default function BookingManagementPage() {
                     <th className="p-3">Date</th>
                     <th className="p-3">Amount</th>
                     <th className="p-3">Status</th>
-                    <th className="p-3">Action</th>
-                    <th className="p-3">Assign</th>
+                    <th className="p-3">Assign vendor</th>
                   </tr>
                 </thead>
                 <tbody>
                   {bookings.map((b: Booking) => (
                     <tr key={b.booking_id} className="border-t border-gray-50 hover:bg-surface/50">
-                      <td className="p-3 font-medium">{b.booking_id}</td>
+                      <td className="p-3 font-medium">
+                        <Link
+                          to={`/admin/bookings/${b.booking_id}`}
+                          className="text-brand hover:underline"
+                        >
+                          {b.booking_id.slice(0, 8)}…
+                        </Link>
+                      </td>
                       <td className="p-3">{b.customer_name}</td>
                       <td className="p-3">{b.service_name}</td>
                       <td className="p-3 text-muted">{formatDate(b.preferred_date)}</td>
                       <td className="p-3">₹{b.price.toLocaleString()}</td>
                       <td className="p-3">
-                        <span className={`badge badge-${statusClass(b.booking_status)}`}>{bookingStatusLabel(b.booking_status)}</span>
-                      </td>
-                      <td className="p-3">
-                        {getValidTransitions(b.booking_status).length > 0 && (
-                          <select
-                            key={`${b.booking_id}-${b.booking_status}`}
-                            className="input-base py-1 px-2 text-xs max-w-[140px]"
-                            defaultValue=""
-                            aria-label={`Change status for ${b.booking_id}`}
-                            onChange={e => {
-                              if (e.target.value) handleStatusChange(b.booking_id, e.target.value as BookingStatus)
-                            }}
-                          >
-                            <option value="">Change...</option>
-                            {getValidTransitions(b.booking_status).map(s => (
-                              <option key={s} value={s}>
-                                {bookingStatusLabel(s)}
-                              </option>
-                            ))}
-                          </select>
-                        )}
+                        <StatusBadge status={b.booking_status} />
                       </td>
                       <td className="p-3">
                         {(b.booking_status === 'pending' || b.booking_status === 'rejected') && (
                           <select
                             key={`${b.booking_id}-assign`}
-                            className="input-base py-1 px-2 text-xs max-w-[160px]"
+                            className="input-base py-1 px-2 text-xs max-w-[180px]"
                             defaultValue=""
-                            aria-label={`Assign vendor for ${b.booking_id}`}
+                            aria-label={`Assign vendor for booking ${b.booking_id}`}
                             onChange={e => handleAssign(b.booking_id, e.target.value)}
                           >
                             <option value="">Assign vendor…</option>
-                            {activeVendors
-                              .filter(v =>
-                                v.categories.length === 0 ||
-                                v.categories.some(c => c.name.toLowerCase() === String(b.category).toLowerCase()) ||
-                                true,
-                              )
-                              .map(v => (
-                                <option key={v.id} value={v.id}>
-                                  {v.company_name}
-                                </option>
-                              ))}
+                            {activeVendors.map(v => (
+                              <option key={v.id} value={v.id}>
+                                {v.company_name}
+                              </option>
+                            ))}
                           </select>
                         )}
                       </td>
@@ -238,11 +211,20 @@ export default function BookingManagementPage() {
                   ))}
                 </tbody>
               </table>
-              {bookings.length === 0 && <p className="text-center py-8 text-sm text-muted">No bookings found</p>}
+              {bookings.length === 0 && (
+                <p className="text-center py-8 text-sm text-muted">No bookings found</p>
+              )}
             </>
           )}
         </div>
       )}
+
+      <Pagination
+        page={page}
+        limit={PAGE_LIMIT}
+        total={total}
+        onPageChange={setPage}
+      />
     </div>
   )
 }
