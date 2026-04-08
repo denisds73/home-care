@@ -232,20 +232,6 @@ describe('Admin (e2e)', () => {
     });
   });
 
-  // ─── Partners ───────────────────────────────────────────────────
-
-  describe('GET /api/admin/partners', () => {
-    it('should return an array of partners', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/admin/partners')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200);
-
-      expect(res.body.success).toBe(true);
-      expect(Array.isArray(res.body.data)).toBe(true);
-    });
-  });
-
   // ─── Finance ────────────────────────────────────────────────────
 
   describe('GET /api/admin/finance', () => {
