@@ -28,7 +28,6 @@ export class ErrorBoundary extends Component<
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
     // Keep stack traces discoverable in devtools; hook a telemetry sink here later.
-    // eslint-disable-next-line no-console
     console.error('[ErrorBoundary]', error, info.componentStack)
   }
 
