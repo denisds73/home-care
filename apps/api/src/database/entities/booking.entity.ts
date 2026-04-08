@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { VendorEntity } from './vendor.entity';
+import { TechnicianEntity } from './technician.entity';
 
 export enum BookingStatus {
   PENDING = 'pending',
@@ -97,6 +98,19 @@ export class BookingEntity {
   @ManyToOne(() => VendorEntity, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'vendor_id' })
   vendor?: VendorEntity | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  technician_id?: string | null;
+
+  @ManyToOne(() => TechnicianEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'technician_id' })
+  technician?: TechnicianEntity | null;
+
+  @Column({ type: 'varchar', length: 6, nullable: true })
+  completion_otp?: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  completion_otp_expires_at?: Date | null;
 
   @Column({ type: 'timestamptz', nullable: true })
   assigned_at?: Date | null;
