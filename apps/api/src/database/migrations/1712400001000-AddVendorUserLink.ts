@@ -44,7 +44,7 @@ export class AddVendorUserLink1712400001000 implements MigrationInterface {
         "id", "company_name", "contact_number", "email", "city",
         "pin_codes", "gst_number", "gst_verified", "status"
       ) VALUES (
-        'd4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f80',
+        'd4e5f6a7-b8c9-4d0e-9f2a-3b4c5d6e7f80',
         'Demo Vendor Co', '+919876543211', 'vendor-co@demo.com',
         'Mumbai', '["400001"]'::jsonb, '27AAAAA0000A1Z5', true, 'active'
       ) ON CONFLICT ("email") DO NOTHING;
@@ -52,7 +52,7 @@ export class AddVendorUserLink1712400001000 implements MigrationInterface {
     await queryRunner.query(`
       UPDATE "users"
       SET "role" = 'vendor',
-          "vendor_id" = 'd4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f80'
+          "vendor_id" = 'd4e5f6a7-b8c9-4d0e-9f2a-3b4c5d6e7f80'
       WHERE "email" = 'demo@vendor.com';
     `);
   }

@@ -5,9 +5,9 @@ export class CreateTechnicians1712500001000 implements MigrationInterface {
   private readonly PASSWORD_HASH =
     '$2b$12$nPHfuH44c0TYZL4g14zDZOAvkA9shPiFyihcFv9vt/M1GaYwRvn6S';
 
-  private readonly DEMO_VENDOR_ID = 'd4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f80';
+  private readonly DEMO_VENDOR_ID = 'd4e5f6a7-b8c9-4d0e-9f2a-3b4c5d6e7f80';
   private readonly DEMO_TECHNICIAN_ID =
-    'e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8091';
+    'e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8091';
   private readonly DEMO_TECH_USER_ID =
     'f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f809102';
 
