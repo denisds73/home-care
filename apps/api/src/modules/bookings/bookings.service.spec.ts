@@ -9,6 +9,7 @@ import {
   TechnicianEntity,
   VendorEntity,
 } from '@/database/entities';
+
 import { BookingsService, BookingActor } from './bookings.service';
 
 /**
@@ -47,14 +48,6 @@ function makeBooking(overrides: Partial<BookingEntity> = {}): BookingEntity {
   } as BookingEntity;
 }
 
-function makeVendor(overrides: Partial<VendorEntity> = {}): VendorEntity {
-  return {
-    id: 'v-1',
-    company_name: 'Demo Vendor Co',
-    ...overrides,
-  } as VendorEntity;
-}
-
 function makeTechnician(overrides: Partial<TechnicianEntity> = {}): TechnicianEntity {
   return {
     id: 't-1',
@@ -81,7 +74,8 @@ function makeFakeManager(store: {
   events: BookingStatusEventEntity[];
 }) {
   return {
-    async findOne(entity: unknown, _opts: unknown) {
+    async findOne(entity: unknown, _opts: unknown): Promise<unknown> {
+      void _opts;
       if (entity === BookingEntity) return store.booking;
       if (entity === VendorEntity) return store.vendor;
       if (entity === TechnicianEntity) return store.technician;
