@@ -14,6 +14,7 @@ import { PaymentsModule } from '@/modules/payments/payments.module';
 import { PartnersModule } from '@/modules/partners/partners.module';
 import { NotificationsModule } from '@/modules/notifications/notifications.module';
 import { AdminModule } from '@/modules/admin/admin.module';
+import { OffersModule } from '@/modules/offers/offers.module';
 import { WalletModule } from '@/modules/wallet/wallet.module';
 
 @Module({
@@ -46,6 +47,7 @@ import { WalletModule } from '@/modules/wallet/wallet.module';
     PartnersModule,
     NotificationsModule,
     AdminModule,
+    OffersModule,
     WalletModule,
   ],
 })

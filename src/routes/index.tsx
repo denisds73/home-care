@@ -38,6 +38,7 @@ const PartnerSupportPage = lazy(() => import('../pages/partner/PartnerSupportPag
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'))
 const BookingManagementPage = lazy(() => import('../pages/admin/BookingManagementPage'))
 const CatalogPage = lazy(() => import('../pages/admin/CatalogPage'))
+const OffersManagementPage = lazy(() => import('../pages/admin/OffersManagementPage'))
 const UserManagementPage = lazy(() => import('../pages/admin/UserManagementPage'))
 const PartnerManagementPage = lazy(() => import('../pages/admin/PartnerManagementPage'))
 const FinancePage = lazy(() => import('../pages/admin/FinancePage'))
@@ -155,6 +156,7 @@ export const router = createBrowserRouter([
       { index: true, element: withSuspense(AdminDashboardPage) },
       { path: 'bookings', element: withSuspense(BookingManagementPage) },
       { path: 'catalog', element: withSuspense(CatalogPage) },
+      { path: 'offers', element: withSuspense(OffersManagementPage) },
       { path: 'users', element: withSuspense(UserManagementPage) },
       { path: 'partners', element: withSuspense(PartnerManagementPage) },
       { path: 'finance', element: withSuspense(FinancePage) },

@@ -6,6 +6,7 @@ import {
   UserEntity,
   PartnerEntity,
   PayoutRequestEntity,
+  OfferEntity,
 } from '@/database/entities';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
@@ -18,6 +19,7 @@ import { AdminService } from './admin.service';
       UserEntity,
       PartnerEntity,
       PayoutRequestEntity,
+      OfferEntity,
     ]),
   ],
   controllers: [AdminController],

@@ -255,6 +255,21 @@ export interface PayoutRequest {
   processedAt?: string
 }
 
+export interface Offer {
+  id: string
+  title: string
+  description: string
+  tag: string
+  cta_text: string
+  category: CategoryId
+  image_url: string
+  bg_gradient: string
+  is_active: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
 export interface LocationData {
   label: string
   fullAddress: string

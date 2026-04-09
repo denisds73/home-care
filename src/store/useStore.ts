@@ -1,9 +1,11 @@
 import { create } from 'zustand'
 import { initialServices } from '../data/services'
 import { initialBookings } from '../data/bookings'
+import { initialOffers } from '../data/offers'
 import { CATEGORIES } from '../data/categories'
 import { serviceService } from '../services/serviceService'
 import { bookingService } from '../services/bookingService'
+import { offerService } from '../services/offerService'
 import { calculatePricing } from '../utils/pricing'
 import type {
   Booking,
@@ -12,6 +14,7 @@ import type {
   CategoryId,
   CategoryMeta,
   NewBookingPayload,
+  Offer,
   Service,
   ToastAction,
   ToastItem,
@@ -33,6 +36,8 @@ interface Store {
   servicesError: string | null
   bookingsLoading: boolean
   bookingsError: string | null
+  offersLoading: boolean
+  offersError: string | null
 
   /** Fetch services from backend; falls back to mock data on failure */
   fetchServices: () => Promise<void>
@@ -40,6 +45,8 @@ interface Store {
   fetchCategories: () => Promise<void>
   /** Fetch bookings from backend; falls back to mock data on failure */
   fetchBookings: () => Promise<void>
+  /** Fetch active offers from backend; falls back to mock data on failure */
+  fetchOffers: () => Promise<void>
 
   addService: (svc: ServiceDraft) => void
   updateService: (id: number, data: Partial<Service> & { created_at?: string; updated_at?: string }) => void
@@ -67,6 +74,12 @@ interface Store {
   toggleCartDrawer: () => void
   openDetailSheet: (id: number) => void
   closeDetailSheet: () => void
+  offers: Offer[]
+  addOffer: (offer: Omit<Offer, 'id' | 'created_at' | 'updated_at'>) => void
+  updateOffer: (id: string, data: Partial<Offer>) => void
+  deleteOffer: (id: string) => void
+  toggleOfferActive: (id: string) => void
+
   toast: ToastState | null
   toasts: ToastItem[]
   showToast: (msg: string, type?: ToastType, action?: ToastAction) => void
@@ -83,6 +96,8 @@ const useStore = create<Store>()((set, get) => ({
   servicesError: null,
   bookingsLoading: false,
   bookingsError: null,
+  offersLoading: false,
+  offersError: null,
 
   fetchServices: async () => {
     set({ servicesLoading: true, servicesError: null })
@@ -129,6 +144,23 @@ const useStore = create<Store>()((set, get) => ({
       // Mock data remains as fallback
     }
   },
+
+  fetchOffers: async () => {
+    set({ offersLoading: true, offersError: null })
+    try {
+      const response = await offerService.getActiveOffers()
+      const offers = response.data
+      if (Array.isArray(offers)) {
+        set({ offers, offersLoading: false })
+      } else {
+        set({ offersLoading: false })
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load offers'
+      set({ offersError: message, offersLoading: false })
+    }
+  },
+
   addService: (svc) => {
     const id = get().nextServiceId
     set({ services: [...get().services, { ...svc, id }], nextServiceId: id + 1 })
@@ -198,6 +230,26 @@ const useStore = create<Store>()((set, get) => ({
   toggleCartDrawer: () => set(s => ({ cartDrawerOpen: !s.cartDrawerOpen })),
   openDetailSheet: (id) => set({ detailSheetOpen: true, detailServiceId: id }),
   closeDetailSheet: () => set({ detailSheetOpen: false }),
+
+  offers: initialOffers,
+  addOffer: (draft) => {
+    const now = new Date().toISOString()
+    const id = `offer-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+    set({ offers: [...get().offers, { ...draft, id, created_at: now, updated_at: now }] })
+  },
+  updateOffer: (id, data) =>
+    set({
+      offers: get().offers.map(o =>
+        o.id === id ? { ...o, ...data, updated_at: new Date().toISOString() } : o,
+      ),
+    }),
+  deleteOffer: (id) => set({ offers: get().offers.filter(o => o.id !== id) }),
+  toggleOfferActive: (id) =>
+    set({
+      offers: get().offers.map(o =>
+        o.id === id ? { ...o, is_active: !o.is_active, updated_at: new Date().toISOString() } : o,
+      ),
+    }),
 
   toast: null,
   toasts: [],

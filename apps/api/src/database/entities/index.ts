@@ -12,3 +12,4 @@ export { JobEntity, JobStatus } from './job.entity';
 export { TransactionEntity, TransactionType } from './transaction.entity';
 export { NotificationEntity, NotificationType } from './notification.entity';
 export { PayoutRequestEntity, PayoutStatus } from './payout-request.entity';
+export { OfferEntity } from './offer.entity';

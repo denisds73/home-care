@@ -16,10 +16,13 @@ import {
   PayoutStatus,
   UserStatus,
   Role,
+  OfferEntity,
 } from '@/database/entities';
 import { QueryBookingsDto } from './dto/query-bookings.dto';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
+import { CreateOfferDto } from './dto/create-offer.dto';
+import { UpdateOfferDto } from './dto/update-offer.dto';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -49,6 +52,8 @@ export class AdminService {
     private readonly partnersRepo: Repository<PartnerEntity>,
     @InjectRepository(PayoutRequestEntity)
     private readonly payoutsRepo: Repository<PayoutRequestEntity>,
+    @InjectRepository(OfferEntity)
+    private readonly offersRepo: Repository<OfferEntity>,
   ) {}
 
   // ─── Dashboard Stats ───────────────────────────────────────────────
@@ -293,5 +298,44 @@ export class AdminService {
     payout.status = status;
     payout.processed_at = new Date();
     return this.payoutsRepo.save(payout);
+  }
+
+  // ─── Offers ────────────────────────────────────────────────────────
+
+  async getOffers(): Promise<OfferEntity[]> {
+    return this.offersRepo.find({ order: { sort_order: 'ASC' } });
+  }
+
+  async getActiveOffers(): Promise<OfferEntity[]> {
+    return this.offersRepo.find({
+      where: { is_active: true },
+      order: { sort_order: 'ASC' },
+    });
+  }
+
+  async createOffer(dto: CreateOfferDto): Promise<OfferEntity> {
+    const offer = this.offersRepo.create(dto);
+    return this.offersRepo.save(offer);
+  }
+
+  async updateOffer(id: string, dto: UpdateOfferDto): Promise<OfferEntity> {
+    const offer = await this.offersRepo.findOne({ where: { id } });
+
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+
+    Object.assign(offer, dto);
+    return this.offersRepo.save(offer);
+  }
+
+  async deleteOffer(id: string): Promise<void> {
+    const offer = await this.offersRepo.findOne({ where: { id } });
+
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+
+    await this.offersRepo.remove(offer);
   }
 }

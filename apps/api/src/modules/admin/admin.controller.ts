@@ -29,6 +29,8 @@ import { QueryBookingsDto } from './dto/query-bookings.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { UpdatePartnerStatusDto } from './dto/update-partner-status.dto';
 import { ProcessPayoutDto } from './dto/process-payout.dto';
+import { CreateOfferDto } from './dto/create-offer.dto';
+import { UpdateOfferDto } from './dto/update-offer.dto';
 
 @ApiTags('admin')
 @ApiBearerAuth()
@@ -143,5 +145,35 @@ export class AdminController {
     @Body() dto: ProcessPayoutDto,
   ) {
     return this.adminService.processPayout(id, dto.status);
+  }
+
+  // ─── Offers ────────────────────────────────────────────────────────
+
+  @Get('offers')
+  @ApiOperation({ summary: 'List all offers (including inactive)' })
+  async getOffers() {
+    return this.adminService.getOffers();
+  }
+
+  @Post('offers')
+  @ApiOperation({ summary: 'Create a new offer' })
+  async createOffer(@Body() dto: CreateOfferDto) {
+    return this.adminService.createOffer(dto);
+  }
+
+  @Put('offers/:id')
+  @ApiOperation({ summary: 'Update an existing offer' })
+  async updateOffer(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateOfferDto,
+  ) {
+    return this.adminService.updateOffer(id, dto);
+  }
+
+  @Delete('offers/:id')
+  @ApiOperation({ summary: 'Delete an offer permanently' })
+  async deleteOffer(@Param('id', ParseUUIDPipe) id: string) {
+    await this.adminService.deleteOffer(id);
+    return { success: true };
   }
 }

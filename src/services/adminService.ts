@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { Booking, BookingStatus, Partner, PartnerStatus, PayoutRequest, Service } from '../types/domain'
+import type { Booking, BookingStatus, Offer, Partner, PartnerStatus, PayoutRequest, Service } from '../types/domain'
 
 export interface AdminStats {
   totalRevenue: number
@@ -62,4 +62,10 @@ export const adminService = {
   getPayoutRequests: () => api.get<{ data: PayoutRequest[] }>('/admin/finance/payouts'),
   processPayoutRequest: (id: string, status: 'processed' | 'rejected') =>
     api.patch<{ data: PayoutRequest }>(`/admin/finance/payouts/${id}`, { status }),
+
+  // Offers
+  getOffers: () => api.get<{ data: Offer[] }>('/admin/offers'),
+  addOffer: (data: Partial<Offer>) => api.post<{ data: Offer }>('/admin/offers', data),
+  updateOffer: (id: string, data: Partial<Offer>) => api.put<{ data: Offer }>(`/admin/offers/${id}`, data),
+  deleteOffer: (id: string) => api.delete<{ success: boolean }>(`/admin/offers/${id}`),
 }
