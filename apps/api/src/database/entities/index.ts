@@ -1,4 +1,4 @@
-export { UserEntity, Role, UserStatus } from './user.entity';
+export { UserEntity, Role, UserStatus, Gender } from './user.entity';
 export { CategoryEntity } from './category.entity';
 export { ServiceEntity } from './service.entity';
 export {

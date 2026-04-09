@@ -23,10 +23,13 @@ interface FormState {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PHONE_RE = /^[6-9]\d{9}$/
 
+const stripCountryCode = (phone: string): string =>
+  phone.replace(/^\+91\s*/, '').replace(/\D/g, '')
+
 const toForm = (u: User): FormState => ({
   name: u.name ?? '',
   email: u.email ?? '',
-  phone: u.phone ?? '',
+  phone: stripCountryCode(u.phone ?? ''),
   dob: u.dob ?? '',
   gender: (u.gender as Gender | undefined) ?? '',
 })
@@ -82,7 +85,7 @@ export const PersonalInfoSection = memo(
     const original = {
       name: (user.name ?? '').trim(),
       email: (user.email ?? '').trim(),
-      phone: (user.phone ?? '').trim(),
+      phone: stripCountryCode(user.phone ?? ''),
       dob: user.dob ?? '',
       gender: (user.gender as Gender | undefined) ?? '',
     }
@@ -158,7 +161,6 @@ export const PersonalInfoSection = memo(
         showToast('No changes to save', 'info')
         return
       }
-      // Phone changes require OTP verification first
       if (phoneChanged && normalized.phone && verifiedPhone !== normalized.phone) {
         setPhoneModalOpen(true)
         return

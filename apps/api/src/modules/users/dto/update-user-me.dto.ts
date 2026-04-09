@@ -1,5 +1,7 @@
 import {
+  IsDateString,
   IsEmail,
+  IsEnum,
   IsOptional,
   IsString,
   Matches,
@@ -7,6 +9,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Gender } from '@/database/entities/user.entity';
 
 export class UpdateUserMeDto {
   @ApiPropertyOptional({ example: 'Flavio Denis' })
@@ -29,6 +32,16 @@ export class UpdateUserMeDto {
     message: 'phone must be a valid 10-digit Indian mobile number',
   })
   phone?: string;
+
+  @ApiPropertyOptional({ example: '1995-06-15' })
+  @IsOptional()
+  @IsDateString()
+  dob?: string;
+
+  @ApiPropertyOptional({ example: 'male', enum: Gender })
+  @IsOptional()
+  @IsEnum(Gender, { message: 'gender must be male, female, or other' })
+  gender?: Gender;
 
   @ApiPropertyOptional({ example: 'https://cdn.example.com/avatar.jpg' })
   @IsOptional()
