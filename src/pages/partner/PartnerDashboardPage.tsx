@@ -218,7 +218,7 @@ export default function PartnerDashboardPage() {
                     {job.serviceName}
                   </p>
                   <p className="text-xs text-muted mt-0.5">
-                    {job.customerName} · {job.timeSlot}
+                    {job.customerName} · {job.preferredDate}
                   </p>
                 </div>
                 <div className="flex items-center gap-3 ml-3 flex-shrink-0">

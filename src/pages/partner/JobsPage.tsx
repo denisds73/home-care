@@ -61,9 +61,9 @@ const JobCard = memo(({ job, onUpdateStatus, isUpdating }: JobCardProps) => {
           <p className="font-medium text-primary mt-0.5">{job.phone}</p>
         </div>
         <div className="bg-surface rounded-lg p-2.5">
-          <p className="text-muted">Date &amp; Time</p>
+          <p className="text-muted">Date</p>
           <p className="font-medium text-primary mt-0.5">
-            {job.preferredDate} · {job.timeSlot}
+            {job.preferredDate}
           </p>
         </div>
         <div className="bg-surface rounded-lg p-2.5">

@@ -40,7 +40,6 @@ interface JobResponse {
   serviceName: string;
   price: number;
   preferredDate: string;
-  timeSlot: string;
   status: string;
   createdAt: string;
 }
@@ -284,7 +283,6 @@ export class PartnersService {
       serviceName: job.service_name,
       price: Number(job.price),
       preferredDate: job.preferred_date,
-      timeSlot: job.time_slot,
       status: job.status,
       createdAt: job.created_at.toISOString(),
     };

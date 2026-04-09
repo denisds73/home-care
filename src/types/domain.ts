@@ -8,8 +8,6 @@ export type CategoryId =
 
 export type View = 'home' | 'services' | 'booking' | 'admin'
 
-export type TimeSlot = '9AM-12PM' | '12PM-3PM' | '3PM-6PM'
-
 export type PaymentMode = 'PAY_NOW' | 'PAY_AFTER_SERVICE'
 
 export type PaymentStatus = 'SUCCESS' | 'FAILED' | 'PENDING'
@@ -84,7 +82,6 @@ export interface Booking {
   price: number
   services_list: ServiceListItem[]
   preferred_date: string
-  time_slot: TimeSlot | string
   payment_mode: PaymentMode
   payment_status: PaymentStatus
   razorpay_order_id: string | null
@@ -106,7 +103,6 @@ export interface CreateBookingPayload {
   price: number
   services_list: ServiceListItem[]
   preferred_date: string
-  time_slot: string
   payment_mode: PaymentMode
 }
 
@@ -227,7 +223,6 @@ export interface Job {
   serviceName: string
   price: number
   preferredDate: string
-  timeSlot: TimeSlot | string
   status: JobStatus
   createdAt: string
 }

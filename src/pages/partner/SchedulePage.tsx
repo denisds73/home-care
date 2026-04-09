@@ -1,15 +1,13 @@
 import { useState, useEffect, useMemo } from 'react'
 import { partnerService } from '../../services/partnerService'
 import useStore from '../../store/useStore'
-import type { Job, TimeSlot } from '../../types/domain'
+import type { Job } from '../../types/domain'
 
-const TIME_SLOTS: TimeSlot[] = ['9AM-12PM', '12PM-3PM', '3PM-6PM']
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 function getDayLabel(dateStr: string): string {
   const date = new Date(dateStr + 'T00:00:00')
   const dayIndex = date.getDay()
-  // getDay: 0=Sun,1=Mon,...6=Sat -> map to our DAYS array
   const map = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   return map[dayIndex]
 }
@@ -24,9 +22,7 @@ export default function SchedulePage() {
     () => {
       const initial: Record<string, boolean> = {}
       DAYS.forEach((day) => {
-        TIME_SLOTS.forEach((slot) => {
-          initial[`${day}-${slot}`] = day !== 'Sun'
-        })
+        initial[day] = day !== 'Sun'
       })
       return initial
     },
@@ -46,20 +42,18 @@ export default function SchedulePage() {
     load()
   }, [])
 
-  // Map jobs to day-slot keys for display
-  const jobsBySlot = useMemo(() => {
+  const jobsByDay = useMemo(() => {
     const map: Record<string, Job[]> = {}
     for (const job of scheduleJobs) {
       const dayLabel = getDayLabel(job.preferredDate)
-      const key = `${dayLabel}-${job.timeSlot}`
-      if (!map[key]) map[key] = []
-      map[key].push(job)
+      if (!map[dayLabel]) map[dayLabel] = []
+      map[dayLabel].push(job)
     }
     return map
   }, [scheduleJobs])
 
-  const toggleSlot = (key: string) => {
-    setAvailability((prev) => ({ ...prev, [key]: !prev[key] }))
+  const toggleDay = (day: string) => {
+    setAvailability((prev) => ({ ...prev, [day]: !prev[day] }))
   }
 
   const handleSave = () => {
@@ -73,11 +67,10 @@ export default function SchedulePage() {
           Schedule
         </h1>
         <p className="text-muted text-sm mt-1">
-          Set your working hours and availability.
+          Set your working days and availability.
         </p>
       </div>
 
-      {/* Scheduled Jobs */}
       {isLoading ? (
         <div className="glass-card p-5 animate-pulse space-y-3">
           <div className="h-4 w-40 bg-muted rounded" />
@@ -96,7 +89,6 @@ export default function SchedulePage() {
         </div>
       ) : (
         <>
-          {/* Upcoming jobs summary */}
           {scheduleJobs.length > 0 && (
             <div className="glass-card p-5">
               <h2 className="text-sm font-semibold text-primary mb-3">
@@ -113,7 +105,7 @@ export default function SchedulePage() {
                         {job.serviceName}
                       </p>
                       <p className="text-xs text-muted mt-0.5">
-                        {job.customerName} · {job.preferredDate} · {job.timeSlot}
+                        {job.customerName} · {job.preferredDate}
                       </p>
                     </div>
                     <span
@@ -142,88 +134,31 @@ export default function SchedulePage() {
           Weekly Availability
         </h2>
 
-        {/* Desktop table */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr>
-                <th className="text-left text-xs text-muted font-medium pb-3 pr-4">
-                  Day
-                </th>
-                {TIME_SLOTS.map((slot) => (
-                  <th
-                    key={slot}
-                    className="text-center text-xs text-muted font-medium pb-3 px-2"
-                  >
-                    {slot}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {DAYS.map((day) => (
-                <tr key={day} className="border-t border-gray-50">
-                  <td className="py-3 pr-4 text-sm font-medium text-primary">
-                    {day}
-                  </td>
-                  {TIME_SLOTS.map((slot) => {
-                    const key = `${day}-${slot}`
-                    const slotJobs = jobsBySlot[key] ?? []
-                    return (
-                      <td key={slot} className="py-3 px-2 text-center">
-                        <button
-                          type="button"
-                          onClick={() => toggleSlot(key)}
-                          className={`w-full py-2 rounded-lg text-xs font-semibold transition min-h-[40px] ${
-                            availability[key]
-                              ? 'bg-brand-soft text-brand'
-                              : 'bg-muted text-muted'
-                          }`}
-                        >
-                          {slotJobs.length > 0
-                            ? `${slotJobs.length} job${slotJobs.length > 1 ? 's' : ''}`
-                            : availability[key]
-                              ? 'Available'
-                              : 'Off'}
-                        </button>
-                      </td>
-                    )
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Mobile view */}
-        <div className="md:hidden space-y-4">
-          {DAYS.map((day) => (
-            <div key={day}>
-              <p className="text-sm font-medium text-primary mb-2">{day}</p>
-              <div className="flex gap-2 flex-wrap">
-                {TIME_SLOTS.map((slot) => {
-                  const key = `${day}-${slot}`
-                  const slotJobs = jobsBySlot[key] ?? []
-                  return (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => toggleSlot(key)}
-                      className={`flex-1 min-w-[88px] py-2 rounded-lg text-xs font-semibold transition whitespace-pre-line text-center ${
-                        availability[key]
-                          ? 'bg-brand-soft text-brand'
-                          : 'bg-muted text-muted'
-                      }`}
-                    >
-                      {slotJobs.length > 0
-                        ? `${slot}\n${slotJobs.length} job${slotJobs.length > 1 ? 's' : ''}`
-                        : slot.replace('-', '\n')}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+          {DAYS.map((day) => {
+            const dayJobs = jobsByDay[day] ?? []
+            return (
+              <button
+                key={day}
+                type="button"
+                onClick={() => toggleDay(day)}
+                className={`flex flex-col items-center gap-1 p-3 rounded-xl text-sm font-semibold transition min-h-[64px] ${
+                  availability[day]
+                    ? 'bg-brand-soft text-brand border-2 border-brand/20'
+                    : 'bg-muted text-muted border-2 border-transparent'
+                }`}
+              >
+                <span>{day}</span>
+                <span className="text-xs font-normal">
+                  {dayJobs.length > 0
+                    ? `${dayJobs.length} job${dayJobs.length > 1 ? 's' : ''}`
+                    : availability[day]
+                      ? 'Available'
+                      : 'Off'}
+                </span>
+              </button>
+            )
+          })}
         </div>
 
         <button

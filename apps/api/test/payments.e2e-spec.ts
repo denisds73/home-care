@@ -65,7 +65,6 @@ describe('Payments (e2e)', () => {
           { id: 1, name: 'Deep Cleaning', price: 499, qty: 1 },
         ],
         preferred_date: '2026-05-01',
-        time_slot: '10:00-12:00',
         payment_mode: 'PAY_NOW',
       })
       .expect(201);

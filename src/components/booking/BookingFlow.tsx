@@ -6,7 +6,7 @@ import { bookingService } from '../../services/bookingService'
 import { useLocationStore } from '../../store/useLocationStore'
 import { CATEGORIES } from '../../data/categories'
 import { calculatePricing } from '../../utils/pricing'
-import type { PaymentMode, TimeSlot } from '../../types/domain'
+import type { PaymentMode } from '../../types/domain'
 import RazorpayModal from './RazorpayModal'
 import { LOGIN_ROUTES } from '../../lib/auth'
 import { DatePicker } from '../common/DatePicker'
@@ -19,17 +19,6 @@ interface BookingDraft {
   phone?: string
   address?: string
   date?: string
-  time_slot?: string
-}
-
-const SLOT_LABELS: Record<string, string> = {
-  '9AM-12PM': '9:00 AM – 12:00 PM',
-  '12PM-3PM': '12:00 PM – 3:00 PM',
-  '3PM-6PM': '3:00 PM – 6:00 PM',
-}
-
-function formatSlot(s: string | undefined): string {
-  return s ? (SLOT_LABELS[s] ?? s) : ''
 }
 
 function formatDate(d: string | undefined): string {
@@ -75,7 +64,6 @@ function DetailsStep({
   const getCartCount = useStore(s => s.getCartCount)
   const savedLocation = useLocationStore(s => s.location)
   const [errors, setErrors] = useState<Record<string, string | undefined>>({})
-  const [selectedSlot, setSelectedSlot] = useState(booking.time_slot || '')
 
   const validate = () => {
     const e: Record<string, string | undefined> = {}
@@ -83,27 +71,17 @@ function DetailsStep({
     if (!booking.phone?.trim() || !/^[6-9]\d{9}$/.test(booking.phone.trim())) e.phone = 'Enter a valid 10-digit Indian mobile number'
     if (!booking.address?.trim()) e.address = 'Address is required'
     if (!booking.date) e.date = 'Please select a date'
-    if (!selectedSlot) e.slot = 'Please select a time slot'
     setErrors(e)
     return Object.keys(e).length === 0
   }
 
   const handleSubmit = () => {
-    if (validate()) {
-      setBooking(b => ({ ...b, time_slot: selectedSlot }))
-      onNext()
-    }
+    if (validate()) onNext()
   }
 
   const tomorrow = new Date()
   tomorrow.setDate(tomorrow.getDate() + 1)
   const minDate = tomorrow.toISOString().split('T')[0]
-
-  const slots: { value: TimeSlot; time: string; end: string; tag: string; tagColor: string }[] = [
-    { value: '9AM-12PM', time: '9:00 AM', end: 'to 12:00 PM', tag: 'Fastest', tagColor: '#6D28D9' },
-    { value: '12PM-3PM', time: '12:00 PM', end: 'to 3:00 PM', tag: 'Available', tagColor: '#16A34A' },
-    { value: '3PM-6PM', time: '3:00 PM', end: 'to 6:00 PM', tag: 'Available', tagColor: '#16A34A' },
-  ]
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6 md:p-8 slide-up">
@@ -166,20 +144,6 @@ function DetailsStep({
           placeholder="Select a date"
           error={errors.date}
         />
-        <div>
-          <label className="block text-sm font-medium text-secondary mb-2">Time Slot <span className="text-error">*</span></label>
-          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-            {slots.map(slot => (
-              <button key={slot.value} type="button" onClick={() => { setSelectedSlot(slot.value); setErrors(er => ({ ...er, slot: undefined })) }}
-                className={`p-2 sm:p-3 border-2 rounded-xl text-center transition ${selectedSlot === slot.value ? 'border-brand bg-muted shadow-[0_0_0_3px_rgba(109,40,217,.16)]' : 'border-gray-200 hover:border-brand hover:bg-muted'}`}>
-                <div className="text-[.8rem] font-bold text-primary">{slot.time}</div>
-                <div className="text-[.65rem] text-muted">{slot.end}</div>
-                <div className="text-[.65rem] font-semibold mt-1" style={{ color: slot.tagColor }}>{slot.tag}</div>
-              </button>
-            ))}
-          </div>
-          {errors.slot && <p className="text-xs text-error mt-1">{errors.slot}</p>}
-        </div>
       </div>
       <button type="button" onClick={handleSubmit} className="btn-base btn-primary w-full py-3 font-semibold mt-6 text-sm">Continue to Payment</button>
     </div>
@@ -257,7 +221,6 @@ function PaymentStep({
         <div className="bg-gray-50 rounded-xl p-3"><p className="text-xs text-muted">Customer</p><p className="font-semibold text-sm">{booking.name}</p></div>
         <div className="bg-gray-50 rounded-xl p-3"><p className="text-xs text-muted">Phone</p><p className="font-semibold text-sm">{booking.phone}</p></div>
         <div className="bg-gray-50 rounded-xl p-3"><p className="text-xs text-muted">Date</p><p className="font-semibold text-sm">{formatDate(booking.date)}</p></div>
-        <div className="bg-gray-50 rounded-xl p-3"><p className="text-xs text-muted">Time Slot</p><p className="font-semibold text-sm">{formatSlot(booking.time_slot)}</p></div>
       </div>
       <div className="bg-gray-50 rounded-xl p-3 mb-4"><p className="text-xs text-muted">Address</p><p className="font-semibold text-sm">{booking.address}</p></div>
 
@@ -307,7 +270,6 @@ function ConfirmationStep({ bookingId, booking }: { bookingId: string; booking: 
       <div className="bg-gray-50 rounded-xl p-5 text-left mb-6 space-y-2.5">
         <div className="flex justify-between"><span className="text-secondary text-sm">Booking ID</span><span className="font-bold text-sm text-brand-dark">{bookingId}</span></div>
         <div className="flex justify-between"><span className="text-secondary text-sm">Date</span><span className="font-semibold text-sm">{formatDate(booking.date)}</span></div>
-        <div className="flex justify-between"><span className="text-secondary text-sm">Time Slot</span><span className="font-semibold text-sm">{booking.time_slot}</span></div>
         <div className="flex justify-between"><span className="text-secondary text-sm">Address</span><span className="font-semibold text-sm text-right max-w-xs">{booking.address}</span></div>
       </div>
       <div className="flex flex-col sm:flex-row gap-3">
@@ -342,7 +304,6 @@ export default function BookingFlow() {
       phone: user?.phone ?? '',
       address: useLocationStore.getState().location?.fullAddress ?? '',
       date: '',
-      time_slot: '',
     }
   })
   const [showRazorpay, setShowRazorpay] = useState(false)
@@ -396,7 +357,6 @@ export default function BookingFlow() {
         qty: c.qty,
       })),
       preferred_date: booking.date ?? '',
-      time_slot: booking.time_slot ?? '',
       payment_mode: paymentMode,
     }
   }

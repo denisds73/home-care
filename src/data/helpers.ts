@@ -1,4 +1,4 @@
-import type { BookingStatus, CategoryId, PaymentMode, PaymentStatus, TimeSlot } from '../types/domain'
+import type { BookingStatus, CategoryId, PaymentMode, PaymentStatus } from '../types/domain'
 import { CATEGORIES } from './categories'
 
 export function getCategoryName(id: CategoryId | string): string {
@@ -25,10 +25,6 @@ export function formatPaymentMode(m: PaymentMode | string): string {
 
 export function formatPaymentStatus(s: PaymentStatus): string {
   return s === 'SUCCESS' ? 'Paid' : s === 'FAILED' ? 'Failed' : 'Pending'
-}
-
-export function formatTimeSlot(s: TimeSlot | string): string {
-  return s === '9AM-12PM' ? '9:00 AM – 12:00 PM' : s === '12PM-3PM' ? '12:00 PM – 3:00 PM' : s === '3PM-6PM' ? '3:00 PM – 6:00 PM' : s
 }
 
 export function formatDate(d: string | undefined): string {

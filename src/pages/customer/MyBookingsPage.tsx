@@ -40,14 +40,10 @@ function BookingCard({ booking, tab, onCancel, onReschedule, isCancelling }: Boo
         </span>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+      <div className="mt-3 text-sm">
         <div>
           <p className="text-muted text-xs">Date</p>
           <p className="text-secondary font-medium">{formatDate(booking.preferred_date)}</p>
-        </div>
-        <div>
-          <p className="text-muted text-xs">Time Slot</p>
-          <p className="text-secondary font-medium">{booking.time_slot}</p>
         </div>
       </div>
 
