@@ -8,6 +8,7 @@ import type { CreateVendorPayload } from '../../types/domain'
 const PHONE_RE = /^[6-9]\d{9}$/
 const PIN_RE = /^\d{6}$/
 const GST_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/
+const DEMO_VENDOR_PASSWORD = 'demo123'
 
 interface FormState {
   company_name: string
@@ -102,7 +103,10 @@ export default function VendorCreatePage() {
     try {
       setIsSaving(true)
       const vendor = await vendorService.create(payload)
-      showToast('Vendor onboarded successfully', 'success')
+      showToast(
+        `Vendor onboarded. Login: ${payload.email} / ${DEMO_VENDOR_PASSWORD}`,
+        'success',
+      )
       navigate(`/admin/vendors/${vendor.id}`)
     } catch (err) {
       showToast(
@@ -128,6 +132,10 @@ export default function VendorCreatePage() {
         </h1>
         <p className="text-muted text-sm mt-1">
           Register a business entity that will provide services on the platform.
+        </p>
+        <p className="text-xs text-secondary mt-2">
+          Demo login provisioning: vendor can sign in with onboarding email and password{' '}
+          <span className="font-semibold text-primary">{DEMO_VENDOR_PASSWORD}</span>.
         </p>
       </div>
 

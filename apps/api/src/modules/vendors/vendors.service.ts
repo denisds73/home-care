@@ -10,11 +10,18 @@ import {
   VendorEntity,
   VendorStatus,
   CategoryEntity,
+  UserEntity,
+  Role,
+  UserStatus,
 } from '@/database/entities';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
 import { UpdateVendorMeDto } from './dto/update-vendor-me.dto';
 import { QueryVendorsDto } from './dto/query-vendors.dto';
+import * as bcrypt from 'bcrypt';
+
+const DEFAULT_VENDOR_DEMO_PASSWORD = 'demo123';
+const BCRYPT_SALT_ROUNDS = 12;
 
 export interface PaginatedVendors {
   items: VendorEntity[];
@@ -30,29 +37,64 @@ export class VendorsService {
     private readonly vendorsRepo: Repository<VendorEntity>,
     @InjectRepository(CategoryEntity)
     private readonly categoriesRepo: Repository<CategoryEntity>,
+    @InjectRepository(UserEntity)
+    private readonly usersRepo: Repository<UserEntity>,
   ) {}
 
   async create(dto: CreateVendorDto, adminUserId?: string): Promise<VendorEntity> {
     await this.assertUniqueEmail(dto.email);
     await this.assertUniqueGst(dto.gst_number);
+    const existingUser = await this.usersRepo.findOne({ where: { email: dto.email } });
+    if (existingUser) {
+      throw new ConflictException('A user with this email already exists');
+    }
 
-    const categories = await this.loadCategories(dto.category_ids);
+    const passwordHash = await bcrypt.hash(
+      DEFAULT_VENDOR_DEMO_PASSWORD,
+      BCRYPT_SALT_ROUNDS,
+    );
 
-    const vendor = this.vendorsRepo.create({
-      company_name: dto.company_name,
-      contact_number: dto.contact_number,
-      email: dto.email,
-      city: dto.city,
-      pin_codes: dto.pin_codes,
-      gst_number: dto.gst_number,
-      gst_verified: dto.gst_verified ?? false,
-      notes: dto.notes ?? null,
-      categories,
-      status: VendorStatus.PENDING,
-      onboarded_by_id: adminUserId ?? null,
+    return this.vendorsRepo.manager.transaction(async (manager) => {
+      const categoriesRepo = manager.getRepository(CategoryEntity);
+      const vendorsRepo = manager.getRepository(VendorEntity);
+      const usersRepo = manager.getRepository(UserEntity);
+
+      const categories = await categoriesRepo.find({
+        where: { id: In(dto.category_ids) },
+      });
+      if (categories.length !== dto.category_ids.length) {
+        throw new BadRequestException('One or more category IDs are invalid');
+      }
+
+      const vendor = vendorsRepo.create({
+        company_name: dto.company_name,
+        contact_number: dto.contact_number,
+        email: dto.email,
+        city: dto.city,
+        pin_codes: dto.pin_codes,
+        gst_number: dto.gst_number,
+        gst_verified: dto.gst_verified ?? false,
+        notes: dto.notes ?? null,
+        categories,
+        status: VendorStatus.PENDING,
+        onboarded_by_id: adminUserId ?? null,
+      });
+
+      const savedVendor = await vendorsRepo.save(vendor);
+
+      const vendorUser = usersRepo.create({
+        name: dto.company_name,
+        email: dto.email,
+        password_hash: passwordHash,
+        phone: dto.contact_number,
+        role: Role.VENDOR,
+        status: UserStatus.ACTIVE,
+        vendor_id: savedVendor.id,
+      });
+      await usersRepo.save(vendorUser);
+
+      return savedVendor;
     });
-
-    return this.vendorsRepo.save(vendor);
   }
 
   async findAll(query: QueryVendorsDto): Promise<PaginatedVendors> {
