@@ -108,7 +108,7 @@ export default function AdminLoginPage() {
       {/* Form panel */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-10 pb-10 md:mt-0 md:pb-0 md:px-8 lg:px-16">
         <div className="w-full max-w-md">
-        <div className="glass-card p-7 md:shadow-none md:border-0 md:bg-transparent">
+        <div className="glass-card no-hover p-7 md:shadow-none md:border-0 md:bg-transparent">
           <h2 className="text-lg font-bold text-primary mb-1">Admin Login</h2>
           <p className="text-xs text-muted mb-5">Authorized personnel only</p>
 

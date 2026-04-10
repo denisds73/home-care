@@ -366,7 +366,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="glass-card overflow-hidden md:rounded-2xl md:shadow-[0_4px_24px_rgba(0,0,0,0.06)] md:border md:border-border-default">
+          <div className="glass-card no-hover overflow-hidden md:rounded-2xl md:shadow-[0_4px_24px_rgba(0,0,0,0.06)] md:border md:border-border-default">
           {/* Tabs */}
           <div className="flex border-b border-default">
             {(['login', 'signup'] as const).map((t) => (
