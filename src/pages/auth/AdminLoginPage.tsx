@@ -22,9 +22,10 @@ export default function AdminLoginPage() {
 
   const returnTo = searchParams.get('returnTo')
 
-  // Redirect if already authenticated
+  // Redirect only when already authenticated as admin.
+  // Keep the form accessible for role switching (e.g. vendor -> admin).
   useEffect(() => {
-    if (isAuthenticated && role) {
+    if (isAuthenticated && role === 'admin') {
       navigate(returnTo ?? DASHBOARD_ROUTES[role] ?? '/admin', { replace: true })
     }
   }, [isAuthenticated, role, navigate, returnTo])
@@ -70,7 +71,7 @@ export default function AdminLoginPage() {
   const passwordError = touched.password ? fieldErrors.password : undefined
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col md:flex-row fade-in">
+    <div className="theme-admin min-h-screen bg-surface flex flex-col md:flex-row fade-in">
       {/* Brand panel */}
       <div
         className="relative flex flex-col items-center justify-center pt-14 pb-20 px-4 md:pb-14 md:w-[45%] lg:w-[50%] md:min-h-screen md:sticky md:top-0"

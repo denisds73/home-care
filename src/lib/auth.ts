@@ -46,13 +46,16 @@ export type SignupFormData = z.infer<typeof signupSchema>
 
 // Token helpers
 export function getStoredToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY)
+  return sessionStorage.getItem(TOKEN_KEY)
 }
 
 export function setStoredToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token)
+  sessionStorage.setItem(TOKEN_KEY, token)
+  // Clear legacy shared storage key to avoid cross-window session clobbering.
+  localStorage.removeItem(TOKEN_KEY)
 }
 
 export function clearStoredToken(): void {
+  sessionStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(TOKEN_KEY)
 }

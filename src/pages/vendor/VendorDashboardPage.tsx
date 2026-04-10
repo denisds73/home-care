@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { bookingService } from '../../services/bookingService'
 import { useAuthStore } from '../../store/useAuthStore'
+import { StatusBadge } from '../../components/bookings/StatusBadge'
+import { formatDate } from '../../data/helpers'
 import type { Booking, BookingStatus } from '../../types/domain'
 
 interface Kpi {
@@ -51,6 +53,24 @@ export default function VendorDashboardPage() {
     return init
   }, [bookings])
 
+  const recentlyAssignedWorks = useMemo(
+    () =>
+      bookings
+        .filter(
+          (booking) =>
+            booking.booking_status === 'assigned' ||
+            booking.booking_status === 'accepted' ||
+            booking.booking_status === 'in_progress',
+        )
+        .sort((a, b) => {
+          const aTs = new Date(a.assigned_at ?? a.updated_at).getTime()
+          const bTs = new Date(b.assigned_at ?? b.updated_at).getTime()
+          return bTs - aTs
+        })
+        .slice(0, 6),
+    [bookings],
+  )
+
   const kpis: Kpi[] = [
     { label: 'Assigned', value: counts.assigned, to: '/vendor/requests?status=assigned', border: 'stat-border-warning' },
     { label: 'Accepted', value: counts.accepted, to: '/vendor/requests?status=accepted', border: 'stat-border-info' },
@@ -89,6 +109,53 @@ export default function VendorDashboardPage() {
           </Link>
         ))}
       </div>
+
+      {!isLoading && !error && bookings.length > 0 && (
+        <div className="glass-card p-4 md:p-6">
+          <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+            <h2 className="font-brand text-base font-bold text-primary">
+              Recently assigned works
+            </h2>
+            <Link
+              to="/vendor/requests?status=assigned"
+              className="text-xs font-semibold text-brand"
+            >
+              View all
+            </Link>
+          </div>
+
+          {recentlyAssignedWorks.length === 0 ? (
+            <p className="text-sm text-muted">
+              No recent assignments yet. New admin assignments will appear here.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {recentlyAssignedWorks.map((booking) => (
+                <Link
+                  key={`recent-${booking.booking_id}`}
+                  to={`/vendor/requests/${booking.booking_id}`}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-default bg-card px-3 py-2 hover:bg-surface/60"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-primary truncate">
+                      {booking.service_name}
+                    </p>
+                    <p className="text-xs text-muted truncate">
+                      {booking.customer_name} · {formatDate(booking.preferred_date)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <StatusBadge status={booking.booking_status} />
+                    <span className="text-xs font-semibold text-brand">
+                      ₹{booking.price.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {!isLoading && !error && bookings.length === 0 && (
         <div className="glass-card p-8 text-center">

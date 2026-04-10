@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/useAuthStore'
-import { LOGIN_ROUTES, DASHBOARD_ROUTES } from '../../lib/auth'
+import { LOGIN_ROUTES } from '../../lib/auth'
 import type { Role } from '../../types/domain'
 
 interface ProtectedRouteProps {
@@ -55,9 +55,11 @@ export default function ProtectedRoute({
     return <Navigate to={loginUrl} replace />
   }
 
-  // Wrong role — redirect to their own dashboard
+  // Wrong role — redirect to the requested portal login so users can switch
+  // accounts without first logging out of the current role session.
   if (role !== requiredRole) {
-    return <Navigate to={DASHBOARD_ROUTES[role!]} replace />
+    const loginUrl = `${LOGIN_ROUTES[requiredRole]}?returnTo=${encodeURIComponent(location.pathname)}`
+    return <Navigate to={loginUrl} replace />
   }
 
   return <>{children}</>

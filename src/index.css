@@ -770,16 +770,12 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
   top: 0;
   left: 0;
   bottom: 0;
-  width: 56px;
+  width: 240px;
   background: var(--color-text-primary);
   display: flex;
   flex-direction: column;
   z-index: 40;
-  transition: width .2s ease;
   overflow: hidden;
-}
-.sidebar:hover {
-  width: 240px;
 }
 .sidebar-logo {
   height: 56px;
@@ -803,10 +799,6 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
   letter-spacing: .08em;
   color: rgba(255,255,255,.3);
   white-space: nowrap;
-  opacity: 0;
-  transition: opacity .15s ease;
-}
-.sidebar:hover .sidebar-section {
   opacity: 1;
 }
 .sidebar-item {
@@ -838,10 +830,6 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
   flex-shrink: 0;
 }
 .sidebar-label {
-  opacity: 0;
-  transition: opacity .15s ease;
-}
-.sidebar:hover .sidebar-label {
   opacity: 1;
 }
 .sidebar-bottom {
@@ -864,7 +852,7 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
   z-index: 30;
 }
 .dashboard-content {
-  margin-left: 56px;
+  margin-left: 240px;
   min-height: 100vh;
   background: var(--color-surface);
 }

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { bookingService } from '../../services/bookingService'
 import { StatusBadge } from '../../components/bookings/StatusBadge'
 import { formatDate } from '../../data/helpers'
+import useStore from '../../store/useStore'
 import type { Booking, BookingStatus } from '../../types/domain'
 
 type TabKey = BookingStatus
@@ -17,48 +18,84 @@ const TABS: { key: TabKey; label: string }[] = [
 
 const VendorRequestCard = memo(function VendorRequestCard({
   booking,
+  onAccept,
+  onReject,
+  isAccepting,
+  isRejecting,
 }: {
   booking: Booking
+  onAccept: (bookingId: string) => void
+  onReject: (bookingId: string) => void
+  isAccepting: boolean
+  isRejecting: boolean
 }) {
+  const showInlineActions = booking.booking_status === 'assigned'
+
   return (
-    <Link
-      to={`/vendor/requests/${booking.booking_id}`}
-      className="glass-card p-4 block hover:shadow-md transition-shadow"
-      aria-label={`Open request ${booking.booking_id.slice(0, 8)}`}
-    >
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-primary truncate">
-            {booking.service_name}
-          </p>
-          <p className="text-xs text-muted mt-0.5">
-            #{booking.booking_id.slice(0, 8)} · {booking.customer_name}
-          </p>
-          <p className="text-xs text-secondary mt-1 truncate">
-            {booking.address}
-          </p>
-          <p className="text-xs text-secondary mt-1">
-            {formatDate(booking.preferred_date)} · {booking.time_slot}
-          </p>
+    <div className="glass-card p-4 hover:shadow-md transition-shadow">
+      <Link
+        to={`/vendor/requests/${booking.booking_id}`}
+        className="block"
+        aria-label={`Open request ${booking.booking_id.slice(0, 8)}`}
+      >
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-primary truncate">
+              {booking.service_name}
+            </p>
+            <p className="text-xs text-muted mt-0.5">
+              #{booking.booking_id.slice(0, 8)} · {booking.customer_name}
+            </p>
+            <p className="text-xs text-secondary mt-1 truncate">
+              {booking.address}
+            </p>
+            <p className="text-xs text-secondary mt-1">
+              {formatDate(booking.preferred_date)} · {booking.time_slot}
+            </p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <StatusBadge status={booking.booking_status} />
+            <span className="font-brand font-bold text-brand text-base">
+              ₹{booking.price.toLocaleString('en-IN')}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <StatusBadge status={booking.booking_status} />
-          <span className="font-brand font-bold text-brand text-base">
-            ₹{booking.price.toLocaleString('en-IN')}
-          </span>
+      </Link>
+
+      {showInlineActions && (
+        <div className="mt-3 pt-3 border-t border-default flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => onReject(booking.booking_id)}
+            disabled={isAccepting || isRejecting}
+            className="btn-base btn-secondary text-xs px-3 py-2 min-h-[40px] disabled:opacity-60"
+          >
+            {isRejecting ? 'Rejecting…' : 'Reject'}
+          </button>
+          <button
+            type="button"
+            onClick={() => onAccept(booking.booking_id)}
+            disabled={isAccepting || isRejecting}
+            className="btn-base btn-primary text-xs px-3 py-2 min-h-[40px] disabled:opacity-60"
+          >
+            {isAccepting ? 'Accepting…' : 'Accept'}
+          </button>
         </div>
-      </div>
-    </Link>
+      )}
+    </div>
   )
 })
 
 export default function VendorRequestsPage() {
+  const showToast = useStore((s) => s.showToast)
   const [searchParams, setSearchParams] = useSearchParams()
   const initial = (searchParams.get('status') as TabKey | null) ?? 'assigned'
   const [tab, setTab] = useState<TabKey>(initial)
   const [items, setItems] = useState<Booking[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [updatingBookingId, setUpdatingBookingId] = useState<string | null>(null)
+  const [updatingAction, setUpdatingAction] = useState<'accept' | 'reject' | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -76,6 +113,36 @@ export default function VendorRequestsPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  const handleAccept = async (bookingId: string) => {
+    try {
+      setUpdatingBookingId(bookingId)
+      setUpdatingAction('accept')
+      await bookingService.accept(bookingId)
+      showToast('Job accepted', 'success')
+      await load()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to accept job', 'danger')
+    } finally {
+      setUpdatingBookingId(null)
+      setUpdatingAction(null)
+    }
+  }
+
+  const handleReject = async (bookingId: string) => {
+    try {
+      setUpdatingBookingId(bookingId)
+      setUpdatingAction('reject')
+      await bookingService.reject(bookingId)
+      showToast('Job rejected', 'warning')
+      await load()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to reject job', 'danger')
+    } finally {
+      setUpdatingBookingId(null)
+      setUpdatingAction(null)
+    }
+  }
 
   const changeTab = (next: TabKey) => {
     setTab(next)
@@ -137,7 +204,14 @@ export default function VendorRequestsPage() {
       ) : (
         <div className="space-y-3">
           {items.map((b) => (
-            <VendorRequestCard key={b.booking_id} booking={b} />
+            <VendorRequestCard
+              key={b.booking_id}
+              booking={b}
+              onAccept={handleAccept}
+              onReject={handleReject}
+              isAccepting={updatingBookingId === b.booking_id && updatingAction === 'accept'}
+              isRejecting={updatingBookingId === b.booking_id && updatingAction === 'reject'}
+            />
           ))}
         </div>
       )}

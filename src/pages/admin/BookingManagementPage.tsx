@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { bookingService } from '../../services/bookingService'
 import { vendorService } from '../../services/vendorService'
@@ -24,6 +24,14 @@ export default function BookingManagementPage() {
   const [statusFilter, setStatusFilter] = useState<BookingStatus | ''>('')
   const [categoryFilter, setCategoryFilter] = useState<CategoryId | ''>('')
   const [activeVendors, setActiveVendors] = useState<Vendor[]>([])
+
+  const activeVendorNameById = useMemo(
+    () =>
+      Object.fromEntries(
+        activeVendors.map((vendor) => [vendor.id, vendor.company_name]),
+      ),
+    [activeVendors],
+  )
 
   useEffect(() => {
     vendorService
@@ -205,6 +213,13 @@ export default function BookingManagementPage() {
                               </option>
                             ))}
                           </select>
+                        )}
+                        {b.booking_status !== 'pending' && b.booking_status !== 'rejected' && (
+                          <span className="text-xs text-secondary">
+                            {b.vendor_id
+                              ? activeVendorNameById[b.vendor_id] ?? 'Assigned'
+                              : 'Unassigned'}
+                          </span>
                         )}
                       </td>
                     </tr>

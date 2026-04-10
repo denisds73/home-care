@@ -121,8 +121,22 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: 'services/:categoryId', element: <CategoryPage /> },
-      { path: 'booking', element: withSuspense(BookingPage) },
-      { path: 'bookings', element: withSuspense(MyBookingsPage) },
+      {
+        path: 'booking',
+        element: (
+          <ProtectedRoute requiredRole="customer">
+            {withSuspense(BookingPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'bookings',
+        element: (
+          <ProtectedRoute requiredRole="customer">
+            {withSuspense(MyBookingsPage)}
+          </ProtectedRoute>
+        ),
+      },
       {
         path: 'bookings/:id',
         element: (

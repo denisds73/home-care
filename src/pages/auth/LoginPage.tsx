@@ -105,8 +105,9 @@ export default function LoginPage() {
   const signup = useAuthStore((s) => s.signup)
   const showToast = useStore((s) => s.showToast)
 
-  // Redirect if already authenticated
-  if (isAuthenticated && role) {
+  // Keep customer login available for cross-role account switching.
+  // Auto-redirect only when the active session is already a customer.
+  if (isAuthenticated && role === 'customer') {
     return <Navigate to={DASHBOARD_ROUTES[role] ?? '/app'} replace />
   }
 

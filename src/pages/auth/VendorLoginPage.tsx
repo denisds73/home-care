@@ -23,7 +23,9 @@ export default function VendorLoginPage() {
   const returnTo = searchParams.get('returnTo')
 
   useEffect(() => {
-    if (isAuthenticated && role) {
+    // Allow switching accounts from other active roles (e.g. admin -> vendor)
+    // by only auto-redirecting if the current session is already vendor.
+    if (isAuthenticated && role === 'vendor') {
       navigate(returnTo ?? DASHBOARD_ROUTES[role] ?? '/vendor', {
         replace: true,
       })
@@ -69,7 +71,7 @@ export default function VendorLoginPage() {
   const passwordError = touched.password ? fieldErrors.password : undefined
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col md:flex-row fade-in">
+    <div className="theme-partner min-h-screen bg-surface flex flex-col md:flex-row fade-in">
       <div
         className="relative flex flex-col items-center justify-center pt-14 pb-20 px-4 md:pb-14 md:w-[45%] lg:w-[50%] md:min-h-screen md:sticky md:top-0"
         style={{
