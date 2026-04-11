@@ -17,7 +17,9 @@ import {
   Role,
   UserEntity,
   VendorEntity,
+  VendorStatus,
   TechnicianEntity,
+  TechnicianStatus,
 } from '@/database/entities';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -261,6 +263,11 @@ export class BookingsService {
         where: { id: technicianId },
       });
       if (!technician) throw new NotFoundException('Technician not found');
+      if (technician.status !== TechnicianStatus.ACTIVE) {
+        throw new BadRequestException(
+          `Cannot dispatch technician: technician is not active (current status: "${technician.status}").`,
+        );
+      }
       if (booking.vendor_id && technician.vendor_id !== booking.vendor_id) {
         throw new ForbiddenException(
           'Technician does not belong to the booking vendor',
@@ -373,7 +380,14 @@ export class BookingsService {
           where: { id: opts.vendor_id },
         });
         if (!vendor) {
-          throw new NotFoundException('Vendor not found');
+          throw new NotFoundException(
+            `Vendor with ID "${opts.vendor_id}" not found.`,
+          );
+        }
+        if (vendor.status !== VendorStatus.ACTIVE) {
+          throw new BadRequestException(
+            `Cannot assign vendor: vendor is not active (current status: "${vendor.status}").`,
+          );
         }
         booking.vendor_id = vendor.id;
         booking.assigned_at = now;

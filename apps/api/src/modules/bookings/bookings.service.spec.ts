@@ -1,4 +1,8 @@
-import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import {
   BookingEntity,
   BookingStatus,
@@ -7,7 +11,9 @@ import {
   PaymentStatus,
   Role,
   TechnicianEntity,
+  TechnicianStatus,
   VendorEntity,
+  VendorStatus,
 } from '@/database/entities';
 
 import { BookingsService, BookingActor } from './bookings.service';
@@ -56,11 +62,31 @@ function makeTechnician(overrides: Partial<TechnicianEntity> = {}): TechnicianEn
     phone: '+911111111111',
     email: 'tech@demo.com',
     skills: ['ac'],
-    status: 'active',
+    status: TechnicianStatus.ACTIVE,
     created_at: new Date(),
     updated_at: new Date(),
     ...overrides,
   } as unknown as TechnicianEntity;
+}
+
+function makeVendor(overrides: Partial<VendorEntity> = {}): VendorEntity {
+  return {
+    id: 'v-1',
+    company_name: 'Demo Co',
+    contact_number: '+911111111111',
+    email: 'vendor@demo.com',
+    city: 'Bangalore',
+    pin_codes: ['560001'],
+    gst_number: '22AAAAA0000A1Z5',
+    gst_verified: true,
+    categories: [],
+    status: VendorStatus.ACTIVE,
+    onboarded_by_id: null,
+    notes: null,
+    created_at: new Date(),
+    updated_at: new Date(),
+    ...overrides,
+  } as VendorEntity;
 }
 
 /**
@@ -112,7 +138,7 @@ interface ServiceHarness {
 
 function makeService(initial: {
   booking?: BookingEntity;
-  vendor?: VendorEntity;
+  vendor?: VendorEntity | null;
   technician?: TechnicianEntity;
 } = {}): ServiceHarness {
   const store = {
@@ -201,6 +227,47 @@ describe('BookingsService.transition', () => {
       });
       const result = await service.transition('b-1', 'start', ADMIN);
       expect(result.booking_status).toBe(BookingStatus.IN_PROGRESS);
+    });
+  });
+
+  describe('assign', () => {
+    it('assigns when vendor status is active', async () => {
+      const { service, store } = makeService({
+        booking: makeBooking({ booking_status: BookingStatus.PENDING }),
+        vendor: makeVendor({ id: 'v-1', status: VendorStatus.ACTIVE }),
+      });
+      const result = await service.transition('b-1', 'assign', ADMIN, {
+        vendor_id: 'v-1',
+      });
+      expect(result.booking_status).toBe(BookingStatus.ASSIGNED);
+      expect(result.vendor_id).toBe('v-1');
+      expect(store.booking?.assigned_at).toBeInstanceOf(Date);
+    });
+
+    it('rejects assign when vendor is not active', async () => {
+      const { service } = makeService({
+        booking: makeBooking({ booking_status: BookingStatus.PENDING }),
+        vendor: makeVendor({ id: 'v-1', status: VendorStatus.PENDING }),
+      });
+      await expect(
+        service.transition('b-1', 'assign', ADMIN, { vendor_id: 'v-1' }),
+      ).rejects.toMatchObject({
+        message: expect.stringMatching(/not active/),
+      });
+    });
+
+    it('rejects assign when vendor id does not exist', async () => {
+      const { service } = makeService({
+        booking: makeBooking({ booking_status: BookingStatus.PENDING }),
+        vendor: null,
+      });
+      await expect(
+        service.transition('b-1', 'assign', ADMIN, {
+          vendor_id: 'missing-id',
+        }),
+      ).rejects.toMatchObject({
+        message: 'Vendor with ID "missing-id" not found.',
+      });
     });
   });
 
@@ -455,6 +522,24 @@ describe('BookingsService.assignTechnician', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it.each([[TechnicianStatus.INACTIVE], [TechnicianStatus.ON_LEAVE]])(
+    'rejects dispatch when technician status is %s',
+    async (status) => {
+      const { service } = makeService({
+        booking: makeBooking({
+          booking_status: BookingStatus.ACCEPTED,
+          vendor_id: 'v-1',
+        }),
+        technician: makeTechnician({ status }),
+      });
+      await expect(
+        service.assignTechnician('b-1', VENDOR_ACTOR, 't-1'),
+      ).rejects.toMatchObject({
+        message: expect.stringMatching(/Cannot dispatch technician|not active/i),
+      });
+    },
+  );
+
   it('blocks reassignment to a different technician once in progress', async () => {
     const { service } = makeService({
       booking: makeBooking({
@@ -475,7 +560,7 @@ describe('BookingsService.assignTechnician', () => {
         booking_status: BookingStatus.ACCEPTED,
         vendor_id: 'v-1',
       }),
-      technician: makeTechnician(),
+      technician: makeTechnician({ status: TechnicianStatus.ACTIVE }),
     });
     const result = await service.assignTechnician('b-1', VENDOR_ACTOR, 't-1');
     expect(result.technician_id).toBe('t-1');
@@ -490,7 +575,7 @@ describe('BookingsService.assignTechnician', () => {
         booking_status: BookingStatus.ACCEPTED,
         vendor_id: 'v-1',
       }),
-      technician: makeTechnician(),
+      technician: makeTechnician({ status: TechnicianStatus.ACTIVE }),
     });
     const result = await service.assignTechnician('b-1', ADMIN, 't-1');
     expect(result.technician_id).toBe('t-1');
