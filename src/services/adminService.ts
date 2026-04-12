@@ -1,13 +1,16 @@
 import { api } from './api'
-import type { Booking, BookingStatus, Offer, Partner, PartnerStatus, PayoutRequest, Service } from '../types/domain'
+import type { Booking, BookingStatus, Offer, Partner, PartnerStatus, Service } from '../types/domain'
 
 export interface AdminStats {
   totalRevenue: number
   totalBookings: number
-  activePartners: number
+  activeVendors: number
   totalUsers: number
   avgRating: number
+  /** Bookings in PENDING status (awaiting vendor assignment). */
   pendingApprovals: number
+  /** Vendors in PENDING onboarding status. */
+  pendingVendorApprovals: number
 }
 
 export interface AdminUser {
@@ -23,8 +26,8 @@ export interface AdminUser {
 
 export interface FinanceSummary {
   totalRevenue: number
-  totalPayouts: number
-  net: number
+  totalPayouts?: number
+  net?: number
 }
 
 export const adminService = {
@@ -52,16 +55,13 @@ export const adminService = {
   updateUserStatus: (id: string, status: 'active' | 'suspended') =>
     api.patch<{ data: AdminUser }>(`/admin/users/${id}/status`, { status }),
 
-  // Partners
+  /** Legacy — backend may not expose this route in vendor-first deployments. */
   getPartners: () => api.get<{ data: Partner[] }>('/admin/partners'),
   updatePartnerStatus: (id: string, status: PartnerStatus) =>
     api.patch<{ data: Partner }>(`/admin/partners/${id}/status`, { status }),
 
   // Finance
   getFinanceSummary: () => api.get<{ data: FinanceSummary }>('/admin/finance'),
-  getPayoutRequests: () => api.get<{ data: PayoutRequest[] }>('/admin/finance/payouts'),
-  processPayoutRequest: (id: string, status: 'processed' | 'rejected') =>
-    api.patch<{ data: PayoutRequest }>(`/admin/finance/payouts/${id}`, { status }),
 
   // Offers
   getOffers: () => api.get<{ data: Offer[] }>('/admin/offers'),

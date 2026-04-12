@@ -4,13 +4,16 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToOne,
-  OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { VendorEntity } from './vendor.entity';
+import { TechnicianEntity } from './technician.entity';
 
 export enum Role {
   CUSTOMER = 'customer',
-  PARTNER = 'partner',
+  VENDOR = 'vendor',
+  TECHNICIAN = 'technician',
   ADMIN = 'admin',
 }
 
@@ -56,6 +59,20 @@ export class UserEntity {
 
   @Column({ type: 'enum', enum: UserStatus, default: UserStatus.ACTIVE })
   status!: UserStatus;
+
+  @Column({ type: 'uuid', nullable: true })
+  vendor_id?: string | null;
+
+  @ManyToOne(() => VendorEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'vendor_id' })
+  vendor?: VendorEntity | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  technician_id?: string | null;
+
+  @ManyToOne(() => TechnicianEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'technician_id' })
+  technician?: TechnicianEntity | null;
 
   @CreateDateColumn()
   created_at!: Date;

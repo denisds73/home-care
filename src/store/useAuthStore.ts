@@ -5,6 +5,22 @@ import { authService } from '../services/authService'
 import type { SignupDto } from '../services/authService'
 import { getStoredToken, setStoredToken, clearStoredToken } from '../lib/auth'
 
+/**
+ * Derives the effective portal role for a user. Technician accounts are
+ * provisioned as sub-users under a vendor organization, so the backend may
+ * return `role: 'vendor'` for them while still populating `technician_id`.
+ * For routing/portal selection we must treat those users as technicians.
+ *
+ * A `portalHint` (passed by the login page that initiated the sign-in)
+ * takes precedence — logging in via `/technician/login` always yields the
+ * technician role, regardless of what the backend reports.
+ */
+function resolveRole(user: User, portalHint?: Role): Role {
+  if (portalHint) return portalHint
+  if (user.technician_id) return 'technician'
+  return user.role
+}
+
 interface AuthState {
   user: User | null
   token: string | null
@@ -33,8 +49,7 @@ export const useAuthStore = create<AuthState>()(
       hasHydrated: false,
       error: null,
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      login: async (email, password, _role?) => {
+      login: async (email, password, portalHint?) => {
         set({ isLoading: true, error: null })
         try {
           const result = await authService.login({ email, password })
@@ -43,7 +58,7 @@ export const useAuthStore = create<AuthState>()(
           set({
             user,
             token,
-            role: user.role,
+            role: resolveRole(user, portalHint),
             isAuthenticated: true,
             isLoading: false,
             error: null,
@@ -67,7 +82,7 @@ export const useAuthStore = create<AuthState>()(
           set({
             user,
             token,
-            role: user.role,
+            role: resolveRole(user),
             isAuthenticated: true,
             isLoading: false,
             error: null,
@@ -142,7 +157,7 @@ export const useAuthStore = create<AuthState>()(
             return {
               user: mergedUser,
               token,
-              role: mergedUser.role,
+              role: resolveRole(mergedUser),
               isAuthenticated: true,
               isLoading: false,
             }
@@ -172,7 +187,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'homecare_auth',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         user: state.user,
         token: state.token,
@@ -184,6 +199,11 @@ export const useAuthStore = create<AuthState>()(
         // fetch wrapper in api.ts (which reads localStorage directly) sees it.
         if (state?.token) {
           setStoredToken(state.token)
+        }
+        // Re-resolve the portal role so previously-persisted sessions where
+        // a technician was stored with role='vendor' are corrected on load.
+        if (state?.user) {
+          state.role = resolveRole(state.user)
         }
         state?.setHasHydrated(true)
       },

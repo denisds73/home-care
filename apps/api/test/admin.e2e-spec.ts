@@ -83,7 +83,15 @@ describe('Admin (e2e)', () => {
 
       expect(res.body.success).toBe(true);
       expect(res.body.data).toBeDefined();
-      expect(typeof res.body.data).toBe('object');
+      const d = res.body.data;
+      expect(typeof d).toBe('object');
+      expect(typeof d.totalRevenue).toBe('number');
+      expect(typeof d.totalBookings).toBe('number');
+      expect(typeof d.activeVendors).toBe('number');
+      expect(typeof d.totalUsers).toBe('number');
+      expect(typeof d.avgRating).toBe('number');
+      expect(typeof d.pendingApprovals).toBe('number');
+      expect(typeof d.pendingVendorApprovals).toBe('number');
     });
 
     it('should fail without admin role (403)', async () => {
@@ -229,20 +237,6 @@ describe('Admin (e2e)', () => {
 
       expect(res.body.success).toBe(false);
       expect(res.body.error.code).toBe('BAD_REQUEST');
-    });
-  });
-
-  // ─── Partners ───────────────────────────────────────────────────
-
-  describe('GET /api/admin/partners', () => {
-    it('should return an array of partners', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/admin/partners')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200);
-
-      expect(res.body.success).toBe(true);
-      expect(Array.isArray(res.body.data)).toBe(true);
     });
   });
 

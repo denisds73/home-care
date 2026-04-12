@@ -16,36 +16,52 @@ const NotFoundPage = lazy(() => import('../pages/NotFoundPage'))
 
 // Auth pages
 const LoginPage = lazy(() => import('../pages/auth/LoginPage'))
-const PartnerLoginPage = lazy(() => import('../pages/auth/PartnerLoginPage'))
+const VendorLoginPage = lazy(() => import('../pages/auth/VendorLoginPage'))
+const TechnicianLoginPage = lazy(() => import('../pages/auth/TechnicianLoginPage'))
 const AdminLoginPage = lazy(() => import('../pages/auth/AdminLoginPage'))
 
 // Customer pages
 const MyBookingsPage = lazy(() => import('../pages/customer/MyBookingsPage'))
+const BookingDetailPage = lazy(() => import('../pages/customer/BookingDetailPage'))
 const ProfilePage = lazy(() => import('../pages/customer/ProfilePage'))
 const WalletPage = lazy(() => import('../pages/customer/WalletPage'))
 const NotificationsPage = lazy(() => import('../pages/customer/NotificationsPage'))
 const SupportPage = lazy(() => import('../pages/customer/SupportPage'))
 
-// Partner pages
-const PartnerDashboardPage = lazy(() => import('../pages/partner/PartnerDashboardPage'))
-const JobsPage = lazy(() => import('../pages/partner/JobsPage'))
-const EarningsPage = lazy(() => import('../pages/partner/EarningsPage'))
-const SchedulePage = lazy(() => import('../pages/partner/SchedulePage'))
-const PartnerProfilePage = lazy(() => import('../pages/partner/PartnerProfilePage'))
-const PartnerSupportPage = lazy(() => import('../pages/partner/PartnerSupportPage'))
+// NotificationsPage is generic and reused across all authenticated portals.
+const SharedNotificationsPage = NotificationsPage
+
+// Vendor pages
+const VendorDashboardPage = lazy(() => import('../pages/vendor/VendorDashboardPage'))
+const VendorRequestsPage = lazy(() => import('../pages/vendor/VendorRequestsPage'))
+const VendorRequestDetailPage = lazy(() => import('../pages/vendor/VendorRequestDetailPage'))
+const VendorProfilePage = lazy(() => import('../pages/vendor/VendorProfilePage'))
+const TechniciansListPage = lazy(() => import('../pages/vendor/TechniciansListPage'))
+const TechnicianCreatePage = lazy(() => import('../pages/vendor/TechnicianCreatePage'))
+const TechnicianEditPage = lazy(() => import('../pages/vendor/TechnicianEditPage'))
+
+// Technician portal pages
+const TechnicianDashboardPage = lazy(() => import('../pages/technician/TechnicianDashboardPage'))
+const TechnicianJobsPage = lazy(() => import('../pages/technician/TechnicianJobsPage'))
+const TechnicianJobDetailPage = lazy(() => import('../pages/technician/TechnicianJobDetailPage'))
+const TechnicianProfilePage = lazy(() => import('../pages/technician/TechnicianProfilePage'))
 
 // Admin pages
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'))
 const BookingManagementPage = lazy(() => import('../pages/admin/BookingManagementPage'))
+const AdminBookingDetailPage = lazy(() => import('../pages/admin/AdminBookingDetailPage'))
 const CatalogPage = lazy(() => import('../pages/admin/CatalogPage'))
 const OffersManagementPage = lazy(() => import('../pages/admin/OffersManagementPage'))
 const UserManagementPage = lazy(() => import('../pages/admin/UserManagementPage'))
-const PartnerManagementPage = lazy(() => import('../pages/admin/PartnerManagementPage'))
 const FinancePage = lazy(() => import('../pages/admin/FinancePage'))
 const SettingsPage = lazy(() => import('../pages/admin/SettingsPage'))
+const VendorListPage = lazy(() => import('../pages/admin/VendorListPage'))
+const VendorCreatePage = lazy(() => import('../pages/admin/VendorCreatePage'))
+const VendorDetailPage = lazy(() => import('../pages/admin/VendorDetailPage'))
 
 // Lazy layouts (not on critical path)
-const PartnerLayout = lazy(() => import('../layouts/PartnerLayout'))
+const VendorLayout = lazy(() => import('../layouts/VendorLayout'))
+const TechnicianLayout = lazy(() => import('../layouts/TechnicianLayout'))
 const AdminLayout = lazy(() => import('../layouts/AdminLayout'))
 
 // ----- Loading fallback -----
@@ -95,7 +111,8 @@ export const router = createBrowserRouter([
 
   // ----- Auth pages (no layout) -----
   { path: '/login', element: withSuspense(LoginPage) },
-  { path: '/partner/login', element: withSuspense(PartnerLoginPage) },
+  { path: '/vendor/login', element: withSuspense(VendorLoginPage) },
+  { path: '/technician/login', element: withSuspense(TechnicianLoginPage) },
   { path: '/admin/login', element: withSuspense(AdminLoginPage) },
 
   // ----- Customer routes -----
@@ -105,8 +122,30 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: 'services/:categoryId', element: <CategoryPage /> },
-      { path: 'booking', element: withSuspense(BookingPage) },
-      { path: 'bookings', element: withSuspense(MyBookingsPage) },
+      {
+        path: 'booking',
+        element: (
+          <ProtectedRoute requiredRole="customer">
+            {withSuspense(BookingPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'bookings',
+        element: (
+          <ProtectedRoute requiredRole="customer">
+            {withSuspense(MyBookingsPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'bookings/:id',
+        element: (
+          <ProtectedRoute requiredRole="customer">
+            {withSuspense(BookingDetailPage)}
+          </ProtectedRoute>
+        ),
+      },
       {
         path: 'profile',
         element: (
@@ -122,23 +161,44 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // ----- Partner routes (protected) -----
+  // ----- Vendor routes (protected) -----
   {
-    path: '/partner',
+    path: '/vendor',
     element: (
       <Suspense fallback={<PageLoader />}>
-        <ProtectedRoute requiredRole="partner">
-          <PartnerLayout />
+        <ProtectedRoute requiredRole="vendor">
+          <VendorLayout />
         </ProtectedRoute>
       </Suspense>
     ),
     children: [
-      { index: true, element: withSuspense(PartnerDashboardPage) },
-      { path: 'jobs', element: withSuspense(JobsPage) },
-      { path: 'earnings', element: withSuspense(EarningsPage) },
-      { path: 'schedule', element: withSuspense(SchedulePage) },
-      { path: 'profile', element: withSuspense(PartnerProfilePage) },
-      { path: 'support', element: withSuspense(PartnerSupportPage) },
+      { index: true, element: withSuspense(VendorDashboardPage) },
+      { path: 'requests', element: withSuspense(VendorRequestsPage) },
+      { path: 'requests/:id', element: withSuspense(VendorRequestDetailPage) },
+      { path: 'technicians', element: withSuspense(TechniciansListPage) },
+      { path: 'technicians/new', element: withSuspense(TechnicianCreatePage) },
+      { path: 'technicians/:id', element: withSuspense(TechnicianEditPage) },
+      { path: 'notifications', element: withSuspense(SharedNotificationsPage) },
+      { path: 'profile', element: withSuspense(VendorProfilePage) },
+    ],
+  },
+
+  // ----- Technician routes (protected) -----
+  {
+    path: '/technician',
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <ProtectedRoute requiredRole="technician">
+          <TechnicianLayout />
+        </ProtectedRoute>
+      </Suspense>
+    ),
+    children: [
+      { index: true, element: withSuspense(TechnicianDashboardPage) },
+      { path: 'jobs', element: withSuspense(TechnicianJobsPage) },
+      { path: 'jobs/:id', element: withSuspense(TechnicianJobDetailPage) },
+      { path: 'notifications', element: withSuspense(SharedNotificationsPage) },
+      { path: 'profile', element: withSuspense(TechnicianProfilePage) },
     ],
   },
 
@@ -155,11 +215,15 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: withSuspense(AdminDashboardPage) },
       { path: 'bookings', element: withSuspense(BookingManagementPage) },
+      { path: 'bookings/:id', element: withSuspense(AdminBookingDetailPage) },
       { path: 'catalog', element: withSuspense(CatalogPage) },
       { path: 'offers', element: withSuspense(OffersManagementPage) },
       { path: 'users', element: withSuspense(UserManagementPage) },
-      { path: 'partners', element: withSuspense(PartnerManagementPage) },
+      { path: 'vendors', element: withSuspense(VendorListPage) },
+      { path: 'vendors/new', element: withSuspense(VendorCreatePage) },
+      { path: 'vendors/:id', element: withSuspense(VendorDetailPage) },
       { path: 'finance', element: withSuspense(FinancePage) },
+      { path: 'notifications', element: withSuspense(SharedNotificationsPage) },
       { path: 'settings', element: withSuspense(SettingsPage) },
     ],
   },

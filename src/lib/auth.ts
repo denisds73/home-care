@@ -1,17 +1,20 @@
 import { z } from 'zod'
+import type { Role } from '../types/domain'
 
 // Constants
 export const TOKEN_KEY = 'homecare_token'
 
-export const LOGIN_ROUTES: Record<string, string> = {
+export const LOGIN_ROUTES: Record<Role, string> = {
   customer: '/login',
-  partner: '/partner/login',
+  vendor: '/vendor/login',
+  technician: '/technician/login',
   admin: '/admin/login',
 }
 
-export const DASHBOARD_ROUTES: Record<string, string> = {
+export const DASHBOARD_ROUTES: Record<Role, string> = {
   customer: '/app',
-  partner: '/partner',
+  vendor: '/vendor',
+  technician: '/technician',
   admin: '/admin',
 }
 
@@ -43,13 +46,16 @@ export type SignupFormData = z.infer<typeof signupSchema>
 
 // Token helpers
 export function getStoredToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY)
+  return sessionStorage.getItem(TOKEN_KEY)
 }
 
 export function setStoredToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token)
+  sessionStorage.setItem(TOKEN_KEY, token)
+  // Clear legacy shared storage key to avoid cross-window session clobbering.
+  localStorage.removeItem(TOKEN_KEY)
 }
 
 export function clearStoredToken(): void {
+  sessionStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(TOKEN_KEY)
 }

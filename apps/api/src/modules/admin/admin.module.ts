@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {
   BookingEntity,
+  BookingReviewEntity,
   ServiceEntity,
   UserEntity,
-  PartnerEntity,
-  PayoutRequestEntity,
+  VendorEntity,
   OfferEntity,
 } from '@/database/entities';
 import { AdminController } from './admin.controller';
@@ -15,10 +15,10 @@ import { AdminService } from './admin.service';
   imports: [
     TypeOrmModule.forFeature([
       BookingEntity,
+      BookingReviewEntity,
       ServiceEntity,
       UserEntity,
-      PartnerEntity,
-      PayoutRequestEntity,
+      VendorEntity,
       OfferEntity,
     ]),
   ],

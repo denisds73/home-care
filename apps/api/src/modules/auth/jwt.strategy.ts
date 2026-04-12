@@ -8,6 +8,8 @@ interface JwtPayload {
   sub: string;
   email: string;
   role: string;
+  vendor_id?: string | null;
+  technician_id?: string | null;
 }
 
 @Injectable()

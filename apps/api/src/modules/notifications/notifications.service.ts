@@ -55,12 +55,14 @@ export class NotificationsService {
     type: NotificationType,
     title: string,
     description: string,
+    bookingId?: string | null,
   ): Promise<NotificationEntity> {
     const notification = this.notificationsRepository.create({
       user_id: userId,
       type,
       title,
       description,
+      booking_id: bookingId ?? null,
     });
     return this.notificationsRepository.save(notification);
   }

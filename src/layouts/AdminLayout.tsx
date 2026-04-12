@@ -10,9 +10,10 @@ import {
   PackageIcon,
   TagIcon,
   UsersIcon,
-  WrenchIcon,
   WalletIcon,
   SettingsIcon,
+  BriefcaseIcon,
+  BellIcon,
 } from '../components/common/Icons'
 import type { NavGroup } from './DashboardSidebar'
 
@@ -32,8 +33,9 @@ const ADMIN_NAV: NavGroup[] = [
     section: 'Management',
     items: [
       { icon: <UsersIcon />, label: 'Users', to: '/admin/users' },
-      { icon: <WrenchIcon />, label: 'Partners', to: '/admin/partners' },
+      { icon: <BriefcaseIcon />, label: 'Vendors', to: '/admin/vendors' },
       { icon: <WalletIcon />, label: 'Finance', to: '/admin/finance' },
+      { icon: <BellIcon />, label: 'Notifications', to: '/admin/notifications' },
     ],
   },
 ]
@@ -48,8 +50,9 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/catalog': 'Service Catalog',
   '/admin/offers': 'Offers & Discounts',
   '/admin/users': 'User Management',
-  '/admin/partners': 'Partner Management',
+  '/admin/vendors': 'Vendor Onboarding',
   '/admin/finance': 'Finance & Payouts',
+  '/admin/notifications': 'Notifications',
   '/admin/settings': 'Settings',
 }
 
@@ -90,9 +93,11 @@ export default function AdminLayout() {
         onMobileClose={() => setMobileOpen(false)}
       />
       <div className="dashboard-content">
+        {/* Bell polls /notifications every 30s while admin is logged in (any admin route). */}
         <DashboardTopBar
           title={title}
           onMenuClick={() => setMobileOpen(true)}
+          adminNotificationsEnabled
         />
         <main className="p-4 md:p-6">
           <Outlet />

@@ -12,24 +12,80 @@ export type PaymentMode = 'PAY_NOW' | 'PAY_AFTER_SERVICE'
 
 export type PaymentStatus = 'SUCCESS' | 'FAILED' | 'PENDING'
 
+// ─── Role & Booking lifecycle contract ────────────────────────────
+export type Role = 'customer' | 'vendor' | 'technician' | 'admin'
+
+export type TechnicianStatus = 'active' | 'inactive' | 'on_leave'
+
+export interface Technician {
+  id: string
+  vendor_id: string
+  full_name: string
+  phone: string
+  email: string
+  skills: CategoryId[]
+  status: TechnicianStatus
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateTechnicianPayload {
+  full_name: string
+  phone: string
+  email: string
+  password: string
+  skills: CategoryId[]
+  status?: TechnicianStatus
+}
+
+export type UpdateTechnicianPayload = Partial<
+  Omit<CreateTechnicianPayload, 'password'>
+>
+
 export type BookingStatus =
-  | 'Pending'
-  | 'Confirmed'
-  | 'In Progress'
-  | 'Completed'
-  | 'Cancelled'
+  | 'pending'
+  | 'assigned'
+  | 'accepted'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+  | 'rejected'
+
+export type BookingEvent =
+  | 'assign'
+  | 'accept'
+  | 'reject'
+  | 'start'
+  | 'complete'
+  | 'cancel'
+
+export interface BookingStatusEvent {
+  id: string
+  booking_id: string
+  from_status: BookingStatus | null
+  to_status: BookingStatus
+  event: BookingEvent | 'create'
+  actor_user_id: string
+  actor_role: Role
+  note?: string
+  created_at: string
+}
+
+export interface BookingReview {
+  id: string
+  booking_id: string
+  customer_id: string
+  vendor_id: string
+  rating: 1 | 2 | 3 | 4 | 5
+  comment?: string
+  created_at: string
+}
 
 export type ToastType = 'success' | 'danger' | 'warning' | 'info'
 
-export type Role = 'customer' | 'partner' | 'admin'
-
-export type PartnerStatus = 'pending' | 'approved' | 'suspended'
-
-export type JobStatus = 'new' | 'accepted' | 'in_progress' | 'completed' | 'declined'
-
 export type TransactionType = 'credit' | 'debit'
 
-export type NotificationType = 'booking' | 'payment' | 'system' | 'partner'
+export type NotificationType = 'booking' | 'payment' | 'system' | 'vendor'
 
 export interface ServiceFaq {
   question: string
@@ -86,8 +142,18 @@ export interface Booking {
   payment_status: PaymentStatus
   razorpay_order_id: string | null
   booking_status: BookingStatus
+  vendor_id?: string | null
+  customer_id?: string | null
+  assigned_at?: string | null
+  accepted_at?: string | null
+  started_at?: string | null
+  completed_at?: string | null
+  cancelled_at?: string | null
   created_at: string
   updated_at: string
+  technician_id?: string | null
+  completion_otp?: string | null
+  completion_otp_expires_at?: string | null
 }
 
 /** Payload sent to POST /bookings — matches backend CreateBookingDto */
@@ -162,6 +228,8 @@ export interface User {
   addresses?: Address[]
   paymentMethods?: PaymentMethod[]
   preferences?: UserPreferences
+  vendor_id?: string | null
+  technician_id?: string | null
 }
 
 export interface CartLine {
@@ -195,6 +263,11 @@ export interface ToastItem {
   duration: number
   createdAt: number
 }
+
+/** Legacy partner model — retained for unused admin/partner demo pages. */
+export type PartnerStatus = 'pending' | 'approved' | 'suspended'
+
+export type JobStatus = 'new' | 'accepted' | 'in_progress' | 'completed' | 'declined'
 
 export interface Partner {
   id: string
@@ -243,16 +316,8 @@ export interface Notification {
   description: string
   timestamp: string
   read: boolean
-}
-
-export interface PayoutRequest {
-  id: string
-  partnerId: string
-  partnerName: string
-  amount: number
-  status: 'pending' | 'processed' | 'rejected'
-  requestedAt: string
-  processedAt?: string
+  /** Present for admin booking alerts; deep-link to booking detail. */
+  booking_id?: string | null
 }
 
 export interface Offer {
@@ -279,3 +344,59 @@ export interface LocationData {
 }
 
 export type LocationStatus = 'idle' | 'detecting' | 'resolved' | 'denied' | 'error'
+
+// ─── Vendor ─────────────────────────────────────────────────────────
+
+export type VendorStatus = 'pending' | 'active' | 'suspended' | 'rejected'
+
+export interface VendorCategoryRef {
+  id: string
+  name: string
+}
+
+export interface Vendor {
+  id: string
+  company_name: string
+  contact_number: string
+  email: string
+  city: string
+  pin_codes: string[]
+  gst_number: string
+  gst_verified: boolean
+  status: VendorStatus
+  categories: VendorCategoryRef[]
+  notes?: string | null
+  onboarded_by_id?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateVendorPayload {
+  company_name: string
+  contact_number: string
+  email: string
+  city: string
+  pin_codes: string[]
+  gst_number: string
+  gst_verified?: boolean
+  category_ids: string[]
+  notes?: string
+}
+
+export type UpdateVendorPayload = Partial<CreateVendorPayload>
+
+export interface VendorListQuery {
+  status?: VendorStatus
+  city?: string
+  category_id?: string
+  search?: string
+  page?: number
+  limit?: number
+}
+
+export interface PaginatedVendors {
+  items: Vendor[]
+  total: number
+  page: number
+  limit: number
+}

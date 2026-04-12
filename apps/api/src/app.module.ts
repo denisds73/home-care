@@ -11,11 +11,11 @@ import { CategoriesModule } from '@/modules/categories/categories.module';
 import { ServicesModule } from '@/modules/services/services.module';
 import { BookingsModule } from '@/modules/bookings/bookings.module';
 import { PaymentsModule } from '@/modules/payments/payments.module';
-import { PartnersModule } from '@/modules/partners/partners.module';
 import { NotificationsModule } from '@/modules/notifications/notifications.module';
 import { AdminModule } from '@/modules/admin/admin.module';
 import { OffersModule } from '@/modules/offers/offers.module';
-import { WalletModule } from '@/modules/wallet/wallet.module';
+import { VendorsModule } from '@/modules/vendors/vendors.module';
+import { TechniciansModule } from '@/modules/technicians/technicians.module';
 
 @Module({
   imports: [
@@ -44,11 +44,11 @@ import { WalletModule } from '@/modules/wallet/wallet.module';
     ServicesModule,
     BookingsModule,
     PaymentsModule,
-    PartnersModule,
     NotificationsModule,
     AdminModule,
     OffersModule,
-    WalletModule,
+    VendorsModule,
+    TechniciansModule,
   ],
 })
 export class AppModule {}

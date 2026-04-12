@@ -7,9 +7,10 @@ export {
   PaymentMode,
   PaymentStatus,
 } from './booking.entity';
-export { PartnerEntity, PartnerStatus } from './partner.entity';
-export { JobEntity, JobStatus } from './job.entity';
+export { BookingStatusEventEntity } from './booking-status-event.entity';
+export { BookingReviewEntity } from './booking-review.entity';
 export { TransactionEntity, TransactionType } from './transaction.entity';
 export { NotificationEntity, NotificationType } from './notification.entity';
-export { PayoutRequestEntity, PayoutStatus } from './payout-request.entity';
+export { VendorEntity, VendorStatus } from './vendor.entity';
+export { TechnicianEntity, TechnicianStatus } from './technician.entity';
 export { OfferEntity } from './offer.entity';

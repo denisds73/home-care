@@ -198,6 +198,8 @@ function PaymentStep({
   const cart = useStore(s => s.cart)
   const pricing = calculatePricing(cart)
   const isAuthenticated = useAuthStore(s => s.isAuthenticated)
+  const role = useAuthStore(s => s.role)
+  const isCustomerAuthenticated = isAuthenticated && role === 'customer'
 
 
   return (
@@ -234,7 +236,7 @@ function PaymentStep({
         <div className="flex justify-between py-2 text-base font-extrabold border-t-2 border-gray-200 mt-1"><span className="text-primary">Total Amount</span><span className="text-brand-dark">₹{pricing.grandTotal}</span></div>
       </div>
 
-      {!isAuthenticated ? (
+      {!isCustomerAuthenticated ? (
         <PaymentAuthGate booking={booking} />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -290,6 +292,7 @@ export default function BookingFlow() {
   const cart = useStore(s => s.cart)
   const [step, setStep] = useState(1)
   const user = useAuthStore(s => s.user)
+  const role = useAuthStore(s => s.role)
   const authLoading = useAuthStore(s => s.isLoading)
 
   // Restore booking draft from localStorage if returning from auth redirect
@@ -362,6 +365,14 @@ export default function BookingFlow() {
   }
 
   const createBooking = async (paymentMode: PaymentMode): Promise<string | null> => {
+    if (role !== 'customer') {
+      const message = 'Please sign in with a customer account to book services.'
+      setBookingError(message)
+      showToast(message, 'warning')
+      navigate(`${LOGIN_ROUTES.customer}?returnTo=${encodeURIComponent('/app/booking')}`)
+      return null
+    }
+
     const payload = buildPayload(paymentMode)
     setSubmitting(true)
     setBookingError(null)
@@ -373,7 +384,7 @@ export default function BookingFlow() {
         ...payload,
         payment_status: created.payment_status ?? 'PENDING',
         razorpay_order_id: created.razorpay_order_id ?? null,
-        booking_status: created.booking_status ?? 'Pending',
+        booking_status: created.booking_status ?? 'pending',
         created_at: created.created_at ?? new Date().toISOString(),
         updated_at: created.updated_at ?? new Date().toISOString(),
       })
