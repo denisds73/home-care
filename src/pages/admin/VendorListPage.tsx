@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { vendorService } from '../../services/vendorService'
 import useStore from '../../store/useStore'
 import type { Vendor, VendorStatus } from '../../types/domain'
 import { vendorStatusBadgeClass } from '../../utils/vendorStatus'
+import {
+  adminVendorDetail,
+  ADMIN_VENDORS_NEW,
+  parseVendorStatusQuery,
+} from '../../lib/adminRoutes'
 
 const STATUS_TABS: Array<{ key: VendorStatus | ''; label: string }> = [
   { key: '', label: 'All' },
@@ -18,11 +23,14 @@ const PAGE_SIZE = 20
 export default function VendorListPage() {
   const navigate = useNavigate()
   const showToast = useStore((s) => s.showToast)
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [vendors, setVendors] = useState<Vendor[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
-  const [statusFilter, setStatusFilter] = useState<VendorStatus | ''>('')
+  const [statusFilter, setStatusFilter] = useState<VendorStatus | ''>(() =>
+    parseVendorStatusQuery(searchParams.get('status')),
+  )
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -49,6 +57,24 @@ export default function VendorListPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  useEffect(() => {
+    setStatusFilter(parseVendorStatusQuery(searchParams.get('status')))
+  }, [searchParams])
+
+  const setStatusTab = (key: VendorStatus | '') => {
+    setStatusFilter(key)
+    setPage(1)
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (key) next.set('status', key)
+        else next.delete('status')
+        return next
+      },
+      { replace: true },
+    )
+  }
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(total / PAGE_SIZE)),
@@ -80,7 +106,7 @@ export default function VendorListPage() {
           </p>
         </div>
         <Link
-          to="/admin/vendors/new"
+          to={ADMIN_VENDORS_NEW}
           className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px]"
         >
           + Onboard New Vendor
@@ -94,10 +120,7 @@ export default function VendorListPage() {
             <button
               key={tab.key || 'all'}
               type="button"
-              onClick={() => {
-                setStatusFilter(tab.key)
-                setPage(1)
-              }}
+              onClick={() => setStatusTab(tab.key)}
               className={`btn-base text-xs px-4 py-1.5 min-h-[44px] ${
                 active ? 'btn-primary' : 'btn-ghost'
               }`}
@@ -154,7 +177,7 @@ export default function VendorListPage() {
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <button
                     type="button"
-                    onClick={() => navigate(`/admin/vendors/${v.id}`)}
+                    onClick={() => navigate(adminVendorDetail(v.id))}
                     className="text-left min-w-0 flex-1"
                   >
                     <p className="text-sm font-semibold text-primary truncate">
@@ -216,7 +239,7 @@ export default function VendorListPage() {
                     </button>
                   )}
                   <Link
-                    to={`/admin/vendors/${v.id}`}
+                    to={adminVendorDetail(v.id)}
                     className="btn-base btn-ghost text-xs px-4 py-1.5 min-h-[44px]"
                   >
                     View

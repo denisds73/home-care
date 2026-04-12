@@ -36,6 +36,10 @@ export class NotificationEntity {
   @Column({ type: 'text' })
   description!: string;
 
+  /** When set, admin UI can deep-link to this booking. */
+  @Column({ type: 'uuid', nullable: true })
+  booking_id?: string | null;
+
   @Column({ default: false })
   read!: boolean;
 

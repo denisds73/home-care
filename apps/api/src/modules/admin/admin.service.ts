@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
   BookingEntity,
+  BookingReviewEntity,
   BookingStatus,
   ServiceEntity,
   UserEntity,
@@ -23,6 +24,11 @@ interface DashboardStats {
   totalBookings: number;
   activeVendors: number;
   totalUsers: number;
+  /** Average rating from completed booking reviews (0 if none). */
+  avgRating: number;
+  /** Bookings awaiting vendor assignment. */
+  pendingApprovals: number;
+  /** Vendors in onboarding (pending approval). */
   pendingVendorApprovals: number;
 }
 
@@ -35,6 +41,8 @@ export class AdminService {
   constructor(
     @InjectRepository(BookingEntity)
     private readonly bookingsRepo: Repository<BookingEntity>,
+    @InjectRepository(BookingReviewEntity)
+    private readonly reviewsRepo: Repository<BookingReviewEntity>,
     @InjectRepository(ServiceEntity)
     private readonly servicesRepo: Repository<ServiceEntity>,
     @InjectRepository(UserEntity)
@@ -46,13 +54,26 @@ export class AdminService {
   // ─── Dashboard Stats ───────────────────────────────────────────────
 
   async getDashboardStats(): Promise<DashboardStats> {
-    const [totalBookings, totalUsers, activeVendors, pendingVendorApprovals] =
-      await Promise.all([
-        this.bookingsRepo.count(),
-        this.usersRepo.count(),
-        this.vendorsRepo.count({ where: { status: VendorStatus.ACTIVE } }),
-        this.vendorsRepo.count({ where: { status: VendorStatus.PENDING } }),
-      ]);
+    const [
+      totalBookings,
+      totalUsers,
+      activeVendors,
+      pendingVendorApprovals,
+      pendingApprovals,
+      avgRow,
+    ] = await Promise.all([
+      this.bookingsRepo.count(),
+      this.usersRepo.count(),
+      this.vendorsRepo.count({ where: { status: VendorStatus.ACTIVE } }),
+      this.vendorsRepo.count({ where: { status: VendorStatus.PENDING } }),
+      this.bookingsRepo.count({
+        where: { booking_status: BookingStatus.PENDING },
+      }),
+      this.reviewsRepo
+        .createQueryBuilder('r')
+        .select('COALESCE(AVG(r.rating), 0)', 'avg')
+        .getRawOne<{ avg: string }>(),
+    ]);
 
     const revenueResult = await this.bookingsRepo
       .createQueryBuilder('b')
@@ -62,11 +83,16 @@ export class AdminService {
       })
       .getRawOne<{ total: string }>();
 
+    const avgRaw = parseFloat(avgRow?.avg ?? '0');
+    const avgRating = Math.round(avgRaw * 10) / 10;
+
     return {
       totalRevenue: parseFloat(revenueResult?.total ?? '0'),
       totalBookings,
       activeVendors,
       totalUsers,
+      avgRating,
+      pendingApprovals,
       pendingVendorApprovals,
     };
   }

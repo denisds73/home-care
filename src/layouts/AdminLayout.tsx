@@ -90,9 +90,11 @@ export default function AdminLayout() {
         onMobileClose={() => setMobileOpen(false)}
       />
       <div className="dashboard-content">
+        {/* Bell polls /notifications every 30s while admin is logged in (any admin route). */}
         <DashboardTopBar
           title={title}
           onMenuClick={() => setMobileOpen(true)}
+          adminNotificationsEnabled
         />
         <main className="p-4 md:p-6">
           <Outlet />

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { bookingService } from '../../services/bookingService'
 import { vendorService } from '../../services/vendorService'
 import { Pagination } from '../../components/common/Pagination'
@@ -8,11 +8,13 @@ import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
 import { formatDate } from '../../data/helpers'
 import type { BookingStatus, CategoryId, Booking, Vendor } from '../../types/domain'
+import { adminBookingDetail, parseBookingStatusQuery } from '../../lib/adminRoutes'
 
 const PAGE_LIMIT = 20
 
 export default function BookingManagementPage() {
   const showToast = useStore(s => s.showToast)
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [bookings, setBookings] = useState<Booking[]>([])
   const [total, setTotal] = useState(0)
@@ -21,7 +23,9 @@ export default function BookingManagementPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<BookingStatus | ''>('')
+  const [statusFilter, setStatusFilter] = useState<BookingStatus | ''>(() =>
+    parseBookingStatusQuery(searchParams.get('status')),
+  )
   const [categoryFilter, setCategoryFilter] = useState<CategoryId | ''>('')
   const [activeVendors, setActiveVendors] = useState<Vendor[]>([])
 
@@ -39,6 +43,23 @@ export default function BookingManagementPage() {
       .then(setActiveVendors)
       .catch(() => setActiveVendors([]))
   }, [])
+
+  useEffect(() => {
+    setStatusFilter(parseBookingStatusQuery(searchParams.get('status')))
+  }, [searchParams])
+
+  const handleStatusFilterChange = (value: BookingStatus | '') => {
+    setStatusFilter(value)
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (value) next.set('status', value)
+        else next.delete('status')
+        return next
+      },
+      { replace: true },
+    )
+  }
 
   const handleAssign = async (bookingId: string, vendorId: string) => {
     if (!vendorId) return
@@ -110,7 +131,9 @@ export default function BookingManagementPage() {
           <select
             className="input-base py-2 px-3 text-sm"
             value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value as BookingStatus | '')}
+            onChange={(e) =>
+              handleStatusFilterChange(e.target.value as BookingStatus | '')
+            }
             aria-label="Filter by status"
           >
             <option value="">All Statuses</option>
@@ -184,7 +207,7 @@ export default function BookingManagementPage() {
                     <tr key={b.booking_id} className="border-t border-gray-50 hover:bg-surface/50">
                       <td className="p-3 font-medium">
                         <Link
-                          to={`/admin/bookings/${b.booking_id}`}
+                          to={adminBookingDetail(b.booking_id)}
                           className="text-brand hover:underline"
                         >
                           {b.booking_id.slice(0, 8)}…

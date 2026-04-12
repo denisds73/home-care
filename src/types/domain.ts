@@ -284,6 +284,8 @@ export interface Notification {
   description: string
   timestamp: string
   read: boolean
+  /** Present for admin booking alerts; deep-link to booking detail. */
+  booking_id?: string | null
 }
 
 export interface LocationData {

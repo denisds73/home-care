@@ -7,7 +7,10 @@ export interface AdminStats {
   activeVendors: number
   totalUsers: number
   avgRating: number
+  /** Bookings in PENDING status (awaiting vendor assignment). */
   pendingApprovals: number
+  /** Vendors in PENDING onboarding status. */
+  pendingVendorApprovals: number
 }
 
 export interface AdminUser {

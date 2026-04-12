@@ -7,6 +7,7 @@ import {
   BookingEntity,
   BookingStatus,
   BookingStatusEventEntity,
+  NotificationType,
   PaymentMode,
   PaymentStatus,
   Role,
@@ -16,6 +17,7 @@ import {
   VendorStatus,
 } from '@/database/entities';
 
+import { CreateBookingDto } from './dto/create-booking.dto';
 import { BookingsService, BookingActor } from './bookings.service';
 
 /**
@@ -149,6 +151,7 @@ function makeService(initial: {
   };
   const fakeRepo = {
     findOne: jest.fn(async () => null),
+    find: jest.fn(async () => []),
   } as never;
   const fakeDataSource = {
     transaction: async <T>(cb: (m: unknown) => Promise<T>): Promise<T> =>
@@ -169,6 +172,161 @@ function makeService(initial: {
   );
   return { service, store, notificationsService };
 }
+
+const TEST_NEW_BOOKING_ID = 'aaaaaaaa-bbbb-cccc-dddd-111111111111';
+
+function makeCreateFakeStore() {
+  return {
+    booking: null as BookingEntity | null,
+    events: [] as BookingStatusEventEntity[],
+  };
+}
+
+function makeCreateFakeManager(store: ReturnType<typeof makeCreateFakeStore>) {
+  return {
+    create(entity: unknown, data: unknown) {
+      if (entity === BookingStatusEventEntity) {
+        return { ...(data as object) } as BookingStatusEventEntity;
+      }
+      return { ...(data as object) } as BookingEntity;
+    },
+    async save(entity: unknown) {
+      const row = entity as BookingStatusEventEntity;
+      if (row.event !== undefined && row.to_status !== undefined) {
+        store.events.push(row);
+        return entity;
+      }
+      const b = entity as BookingEntity;
+      if (!b.booking_id) {
+        b.booking_id = TEST_NEW_BOOKING_ID;
+      }
+      store.booking = b;
+      return b;
+    },
+  };
+}
+
+function makeServiceForCreate(): {
+  service: BookingsService;
+  store: ReturnType<typeof makeCreateFakeStore>;
+  notificationsService: { create: jest.Mock };
+} {
+  const store = makeCreateFakeStore();
+  const fakeRepo = {
+    findOne: jest.fn(async () => null),
+    find: jest.fn(async () => []),
+  } as never;
+  const fakeDataSource = {
+    transaction: async <T>(cb: (m: unknown) => Promise<T>): Promise<T> =>
+      cb(makeCreateFakeManager(store)),
+  } as never;
+  const notificationsService = {
+    create: jest.fn(async () => undefined),
+  };
+  const service = new BookingsService(
+    fakeRepo,
+    fakeRepo,
+    fakeRepo,
+    fakeRepo,
+    fakeRepo,
+    fakeRepo,
+    fakeDataSource,
+    notificationsService as never,
+  );
+  return { service, store, notificationsService };
+}
+
+const minimalCreateDto: CreateBookingDto = {
+  customer_name: 'Test User',
+  phone: '9876543210',
+  address: '1 Main St',
+  lat: 12.97,
+  lng: 77.59,
+  category: 'ac',
+  service_name: 'AC Service',
+  price: 500,
+  services_list: [{ id: 1, name: 'AC tune', price: 500, qty: 1 }],
+  preferred_date: '2026-05-01',
+  time_slot: '9AM-12PM',
+  payment_mode: PaymentMode.PAY_AFTER_SERVICE,
+};
+
+describe('BookingsService.create', () => {
+  it('notifies customer after successful create', async () => {
+    const { service, notificationsService } = makeServiceForCreate();
+    const result = await service.create('cust-1', minimalCreateDto);
+    expect(result.booking_id).toBe(TEST_NEW_BOOKING_ID);
+    expect(result.customer_id).toBe('cust-1');
+    expect(notificationsService.create).toHaveBeenCalledTimes(1);
+    expect(notificationsService.create).toHaveBeenCalledWith(
+      'cust-1',
+      NotificationType.BOOKING,
+      'Booking confirmed',
+      expect.stringMatching(/AC Service|#aaaaaaaa/),
+      null,
+    );
+  });
+
+  it('notifies each admin after successful create', async () => {
+    const store = makeCreateFakeStore();
+    const fakeRepo = {
+      findOne: jest.fn(async () => null),
+      find: jest.fn(async () => [{ id: 'admin-1' }, { id: 'admin-2' }]),
+    } as never;
+    const fakeDataSource = {
+      transaction: async <T>(cb: (m: unknown) => Promise<T>): Promise<T> =>
+        cb(makeCreateFakeManager(store)),
+    } as never;
+    const notificationsService = {
+      create: jest.fn(async () => undefined),
+    };
+    const service = new BookingsService(
+      fakeRepo,
+      fakeRepo,
+      fakeRepo,
+      fakeRepo,
+      fakeRepo,
+      fakeRepo,
+      fakeDataSource,
+      notificationsService as never,
+    );
+    await service.create('cust-1', minimalCreateDto);
+    const calls = notificationsService.create.mock.calls as unknown[][];
+    const customerCalls = calls.filter((c) => c[0] === 'cust-1');
+    const adminCalls = calls.filter((c) => c[0] === 'admin-1' || c[0] === 'admin-2');
+    expect(customerCalls).toHaveLength(1);
+    expect(adminCalls).toHaveLength(2);
+    expect(adminCalls[0]?.[4]).toBe(TEST_NEW_BOOKING_ID);
+    expect(adminCalls[1]?.[4]).toBe(TEST_NEW_BOOKING_ID);
+  });
+
+  it('does not notify when transaction fails', async () => {
+    const fakeRepo = {
+      findOne: jest.fn(async () => null),
+      find: jest.fn(async () => []),
+    } as never;
+    const fakeDataSource = {
+      transaction: jest.fn().mockRejectedValue(new Error('db')),
+    } as never;
+    const notificationsService = {
+      create: jest.fn(async () => undefined),
+    };
+    const service = new BookingsService(
+      fakeRepo,
+      fakeRepo,
+      fakeRepo,
+      fakeRepo,
+      fakeRepo,
+      fakeRepo,
+      fakeDataSource,
+      notificationsService as never,
+    );
+    await expect(service.create('cust-1', minimalCreateDto)).rejects.toThrow(
+      'db',
+    );
+    expect(notificationsService.create).not.toHaveBeenCalled();
+  });
+});
 
 const CUSTOMER: BookingActor = { id: 'cust-1', role: Role.CUSTOMER };
 const ADMIN: BookingActor = { id: 'admin-1', role: Role.ADMIN };

@@ -75,6 +75,7 @@ export class BookingsService {
     userId: string | null | undefined,
     title: string,
     description: string,
+    bookingId?: string | null,
   ): Promise<void> {
     if (!userId) return;
     try {
@@ -83,6 +84,7 @@ export class BookingsService {
         NotificationType.BOOKING,
         title,
         description,
+        bookingId,
       );
     } catch (err) {
       console.error('[notify] failed to create notification', err);
@@ -111,16 +113,16 @@ export class BookingsService {
     customerId: string,
     dto: CreateBookingDto,
   ): Promise<BookingEntity> {
-    return this.dataSource.transaction(async (manager) => {
+    const saved = await this.dataSource.transaction(async (manager) => {
       const booking = manager.create(BookingEntity, {
         ...dto,
         customer_id: customerId,
         booking_status: BookingStatus.PENDING,
       });
-      const saved = await manager.save(booking);
+      const persisted = await manager.save(booking);
 
       const event = manager.create(BookingStatusEventEntity, {
-        booking_id: saved.booking_id,
+        booking_id: persisted.booking_id,
         from_status: null,
         to_status: BookingStatus.PENDING,
         event: 'create',
@@ -130,8 +132,40 @@ export class BookingsService {
       });
       await manager.save(event);
 
-      return saved;
+      return persisted;
     });
+
+    await this.notifyCustomerBookingCreated(saved);
+    await this.notifyAdminsNewBooking(saved);
+    return saved;
+  }
+
+  private async notifyCustomerBookingCreated(
+    booking: BookingEntity,
+  ): Promise<void> {
+    const svc = `${booking.service_name} (#${booking.booking_id.slice(0, 8)})`;
+    await this.notify(
+      booking.customer_id,
+      'Booking confirmed',
+      `Thanks — we received ${svc}. It is pending vendor assignment; we will notify you when a vendor accepts.`,
+      null,
+    );
+  }
+
+  private async notifyAdminsNewBooking(booking: BookingEntity): Promise<void> {
+    const admins = await this.usersRepository.find({
+      where: { role: Role.ADMIN },
+      select: ['id'],
+    });
+    const title = 'New booking received';
+    const description = [
+      `${booking.customer_name} booked "${booking.service_name}".`,
+      `Preferred: ${booking.preferred_date} · ${booking.time_slot}.`,
+      `Booking ID: ${booking.booking_id.slice(0, 8)}…`,
+    ].join(' ');
+    for (const admin of admins) {
+      await this.notify(admin.id, title, description, booking.booking_id);
+    }
   }
 
   async findByCustomer(customerId: string): Promise<BookingEntity[]> {

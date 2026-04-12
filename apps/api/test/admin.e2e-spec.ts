@@ -83,7 +83,15 @@ describe('Admin (e2e)', () => {
 
       expect(res.body.success).toBe(true);
       expect(res.body.data).toBeDefined();
-      expect(typeof res.body.data).toBe('object');
+      const d = res.body.data;
+      expect(typeof d).toBe('object');
+      expect(typeof d.totalRevenue).toBe('number');
+      expect(typeof d.totalBookings).toBe('number');
+      expect(typeof d.activeVendors).toBe('number');
+      expect(typeof d.totalUsers).toBe('number');
+      expect(typeof d.avgRating).toBe('number');
+      expect(typeof d.pendingApprovals).toBe('number');
+      expect(typeof d.pendingVendorApprovals).toBe('number');
     });
 
     it('should fail without admin role (403)', async () => {

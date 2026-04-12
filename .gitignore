@@ -17,6 +17,7 @@ npm-debug.log*
 .idea/
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 
 # Env (keep secrets out of git)
 .env
@@ -25,5 +26,9 @@ npm-debug.log*
 # Optional tooling
 *.tsbuildinfo
 coverage/
+
+# Python (not part of core stack; ignore if created locally)
+.venv/
+venv/
 
 CLAUDE.md

@@ -755,6 +755,91 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
 }
 .theme-admin .stat-card { border-radius: 10px; padding: 16px; }
 .theme-admin .dashboard-topbar { height: 52px; }
+
+/* Admin dashboard KPI cards — category tint + clickable affordance */
+.theme-admin a.dashboard-kpi-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  border-width: 1px;
+  border-style: solid;
+  transition: box-shadow .2s ease, border-color .2s ease, transform .15s ease;
+}
+.theme-admin a.dashboard-kpi-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, .22);
+}
+.theme-admin a.dashboard-kpi-link:active {
+  transform: scale(0.98);
+}
+.theme-admin a.dashboard-kpi-link:hover {
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.06);
+}
+.theme-admin .dashboard-kpi-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+/* Neutral counts (bookings, vendors, users, rating): plain card + admin brand icon only */
+.theme-admin .dashboard-kpi--neutral {
+  background: var(--color-card);
+  border-color: var(--color-border);
+}
+.theme-admin .dashboard-kpi--neutral .dashboard-kpi-icon-wrap {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+/* Headline metric: revenue — single stronger primary emphasis (not “success” green) */
+.theme-admin .dashboard-kpi--financial {
+  background: linear-gradient(135deg, var(--color-card) 0%, var(--color-primary-soft) 100%);
+  border-color: var(--color-primary-light);
+}
+.theme-admin .dashboard-kpi--financial .dashboard-kpi-icon-wrap {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+/* Action queue: needs vendor assignment — keep error semantics */
+.theme-admin .dashboard-kpi--urgent {
+  background: linear-gradient(135deg, var(--color-card) 0%, rgba(220, 38, 38, 0.06) 100%);
+  border-color: rgba(220, 38, 38, 0.22);
+}
+.theme-admin .dashboard-kpi--urgent .dashboard-kpi-icon-wrap {
+  background: var(--color-error-soft);
+  color: var(--color-error);
+}
+
+/* Pipeline: vendor applications to review — brand wash, not emergency red */
+.theme-admin .dashboard-kpi--onboarding {
+  background: linear-gradient(135deg, var(--color-card) 0%, var(--color-accent-soft) 45%);
+  border-color: var(--color-border);
+}
+.theme-admin .dashboard-kpi--onboarding .dashboard-kpi-icon-wrap {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+/* Admin shell: dense ops UI — no card lift; shadow/border only (overrides global .glass-card:hover) */
+.theme-admin .glass-card {
+  transition: box-shadow .2s ease, border-color .2s ease;
+}
+.theme-admin .glass-card:hover {
+  transform: none;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.06);
+}
+
+.theme-admin .btn-primary:hover {
+  transform: none;
+}
+.theme-admin .btn-primary:active {
+  transform: scale(0.98);
+}
+
 .theme-partner .sidebar-item.active {
   border-left-color: var(--color-primary-light);
   background: rgba(20,184,166,.12);
