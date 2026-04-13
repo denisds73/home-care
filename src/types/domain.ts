@@ -85,7 +85,7 @@ export type ToastType = 'success' | 'danger' | 'warning' | 'info'
 
 export type TransactionType = 'credit' | 'debit'
 
-export type NotificationType = 'booking' | 'payment' | 'system' | 'vendor'
+export type NotificationType = 'booking' | 'payment' | 'system' | 'vendor' | 'delay' | 'reschedule'
 
 export interface ServiceFaq {
   question: string
@@ -400,3 +400,6 @@ export interface PaginatedVendors {
   page: number
   limit: number
 }
+
+// Delay communication types
+export type { DelayType, DelayReason, DelayEvent, DelayReporterRole, ClientDelayResponse, ReportDelayPayload, RespondToDelayPayload, RescheduleRequest, RescheduleStatus, RescheduleInitiator, DisplayStatus, BookingWithDelay } from './delay'
