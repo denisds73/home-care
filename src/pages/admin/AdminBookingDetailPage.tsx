@@ -14,6 +14,9 @@ import type {
   Technician,
   Vendor,
 } from '../../types/domain'
+import { DelayBanner } from '../../components/delay'
+import { delayService } from '../../services/delayService'
+import type { DelayEvent } from '../../types/delay'
 
 type BusyAction =
   | 'assign-vendor'
@@ -38,22 +41,25 @@ export default function AdminBookingDetailPage() {
 
   const [selectedVendor, setSelectedVendor] = useState('')
   const [selectedTech, setSelectedTech] = useState('')
+  const [activeDelay, setActiveDelay] = useState<DelayEvent | null>(null)
 
   const load = useCallback(async () => {
     if (!id) return
     try {
       setIsLoading(true)
       setError(null)
-      const [b, ev, rv, vs] = await Promise.all([
+      const [b, ev, rv, vs, delays] = await Promise.all([
         bookingService.getById(id),
         bookingService.getEvents(id),
         bookingService.getReview(id),
         vendorService.listActive().catch(() => []),
+        delayService.getDelayEvents(id).catch(() => [] as DelayEvent[]),
       ])
       setBooking(b)
       setEvents(ev)
       setReview(rv)
       setVendors(vs)
+      setActiveDelay(delays.find((d) => d.is_active) ?? null)
       if (b.vendor_id) {
         try {
           setTechnicians(
@@ -326,6 +332,14 @@ export default function AdminBookingDetailPage() {
             </div>
           )}
         </div>
+      )}
+
+      {activeDelay && (
+        <DelayBanner
+          delay={activeDelay}
+          role="admin"
+          onReschedule={() => showToast('Reschedule flow coming in Phase 2', 'info')}
+        />
       )}
 
       {/* Admin lifecycle overrides */}
