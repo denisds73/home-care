@@ -1,4 +1,5 @@
 import type { BookingStatus, CategoryId, PaymentMode, PaymentStatus } from '../types/domain'
+import type { DisplayStatus } from '../types/delay'
 import { CATEGORIES } from './categories'
 
 export function getCategoryName(id: CategoryId | string): string {
@@ -27,6 +28,17 @@ const STATUS_LABELS: Record<BookingStatus, string> = {
 
 export function bookingStatusLabel(s: BookingStatus | string): string {
   return STATUS_LABELS[s as BookingStatus] ?? String(s)
+}
+
+const DISPLAY_STATUS_LABELS: Record<string, string> = {
+  delayed: 'Delayed',
+  cannot_attend: 'Cannot Attend',
+  rescheduling: 'Rescheduling',
+  rescheduled: 'Rescheduled',
+}
+
+export function displayStatusLabel(status: DisplayStatus): string {
+  return DISPLAY_STATUS_LABELS[status] ?? bookingStatusLabel(status)
 }
 
 export function paymentBadgeClass(s: PaymentStatus): 'success' | 'failed' | 'pay-pending' {
