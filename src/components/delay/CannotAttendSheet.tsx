@@ -32,8 +32,8 @@ export function CannotAttendSheet({ isOpen, onClose, bookingId, onSuccess }: Can
       showToast('Reported — client and vendor will be notified', 'success')
       onSuccess()
       onClose()
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to report', 'danger')
+    } catch {
+      showToast('Failed to report. Please try again.', 'danger')
     } finally {
       setSubmitting(false)
     }

@@ -128,7 +128,7 @@ export const DelayBanner = memo(
               <button
                 type="button"
                 onClick={onAcceptEta}
-                className="btn-base flex-1 py-2.5 text-[0.8rem] font-bold bg-warning text-white hover:bg-accent-strong min-h-[44px]"
+                className="btn-base flex-1 py-2.5 text-[0.8rem] font-bold bg-[#D97706] text-white hover:bg-[#B45309] active:scale-[0.97] transition-all min-h-[44px]"
               >
                 Accept ETA
               </button>

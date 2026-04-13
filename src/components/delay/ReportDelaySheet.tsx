@@ -35,8 +35,8 @@ export function ReportDelaySheet({ isOpen, onClose, bookingId, onSuccess }: Repo
       showToast('Delay reported — client will be notified', 'success')
       onSuccess()
       onClose()
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to report delay', 'danger')
+    } catch {
+      showToast('Failed to report delay. Please try again.', 'danger')
     } finally {
       setSubmitting(false)
     }
@@ -78,7 +78,7 @@ export function ReportDelaySheet({ isOpen, onClose, bookingId, onSuccess }: Repo
           type="button"
           onClick={handleSubmit}
           disabled={!canSubmit}
-          className="btn-base w-full py-3.5 text-sm font-bold min-h-[48px] disabled:opacity-60 bg-warning text-white hover:bg-accent-strong"
+          className="btn-base w-full py-3.5 text-sm font-bold min-h-[48px] disabled:opacity-60 bg-[#D97706] text-white hover:bg-[#B45309] active:scale-[0.97] transition-all"
         >
           {submitting ? 'Submitting...' : 'Submit Delay Report'}
         </button>

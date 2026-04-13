@@ -192,7 +192,7 @@ export default function TechnicianJobDetailPage() {
             type="button"
             onClick={() => setShowDelaySheet(true)}
             disabled={busy !== null}
-            className="btn-base flex-1 py-3 text-sm font-bold min-h-[48px] bg-warning text-white hover:bg-accent-strong disabled:opacity-60"
+            className="btn-base flex-1 py-3 text-sm font-bold min-h-[48px] bg-[#D97706] text-white hover:bg-[#B45309] active:scale-[0.97] disabled:opacity-60 transition-all"
           >
             Report Delay
           </button>
