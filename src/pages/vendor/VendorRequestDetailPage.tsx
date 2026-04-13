@@ -11,6 +11,9 @@ import type {
   BookingStatusEvent,
   Technician,
 } from '../../types/domain'
+import { DelayBanner } from '../../components/delay'
+import { delayService } from '../../services/delayService'
+import type { DelayEvent } from '../../types/delay'
 
 type Action = 'accept' | 'reject' | 'start' | 'complete' | 'dispatch'
 
@@ -27,20 +30,23 @@ export default function VendorRequestDetailPage() {
   const [busy, setBusy] = useState<Action | null>(null)
   const [rejectNote, setRejectNote] = useState('')
   const [showReject, setShowReject] = useState(false)
+  const [activeDelay, setActiveDelay] = useState<DelayEvent | null>(null)
 
   const load = useCallback(async () => {
     if (!id) return
     try {
       setIsLoading(true)
       setError(null)
-      const [b, ev, techs] = await Promise.all([
+      const [b, ev, techs, delays] = await Promise.all([
         bookingService.getById(id),
         bookingService.getEvents(id),
         technicianService.listMine().catch(() => []),
+        delayService.getDelayEvents(id).catch(() => [] as DelayEvent[]),
       ])
       setBooking(b)
       setEvents(ev)
       setTechnicians(techs)
+      setActiveDelay(delays.find((d) => d.is_active) ?? null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load booking')
     } finally {
@@ -248,6 +254,14 @@ export default function VendorRequestDetailPage() {
           </div>
         )}
       </div>
+
+      {activeDelay && (
+        <DelayBanner
+          delay={activeDelay}
+          role="vendor"
+          onReschedule={() => showToast('Reschedule flow coming in Phase 2', 'info')}
+        />
+      )}
 
       {showDispatch && (
         <div className="glass-card p-5">
