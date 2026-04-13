@@ -13,6 +13,7 @@ import {
 import { BookingsController } from './bookings.controller';
 import { BookingsService } from './bookings.service';
 import { DelayService } from './delay.service';
+import { RescheduleService } from './reschedule.service';
 import { NotificationsModule } from '@/modules/notifications/notifications.module';
 
 @Module({
@@ -30,7 +31,7 @@ import { NotificationsModule } from '@/modules/notifications/notifications.modul
     NotificationsModule,
   ],
   controllers: [BookingsController],
-  providers: [BookingsService, DelayService],
-  exports: [BookingsService, DelayService],
+  providers: [BookingsService, DelayService, RescheduleService],
+  exports: [BookingsService, DelayService, RescheduleService],
 })
 export class BookingsModule {}
