@@ -55,6 +55,12 @@ export default function AdminLoginPage() {
     if (serverError) clearError()
   }
 
+  const fillDemo = () => {
+    setForm({ email: 'demo@admin.com', password: 'demo123' })
+    setTouched({ email: true, password: true })
+    if (serverError) clearError()
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setTouched({ email: true, password: true })
@@ -66,9 +72,13 @@ export default function AdminLoginPage() {
       return
     }
 
-    await login(form.email, form.password, 'admin')
-    const dest = returnTo ?? DASHBOARD_ROUTES['admin'] ?? '/admin'
-    navigate(dest, { replace: true })
+    try {
+      await login(form.email, form.password, 'admin')
+      const dest = returnTo ?? DASHBOARD_ROUTES['admin'] ?? '/admin'
+      navigate(dest, { replace: true })
+    } catch {
+      // Error is already set in the auth store and rendered via serverError
+    }
   }
 
   const emailError = touched.email ? fieldErrors.email : undefined
@@ -345,7 +355,17 @@ export default function AdminLoginPage() {
               </button>
             </form>
 
-            <p className="text-center text-xs text-muted mt-5">
+            {import.meta.env.DEV && (
+              <button
+                type="button"
+                onClick={fillDemo}
+                className="w-full mt-4 text-xs text-brand font-medium py-2 px-3 rounded-lg border border-dashed border-brand/30 hover:bg-[var(--color-primary-soft)] transition-colors min-h-[44px]"
+              >
+                Fill demo credentials
+              </button>
+            )}
+
+            <p className="text-center text-xs text-muted mt-4">
               Use your admin credentials to sign in
             </p>
           </div>

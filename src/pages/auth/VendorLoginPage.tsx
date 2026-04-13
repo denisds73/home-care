@@ -91,6 +91,12 @@ export default function VendorLoginPage() {
     if (serverError) clearError()
   }
 
+  const fillDemo = () => {
+    setForm({ email: 'demo@vendor.com', password: 'demo123' })
+    setTouched({ email: true, password: true })
+    if (serverError) clearError()
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setTouched({ email: true, password: true })
@@ -100,8 +106,12 @@ export default function VendorLoginPage() {
       else passwordRef.current?.focus()
       return
     }
-    await login(form.email, form.password, 'vendor')
-    navigate(returnTo ?? '/vendor', { replace: true })
+    try {
+      await login(form.email, form.password, 'vendor')
+      navigate(returnTo ?? '/vendor', { replace: true })
+    } catch {
+      // Error is already set in the auth store and rendered via serverError
+    }
   }
 
   const emailError = touched.email ? fieldErrors.email : undefined
@@ -248,6 +258,16 @@ export default function VendorLoginPage() {
               </button>
             </form>
           </div>
+
+          {import.meta.env.DEV && (
+            <button
+              type="button"
+              onClick={fillDemo}
+              className="w-full mt-4 text-xs text-brand font-medium py-2 px-3 rounded-lg border border-dashed border-brand/30 hover:bg-[var(--color-primary-soft)] transition-colors min-h-[44px]"
+            >
+              Fill demo credentials
+            </button>
+          )}
 
           <p className="mt-4 text-center text-xs text-muted">
             Use your registered vendor credentials

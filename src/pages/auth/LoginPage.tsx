@@ -251,6 +251,12 @@ export default function LoginPage() {
 
   /* ── Login handlers ── */
 
+  const fillDemo = () => {
+    setLoginData({ email: 'demo@customer.com', password: 'demo123' })
+    setFieldErrors({})
+    setServerError('')
+  }
+
   const handleLoginChange = (field: keyof LoginFormData, value: string) => {
     const next = { ...loginData, [field]: value }
     setLoginData(next)
@@ -680,6 +686,16 @@ export default function LoginPage() {
                     {isSubmitting && Spinner}
                     {isSubmitting ? 'Signing in...' : 'Log In'}
                   </button>
+
+                  {import.meta.env.DEV && (
+                    <button
+                      type="button"
+                      onClick={fillDemo}
+                      className="w-full text-xs text-brand font-medium py-2 px-3 rounded-lg border border-dashed border-brand/30 hover:bg-[var(--color-primary-soft)] transition-colors min-h-[44px]"
+                    >
+                      Fill demo credentials
+                    </button>
+                  )}
                 </form>
               ) : (
                 <form
