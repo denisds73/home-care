@@ -1,13 +1,13 @@
 import { memo } from 'react'
-import type { BookingStatus } from '../../types/domain'
-import { bookingStatusLabel } from '../../data/helpers'
+import type { DisplayStatus } from '../../types/delay'
+import { displayStatusLabel } from '../../data/helpers'
 
 interface StatusBadgeProps {
-  status: BookingStatus
+  status: DisplayStatus
   className?: string
 }
 
-const VARIANT: Record<BookingStatus, string> = {
+const VARIANT: Record<DisplayStatus, string> = {
   pending: 'badge-warning',
   assigned: 'badge-info',
   accepted: 'badge-info',
@@ -15,12 +15,16 @@ const VARIANT: Record<BookingStatus, string> = {
   completed: 'badge-success',
   cancelled: 'badge-error',
   rejected: 'badge-error',
+  delayed: 'badge-delayed',
+  cannot_attend: 'badge-cannot-attend',
+  rescheduling: 'badge-rescheduling',
+  rescheduled: 'badge-rescheduled',
 }
 
 export const StatusBadge = memo(({ status, className }: StatusBadgeProps) => {
   return (
     <span className={`badge ${VARIANT[status]} ${className ?? ''}`.trim()}>
-      {bookingStatusLabel(status)}
+      {displayStatusLabel(status)}
     </span>
   )
 })
