@@ -13,6 +13,7 @@ import { BookingsModule } from '@/modules/bookings/bookings.module';
 import { PaymentsModule } from '@/modules/payments/payments.module';
 import { NotificationsModule } from '@/modules/notifications/notifications.module';
 import { AdminModule } from '@/modules/admin/admin.module';
+import { OffersModule } from '@/modules/offers/offers.module';
 import { VendorsModule } from '@/modules/vendors/vendors.module';
 import { TechniciansModule } from '@/modules/technicians/technicians.module';
 
@@ -45,6 +46,7 @@ import { TechniciansModule } from '@/modules/technicians/technicians.module';
     PaymentsModule,
     NotificationsModule,
     AdminModule,
+    OffersModule,
     VendorsModule,
     TechniciansModule,
   ],

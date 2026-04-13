@@ -4,6 +4,7 @@ import { userService } from '../../services/userService'
 import { useAuthStore } from '../../store/useAuthStore'
 import useStore from '../../store/useStore'
 import { PhoneVerifyModal } from './PhoneVerifyModal'
+import Dropdown from '../common/Dropdown'
 
 interface PersonalInfoSectionProps {
   user: User
@@ -22,10 +23,13 @@ interface FormState {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PHONE_RE = /^[6-9]\d{9}$/
 
+const stripCountryCode = (phone: string): string =>
+  phone.replace(/^\+91\s*/, '').replace(/\D/g, '')
+
 const toForm = (u: User): FormState => ({
   name: u.name ?? '',
   email: u.email ?? '',
-  phone: u.phone ?? '',
+  phone: stripCountryCode(u.phone ?? ''),
   dob: u.dob ?? '',
   gender: (u.gender as Gender | undefined) ?? '',
 })
@@ -81,7 +85,7 @@ export const PersonalInfoSection = memo(
     const original = {
       name: (user.name ?? '').trim(),
       email: (user.email ?? '').trim(),
-      phone: (user.phone ?? '').trim(),
+      phone: stripCountryCode(user.phone ?? ''),
       dob: user.dob ?? '',
       gender: (user.gender as Gender | undefined) ?? '',
     }
@@ -157,7 +161,6 @@ export const PersonalInfoSection = memo(
         showToast('No changes to save', 'info')
         return
       }
-      // Phone changes require OTP verification first
       if (phoneChanged && normalized.phone && verifiedPhone !== normalized.phone) {
         setPhoneModalOpen(true)
         return
@@ -301,19 +304,18 @@ export const PersonalInfoSection = memo(
               />
             </Field>
             <Field id="pf-gender" label="Gender">
-              <select
-                id="pf-gender"
+              <Dropdown
+                options={[
+                  { value: '', label: 'Prefer not to say' },
+                  { value: 'male', label: 'Male' },
+                  { value: 'female', label: 'Female' },
+                  { value: 'other', label: 'Other' },
+                ]}
                 value={form.gender}
-                onChange={(e) =>
-                  handleChange('gender', e.target.value as Gender | '')
-                }
-                className="input-base w-full px-3 py-2.5 text-sm"
-              >
-                <option value="">Prefer not to say</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
+                onChange={(v) => handleChange('gender', v as Gender | '')}
+                placeholder="Prefer not to say"
+                id="pf-gender"
+              />
             </Field>
           </form>
         )}

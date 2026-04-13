@@ -5,6 +5,7 @@ import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
 import Modal from '../../components/common/Modal'
 import type { CategoryId, Service } from '../../types/domain'
+import Dropdown from '../../components/common/Dropdown'
 
 interface SvcForm {
   category: CategoryId | ''
@@ -236,18 +237,18 @@ export default function CatalogPage() {
   return (
     <div className="fade-in space-y-6">
       <div className="flex flex-wrap items-center gap-3">
-        <select
-          className="input-base py-2 px-3 text-sm"
+        <Dropdown
+          options={[
+            { value: '', label: 'All Categories' },
+            ...CATEGORIES.map(c => ({ value: c.id, label: c.name })),
+          ]}
           value={categoryFilter}
-          onChange={e => setCategoryFilter(e.target.value as CategoryId | '')}
-        >
-          <option value="">All Categories</option>
-          {CATEGORIES.map(c => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+          onChange={v => setCategoryFilter(v as CategoryId | '')}
+          placeholder="All Categories"
+          searchable
+          searchPlaceholder="Search category..."
+          className="min-w-[170px]"
+        />
         <button type="button" onClick={openAdd} className="btn-base btn-primary text-sm px-4 py-2 ml-auto min-h-[44px]">
           + Add Service
         </button>
@@ -311,18 +312,16 @@ export default function CatalogPage() {
           <h4 className="text-sm font-bold text-primary mb-3">Basic Info</h4>
           <div className="space-y-3">
             <div>
-              <label htmlFor="svc-category" className="text-xs font-semibold text-secondary mb-1 block">Category *</label>
-              <select
-                id="svc-category"
-                className="input-base w-full py-2.5 px-3 text-sm"
+              <Dropdown
+                options={CATEGORIES.map(c => ({ value: c.id, label: c.name }))}
                 value={form.category}
-                onChange={e => setForm({ ...form, category: e.target.value as CategoryId })}
-              >
-                <option value="">Select Category</option>
-                {CATEGORIES.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+                onChange={v => setForm({ ...form, category: v as CategoryId })}
+                placeholder="Select Category"
+                label="Category *"
+                searchable
+                searchPlaceholder="Search category..."
+                id="svc-category"
+              />
             </div>
             <div>
               <label htmlFor="svc-name" className="text-xs font-semibold text-secondary mb-1 block">Service Name *</label>

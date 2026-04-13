@@ -31,7 +31,6 @@ describe('Bookings (e2e)', () => {
       { id: 1, name: 'AC Gas Refill', price: 499, qty: 1 },
     ],
     preferred_date: '2026-05-01',
-    time_slot: '9AM-12PM',
     payment_mode: 'PAY_AFTER_SERVICE',
   };
 

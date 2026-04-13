@@ -22,6 +22,12 @@ export enum UserStatus {
   SUSPENDED = 'suspended',
 }
 
+export enum Gender {
+  MALE = 'male',
+  FEMALE = 'female',
+  OTHER = 'other',
+}
+
 @Entity('users')
 export class UserEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -41,6 +47,12 @@ export class UserEntity {
 
   @Column({ type: 'enum', enum: Role, default: Role.CUSTOMER })
   role!: Role;
+
+  @Column({ type: 'date', nullable: true })
+  dob?: string;
+
+  @Column({ type: 'enum', enum: Gender, nullable: true })
+  gender?: Gender;
 
   @Column({ nullable: true })
   avatar?: string;

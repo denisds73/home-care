@@ -8,6 +8,7 @@ import {
   GridIcon,
   ClipboardIcon,
   PackageIcon,
+  TagIcon,
   UsersIcon,
   WalletIcon,
   SettingsIcon,
@@ -25,6 +26,7 @@ const ADMIN_NAV: NavGroup[] = [
     items: [
       { icon: <ClipboardIcon />, label: 'Bookings', to: '/admin/bookings' },
       { icon: <PackageIcon />, label: 'Catalog', to: '/admin/catalog' },
+      { icon: <TagIcon />, label: 'Offers', to: '/admin/offers' },
     ],
   },
   {
@@ -46,6 +48,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin': 'Dashboard',
   '/admin/bookings': 'Booking Management',
   '/admin/catalog': 'Service Catalog',
+  '/admin/offers': 'Offers & Discounts',
   '/admin/users': 'User Management',
   '/admin/vendors': 'Vendor Onboarding',
   '/admin/finance': 'Finance & Payouts',

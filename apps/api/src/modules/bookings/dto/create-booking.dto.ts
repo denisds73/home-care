@@ -87,11 +87,6 @@ export class CreateBookingDto {
   @IsDateString()
   preferred_date!: string;
 
-  @ApiProperty({ maxLength: 20, example: '10:00-12:00' })
-  @IsString()
-  @MaxLength(20)
-  time_slot!: string;
-
   @ApiProperty({ enum: PaymentMode })
   @IsEnum(PaymentMode)
   payment_mode!: PaymentMode;

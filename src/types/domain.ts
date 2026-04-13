@@ -8,8 +8,6 @@ export type CategoryId =
 
 export type View = 'home' | 'services' | 'booking' | 'admin'
 
-export type TimeSlot = '9AM-12PM' | '12PM-3PM' | '3PM-6PM'
-
 export type PaymentMode = 'PAY_NOW' | 'PAY_AFTER_SERVICE'
 
 export type PaymentStatus = 'SUCCESS' | 'FAILED' | 'PENDING'
@@ -140,7 +138,6 @@ export interface Booking {
   price: number
   services_list: ServiceListItem[]
   preferred_date: string
-  time_slot: TimeSlot | string
   payment_mode: PaymentMode
   payment_status: PaymentStatus
   razorpay_order_id: string | null
@@ -172,7 +169,6 @@ export interface CreateBookingPayload {
   price: number
   services_list: ServiceListItem[]
   preferred_date: string
-  time_slot: string
   payment_mode: PaymentMode
 }
 
@@ -268,6 +264,42 @@ export interface ToastItem {
   createdAt: number
 }
 
+/** Legacy partner model — retained for unused admin/partner demo pages. */
+export type PartnerStatus = 'pending' | 'approved' | 'suspended'
+
+export type JobStatus = 'new' | 'accepted' | 'in_progress' | 'completed' | 'declined'
+
+export interface Partner {
+  id: string
+  name: string
+  email: string
+  phone: string
+  avatar?: string
+  skills: CategoryId[]
+  rating: number
+  completedJobs: number
+  status: PartnerStatus
+  serviceArea: string
+  isOnline: boolean
+  joinedAt: string
+  earnings: number
+}
+
+export interface Job {
+  id: string
+  bookingId: string
+  partnerId: string
+  customerName: string
+  phone: string
+  address: string
+  category: CategoryId
+  serviceName: string
+  price: number
+  preferredDate: string
+  status: JobStatus
+  createdAt: string
+}
+
 export interface Transaction {
   id: string
   amount: number
@@ -286,6 +318,21 @@ export interface Notification {
   read: boolean
   /** Present for admin booking alerts; deep-link to booking detail. */
   booking_id?: string | null
+}
+
+export interface Offer {
+  id: string
+  title: string
+  description: string
+  tag: string
+  cta_text: string
+  category: CategoryId
+  image_url: string
+  bg_gradient: string
+  is_active: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
 }
 
 export interface LocationData {

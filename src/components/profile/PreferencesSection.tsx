@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import type { NotificationPrefs, User, UserPreferences } from '../../types/domain'
+import Dropdown from '../common/Dropdown'
 import { userService } from '../../services/userService'
 import { useAuthStore } from '../../store/useAuthStore'
 import useStore from '../../store/useStore'
@@ -94,26 +95,22 @@ export const PreferencesSection = memo(({ user }: PreferencesSectionProps) => {
         </div>
 
         <div className="mt-5 pt-5 border-t border-default">
-          <label
-            htmlFor="pref-language"
-            className="text-xs font-semibold text-secondary uppercase"
-          >
-            Language
-          </label>
-          <select
-            id="pref-language"
+          <Dropdown
+            options={[
+              { value: 'en', label: 'English' },
+              { value: 'hi', label: 'हिन्दी (Hindi)' },
+            ]}
             value={prefs.language}
-            onChange={(e) =>
+            onChange={(v) =>
               setPrefs((p) => ({
                 ...p,
-                language: e.target.value as UserPreferences['language'],
+                language: v as UserPreferences['language'],
               }))
             }
-            className="input-base w-full md:w-64 mt-1 px-3 py-2.5 text-sm"
-          >
-            <option value="en">English</option>
-            <option value="hi">हिन्दी (Hindi)</option>
-          </select>
+            label="Language"
+            id="pref-language"
+            className="w-full md:w-64"
+          />
         </div>
       </div>
     </section>

@@ -105,7 +105,6 @@ export default function BookingManagementPage() {
     loadBookings()
   }, [loadBookings])
 
-  // Reset to page 1 whenever filters change
   useEffect(() => {
     setPage(1)
   }, [statusFilter, categoryFilter, search])
@@ -129,7 +128,7 @@ export default function BookingManagementPage() {
             onChange={e => setSearch(e.target.value)}
           />
           <select
-            className="input-base py-2 px-3 text-sm"
+            className="input-base py-2 px-3 text-sm min-w-[160px]"
             value={statusFilter}
             onChange={(e) =>
               handleStatusFilterChange(e.target.value as BookingStatus | '')
@@ -146,7 +145,7 @@ export default function BookingManagementPage() {
             <option value="rejected">Rejected</option>
           </select>
           <select
-            className="input-base py-2 px-3 text-sm"
+            className="input-base py-2 px-3 text-sm min-w-[170px]"
             value={categoryFilter}
             onChange={e => setCategoryFilter(e.target.value as CategoryId | '')}
             aria-label="Filter by category"

@@ -1,6 +1,7 @@
 import { memo, useState } from 'react'
 import Modal from '../common/Modal'
 import type { Address } from '../../types/domain'
+import Dropdown from '../common/Dropdown'
 
 interface AddressFormModalProps {
   isOpen: boolean
@@ -113,24 +114,19 @@ export const AddressFormModal = memo(
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
-              <label
-                htmlFor="addr-label"
-                className="text-xs font-semibold text-secondary uppercase"
-              >
-                Label
-              </label>
-              <select
-                id="addr-label"
+              <Dropdown
+                options={[
+                  { value: 'Home', label: 'Home' },
+                  { value: 'Work', label: 'Work' },
+                  { value: 'Other', label: 'Other' },
+                ]}
                 value={form.label}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, label: e.target.value as LabelType }))
+                onChange={(v) =>
+                  setForm((f) => ({ ...f, label: v as LabelType }))
                 }
-                className="input-base w-full px-3 py-2.5 text-sm"
-              >
-                <option value="Home">Home</option>
-                <option value="Work">Work</option>
-                <option value="Other">Other</option>
-              </select>
+                label="Label"
+                id="addr-label"
+              />
             </div>
 
             <div className="flex flex-col gap-1 md:col-span-2">

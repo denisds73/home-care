@@ -15,9 +15,12 @@ import {
   VendorStatus,
   UserStatus,
   Role,
+  OfferEntity,
 } from '@/database/entities';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
+import { CreateOfferDto } from './dto/create-offer.dto';
+import { UpdateOfferDto } from './dto/update-offer.dto';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -49,6 +52,8 @@ export class AdminService {
     private readonly usersRepo: Repository<UserEntity>,
     @InjectRepository(VendorEntity)
     private readonly vendorsRepo: Repository<VendorEntity>,
+    @InjectRepository(OfferEntity)
+    private readonly offersRepo: Repository<OfferEntity>,
   ) {}
 
   // ─── Dashboard Stats ───────────────────────────────────────────────
@@ -176,5 +181,37 @@ export class AdminService {
     return {
       totalRevenue: parseFloat(revenueResult?.total ?? '0'),
     };
+  }
+
+  // ─── Offers ────────────────────────────────────────────────────────
+
+  async getOffers(): Promise<OfferEntity[]> {
+    return this.offersRepo.find({ order: { sort_order: 'ASC' } });
+  }
+
+  async createOffer(dto: CreateOfferDto): Promise<OfferEntity> {
+    const offer = this.offersRepo.create(dto);
+    return this.offersRepo.save(offer);
+  }
+
+  async updateOffer(id: string, dto: UpdateOfferDto): Promise<OfferEntity> {
+    const offer = await this.offersRepo.findOne({ where: { id } });
+
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+
+    Object.assign(offer, dto);
+    return this.offersRepo.save(offer);
+  }
+
+  async deleteOffer(id: string): Promise<void> {
+    const offer = await this.offersRepo.findOne({ where: { id } });
+
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+
+    await this.offersRepo.remove(offer);
   }
 }

@@ -1,4 +1,4 @@
-export { UserEntity, Role, UserStatus } from './user.entity';
+export { UserEntity, Role, UserStatus, Gender } from './user.entity';
 export { CategoryEntity } from './category.entity';
 export { ServiceEntity } from './service.entity';
 export {
@@ -13,3 +13,4 @@ export { TransactionEntity, TransactionType } from './transaction.entity';
 export { NotificationEntity, NotificationType } from './notification.entity';
 export { VendorEntity, VendorStatus } from './vendor.entity';
 export { TechnicianEntity, TechnicianStatus } from './technician.entity';
+export { OfferEntity } from './offer.entity';
