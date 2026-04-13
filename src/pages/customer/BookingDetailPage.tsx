@@ -10,6 +10,9 @@ import type {
   BookingReview,
   BookingStatusEvent,
 } from '../../types/domain'
+import { DelayBanner, CriticalDelayModal } from '../../components/delay'
+import { delayService } from '../../services/delayService'
+import type { DelayEvent } from '../../types/delay'
 
 const CANCELLABLE = new Set(['pending', 'assigned', 'accepted'])
 
@@ -27,20 +30,23 @@ export default function BookingDetailPage() {
   const [rating, setRating] = useState<1 | 2 | 3 | 4 | 5>(5)
   const [comment, setComment] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
+  const [activeDelay, setActiveDelay] = useState<DelayEvent | null>(null)
 
   const load = useCallback(async () => {
     if (!id) return
     try {
       setIsLoading(true)
       setError(null)
-      const [b, ev, rv] = await Promise.all([
+      const [b, ev, rv, delays] = await Promise.all([
         bookingService.getById(id),
         bookingService.getEvents(id),
         bookingService.getReview(id),
+        delayService.getDelayEvents(id).catch(() => [] as DelayEvent[]),
       ])
       setBooking(b)
       setEvents(ev)
       setReview(rv)
+      setActiveDelay(delays.find((d) => d.is_active) ?? null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load booking')
     } finally {
@@ -66,6 +72,28 @@ export default function BookingDetailPage() {
       )
     } finally {
       setCancelling(false)
+    }
+  }
+
+  const handleAcceptEta = async () => {
+    if (!id || !activeDelay) return
+    try {
+      await delayService.respondToDelay(id, activeDelay.id, { response: 'accepted' })
+      showToast('Revised ETA accepted', 'success')
+      await load()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to respond', 'danger')
+    }
+  }
+
+  const handleRequestDifferentTech = async () => {
+    if (!id || !activeDelay) return
+    try {
+      await delayService.respondToDelay(id, activeDelay.id, { response: 'reschedule_requested' })
+      showToast('Request sent to vendor', 'success')
+      await load()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to request', 'danger')
     }
   }
 
@@ -189,6 +217,29 @@ export default function BookingDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Delay communication */}
+        {activeDelay && activeDelay.delay_type === 'running_late' && (
+          <DelayBanner
+            delay={activeDelay}
+            role="customer"
+            onAcceptEta={handleAcceptEta}
+            onCancel={handleCancel}
+          />
+        )}
+
+        {activeDelay && activeDelay.delay_type === 'cannot_attend' && (
+          <CriticalDelayModal
+            isOpen={true}
+            onClose={() => setActiveDelay(null)}
+            delay={activeDelay}
+            bookingName={booking.service_name}
+            bookingId={booking.booking_id}
+            onReschedule={() => showToast('Reschedule flow coming in Phase 2', 'info')}
+            onRequestDifferentTech={handleRequestDifferentTech}
+            onCancel={handleCancel}
+          />
+        )}
 
         {showOtp && (
           <div className="glass-card p-5 border-l-4 border-success">
