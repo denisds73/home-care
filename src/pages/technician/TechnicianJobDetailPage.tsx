@@ -6,7 +6,7 @@ import { StatusBadge } from '../../components/bookings/StatusBadge'
 import { formatDate } from '../../data/helpers'
 import useStore from '../../store/useStore'
 import type { Booking, BookingStatusEvent } from '../../types/domain'
-import { ReportDelaySheet, CannotAttendSheet } from '../../components/delay'
+import { ReportDelaySheet, CannotAttendSheet, SmartDelayPrompt } from '../../components/delay'
 
 export default function TechnicianJobDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -173,6 +173,15 @@ export default function TechnicianJobDetailPage() {
           </div>
         </div>
       </div>
+
+      <SmartDelayPrompt
+        scheduledTime={booking.time_slot}
+        preferredDate={booking.preferred_date}
+        bookingStatus={s}
+        startedAt={booking.started_at ?? null}
+        onReportDelay={() => setShowDelaySheet(true)}
+        onStartService={handleStart}
+      />
 
       {canStart && (
         <button

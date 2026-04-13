@@ -14,9 +14,10 @@ import type {
   Technician,
   Vendor,
 } from '../../types/domain'
-import { DelayBanner } from '../../components/delay'
+import { DelayBanner, RescheduleSheet } from '../../components/delay'
 import { delayService } from '../../services/delayService'
-import type { DelayEvent } from '../../types/delay'
+import { rescheduleService } from '../../services/rescheduleService'
+import type { DelayEvent, RescheduleRequest } from '../../types/delay'
 
 type BusyAction =
   | 'assign-vendor'
@@ -42,24 +43,28 @@ export default function AdminBookingDetailPage() {
   const [selectedVendor, setSelectedVendor] = useState('')
   const [selectedTech, setSelectedTech] = useState('')
   const [activeDelay, setActiveDelay] = useState<DelayEvent | null>(null)
+  const [rescheduleCount, setRescheduleCount] = useState(0)
+  const [showRescheduleSheet, setShowRescheduleSheet] = useState(false)
 
   const load = useCallback(async () => {
     if (!id) return
     try {
       setIsLoading(true)
       setError(null)
-      const [b, ev, rv, vs, delays] = await Promise.all([
+      const [b, ev, rv, vs, delays, reschedules] = await Promise.all([
         bookingService.getById(id),
         bookingService.getEvents(id),
         bookingService.getReview(id),
         vendorService.listActive().catch(() => []),
         delayService.getDelayEvents(id).catch(() => [] as DelayEvent[]),
+        rescheduleService.getRequests(id).catch(() => [] as RescheduleRequest[]),
       ])
       setBooking(b)
       setEvents(ev)
       setReview(rv)
       setVendors(vs)
       setActiveDelay(delays.find((d) => d.is_active) ?? null)
+      setRescheduleCount(reschedules.length)
       if (b.vendor_id) {
         try {
           setTechnicians(
@@ -338,9 +343,21 @@ export default function AdminBookingDetailPage() {
         <DelayBanner
           delay={activeDelay}
           role="admin"
-          onReschedule={() => showToast('Reschedule flow coming in Phase 2', 'info')}
+          onReschedule={() => setShowRescheduleSheet(true)}
         />
       )}
+
+      <RescheduleSheet
+        isOpen={showRescheduleSheet}
+        onClose={() => setShowRescheduleSheet(false)}
+        bookingId={booking.booking_id}
+        bookingName={booking.service_name}
+        currentDate={booking.preferred_date}
+        currentSlot={booking.time_slot}
+        rescheduleCount={rescheduleCount}
+        role="admin"
+        onSuccess={load}
+      />
 
       {/* Admin lifecycle overrides */}
       <div className="glass-card p-5">

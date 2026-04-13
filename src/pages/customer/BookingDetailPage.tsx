@@ -10,9 +10,10 @@ import type {
   BookingReview,
   BookingStatusEvent,
 } from '../../types/domain'
-import { DelayBanner, CriticalDelayModal } from '../../components/delay'
+import { DelayBanner, CriticalDelayModal, RescheduleSheet } from '../../components/delay'
 import { delayService } from '../../services/delayService'
-import type { DelayEvent } from '../../types/delay'
+import { rescheduleService } from '../../services/rescheduleService'
+import type { DelayEvent, RescheduleRequest } from '../../types/delay'
 
 const CANCELLABLE = new Set(['pending', 'assigned', 'accepted'])
 
@@ -31,22 +32,31 @@ export default function BookingDetailPage() {
   const [comment, setComment] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
   const [activeDelay, setActiveDelay] = useState<DelayEvent | null>(null)
+  const [activeReschedule, setActiveReschedule] = useState<RescheduleRequest | null>(null)
+  const [rescheduleCount, setRescheduleCount] = useState(0)
+  const [showRescheduleSheet, setShowRescheduleSheet] = useState(false)
 
   const load = useCallback(async () => {
     if (!id) return
     try {
       setIsLoading(true)
       setError(null)
-      const [b, ev, rv, delays] = await Promise.all([
+      const [b, ev, rv, delays, reschedules] = await Promise.all([
         bookingService.getById(id),
         bookingService.getEvents(id),
         bookingService.getReview(id),
         delayService.getDelayEvents(id).catch(() => [] as DelayEvent[]),
+        rescheduleService.getRequests(id).catch(() => [] as RescheduleRequest[]),
       ])
       setBooking(b)
       setEvents(ev)
       setReview(rv)
       setActiveDelay(delays.find((d) => d.is_active) ?? null)
+      const activeRs = reschedules.find((r) =>
+        r.status === 'proposed' || r.status === 'counter_proposed'
+      ) ?? null
+      setActiveReschedule(activeRs)
+      setRescheduleCount(reschedules.length)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load booking')
     } finally {
@@ -94,6 +104,17 @@ export default function BookingDetailPage() {
       await load()
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to request', 'danger')
+    }
+  }
+
+  const handleAcceptReschedule = async () => {
+    if (!id || !activeReschedule) return
+    try {
+      await rescheduleService.respond(id, activeReschedule.id, { response: 'accepted' })
+      showToast('Reschedule confirmed', 'success')
+      await load()
+    } catch {
+      showToast('Failed to accept reschedule', 'danger')
     }
   }
 
@@ -224,22 +245,50 @@ export default function BookingDetailPage() {
             delay={activeDelay}
             role="customer"
             onAcceptEta={handleAcceptEta}
+            onReschedule={() => setShowRescheduleSheet(true)}
             onCancel={handleCancel}
           />
         )}
 
         {activeDelay && activeDelay.delay_type === 'cannot_attend' && (
           <CriticalDelayModal
+            mode="cannot_attend"
             isOpen={true}
             onClose={() => setActiveDelay(null)}
             delay={activeDelay}
             bookingName={booking.service_name}
             bookingId={booking.booking_id}
-            onReschedule={() => showToast('Reschedule flow coming in Phase 2', 'info')}
+            onReschedule={() => { setActiveDelay(null); setShowRescheduleSheet(true) }}
             onRequestDifferentTech={handleRequestDifferentTech}
             onCancel={handleCancel}
           />
         )}
+
+        {activeReschedule && (
+          <CriticalDelayModal
+            mode="reschedule_proposed"
+            isOpen={true}
+            onClose={() => setActiveReschedule(null)}
+            reschedule={activeReschedule}
+            bookingName={booking.service_name}
+            bookingId={booking.booking_id}
+            onAccept={handleAcceptReschedule}
+            onSuggestDifferent={() => { setActiveReschedule(null); setShowRescheduleSheet(true) }}
+            onCancel={handleCancel}
+          />
+        )}
+
+        <RescheduleSheet
+          isOpen={showRescheduleSheet}
+          onClose={() => setShowRescheduleSheet(false)}
+          bookingId={booking.booking_id}
+          bookingName={booking.service_name}
+          currentDate={booking.preferred_date}
+          currentSlot={booking.time_slot}
+          rescheduleCount={rescheduleCount}
+          role="customer"
+          onSuccess={load}
+        />
 
         {showOtp && (
           <div className="glass-card p-5 border-l-4 border-success">

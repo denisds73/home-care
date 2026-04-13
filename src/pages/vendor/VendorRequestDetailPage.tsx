@@ -11,9 +11,10 @@ import type {
   BookingStatusEvent,
   Technician,
 } from '../../types/domain'
-import { DelayBanner } from '../../components/delay'
+import { DelayBanner, RescheduleSheet } from '../../components/delay'
 import { delayService } from '../../services/delayService'
-import type { DelayEvent } from '../../types/delay'
+import { rescheduleService } from '../../services/rescheduleService'
+import type { DelayEvent, RescheduleRequest } from '../../types/delay'
 
 type Action = 'accept' | 'reject' | 'start' | 'complete' | 'dispatch'
 
@@ -31,22 +32,26 @@ export default function VendorRequestDetailPage() {
   const [rejectNote, setRejectNote] = useState('')
   const [showReject, setShowReject] = useState(false)
   const [activeDelay, setActiveDelay] = useState<DelayEvent | null>(null)
+  const [rescheduleCount, setRescheduleCount] = useState(0)
+  const [showRescheduleSheet, setShowRescheduleSheet] = useState(false)
 
   const load = useCallback(async () => {
     if (!id) return
     try {
       setIsLoading(true)
       setError(null)
-      const [b, ev, techs, delays] = await Promise.all([
+      const [b, ev, techs, delays, reschedules] = await Promise.all([
         bookingService.getById(id),
         bookingService.getEvents(id),
         technicianService.listMine().catch(() => []),
         delayService.getDelayEvents(id).catch(() => [] as DelayEvent[]),
+        rescheduleService.getRequests(id).catch(() => [] as RescheduleRequest[]),
       ])
       setBooking(b)
       setEvents(ev)
       setTechnicians(techs)
       setActiveDelay(delays.find((d) => d.is_active) ?? null)
+      setRescheduleCount(reschedules.length)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load booking')
     } finally {
@@ -259,9 +264,21 @@ export default function VendorRequestDetailPage() {
         <DelayBanner
           delay={activeDelay}
           role="vendor"
-          onReschedule={() => showToast('Reschedule flow coming in Phase 2', 'info')}
+          onReschedule={() => setShowRescheduleSheet(true)}
         />
       )}
+
+      <RescheduleSheet
+        isOpen={showRescheduleSheet}
+        onClose={() => setShowRescheduleSheet(false)}
+        bookingId={booking.booking_id}
+        bookingName={booking.service_name}
+        currentDate={booking.preferred_date}
+        currentSlot={booking.time_slot}
+        rescheduleCount={rescheduleCount}
+        role="vendor"
+        onSuccess={load}
+      />
 
       {showDispatch && (
         <div className="glass-card p-5">
