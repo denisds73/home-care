@@ -7,9 +7,11 @@ import {
   UserEntity,
   VendorEntity,
   TechnicianEntity,
+  DelayEventEntity,
 } from '@/database/entities';
 import { BookingsController } from './bookings.controller';
 import { BookingsService } from './bookings.service';
+import { DelayService } from './delay.service';
 import { NotificationsModule } from '@/modules/notifications/notifications.module';
 
 @Module({
@@ -21,11 +23,12 @@ import { NotificationsModule } from '@/modules/notifications/notifications.modul
       UserEntity,
       VendorEntity,
       TechnicianEntity,
+      DelayEventEntity,
     ]),
     NotificationsModule,
   ],
   controllers: [BookingsController],
-  providers: [BookingsService],
-  exports: [BookingsService],
+  providers: [BookingsService, DelayService],
+  exports: [BookingsService, DelayService],
 })
 export class BookingsModule {}

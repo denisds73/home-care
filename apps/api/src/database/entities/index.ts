@@ -14,3 +14,9 @@ export { NotificationEntity, NotificationType } from './notification.entity';
 export { VendorEntity, VendorStatus } from './vendor.entity';
 export { TechnicianEntity, TechnicianStatus } from './technician.entity';
 export { OfferEntity } from './offer.entity';
+export {
+  DelayEventEntity,
+  DelayType,
+  DelayReason,
+  ClientDelayResponse,
+} from './delay-event.entity';
