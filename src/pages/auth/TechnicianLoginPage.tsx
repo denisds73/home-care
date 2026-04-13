@@ -90,7 +90,7 @@ export default function TechnicianLoginPage() {
   }
 
   const fillDemo = () => {
-    setForm({ email: 'demo@vendor.com', password: 'demo123' })
+    setForm({ email: 'tech@demo.com', password: 'demo123' })
     setTouched({ email: true, password: true })
     if (serverError) clearError()
   }
