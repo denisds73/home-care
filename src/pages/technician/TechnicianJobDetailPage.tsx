@@ -6,6 +6,7 @@ import { StatusBadge } from '../../components/bookings/StatusBadge'
 import { formatDate } from '../../data/helpers'
 import useStore from '../../store/useStore'
 import type { Booking, BookingStatusEvent } from '../../types/domain'
+import { ReportDelaySheet, CannotAttendSheet } from '../../components/delay'
 
 export default function TechnicianJobDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -19,6 +20,8 @@ export default function TechnicianJobDetailPage() {
   const [otp, setOtp] = useState('')
   const [otpError, setOtpError] = useState<string | null>(null)
   const [busy, setBusy] = useState<'start' | 'complete' | null>(null)
+  const [showDelaySheet, setShowDelaySheet] = useState(false)
+  const [showCannotAttend, setShowCannotAttend] = useState(false)
 
   const load = useCallback(async () => {
     if (!id) return
@@ -181,6 +184,41 @@ export default function TechnicianJobDetailPage() {
           {busy === 'start' ? 'Starting…' : 'Start Job'}
         </button>
       )}
+
+      {/* Delay reporting — visible when accepted or in_progress */}
+      {(canStart || canComplete) && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setShowDelaySheet(true)}
+            disabled={busy !== null}
+            className="btn-base flex-1 py-3 text-sm font-bold min-h-[48px] bg-warning text-white hover:bg-accent-strong disabled:opacity-60"
+          >
+            Report Delay
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowCannotAttend(true)}
+            disabled={busy !== null}
+            className="btn-base py-3 text-sm font-bold min-h-[48px] border-[1.5px] border-error text-error hover:bg-error-soft disabled:opacity-60 px-4"
+          >
+            Cannot Attend
+          </button>
+        </div>
+      )}
+
+      <ReportDelaySheet
+        isOpen={showDelaySheet}
+        onClose={() => setShowDelaySheet(false)}
+        bookingId={booking.booking_id}
+        onSuccess={load}
+      />
+      <CannotAttendSheet
+        isOpen={showCannotAttend}
+        onClose={() => setShowCannotAttend(false)}
+        bookingId={booking.booking_id}
+        onSuccess={load}
+      />
 
       {canComplete && (
         <div className="glass-card p-5 space-y-3">
