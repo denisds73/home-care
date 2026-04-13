@@ -138,7 +138,7 @@ export interface Booking {
   price: number
   services_list: ServiceListItem[]
   preferred_date: string
-  time_slot?: string
+  time_slot: string
   payment_mode: PaymentMode
   payment_status: PaymentStatus
   razorpay_order_id: string | null
@@ -170,6 +170,7 @@ export interface CreateBookingPayload {
   price: number
   services_list: ServiceListItem[]
   preferred_date: string
+  time_slot: string
   payment_mode: PaymentMode
 }
 
