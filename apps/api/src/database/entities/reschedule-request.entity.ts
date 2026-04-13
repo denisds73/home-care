@@ -80,7 +80,7 @@ export class RescheduleRequestEntity {
   @Column({ type: 'date', nullable: true })
   counter_date?: string | null;
 
-  @Column({ length: 20, nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: true })
   counter_time_slot?: string | null;
 
   @Column({ type: 'timestamptz', nullable: true })
