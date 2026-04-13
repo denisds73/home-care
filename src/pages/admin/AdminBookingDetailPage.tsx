@@ -353,7 +353,7 @@ export default function AdminBookingDetailPage() {
         bookingId={booking.booking_id}
         bookingName={booking.service_name}
         currentDate={booking.preferred_date}
-        currentSlot={booking.time_slot}
+        currentSlot={booking.time_slot ?? ''}
         rescheduleCount={rescheduleCount}
         role="admin"
         onSuccess={load}

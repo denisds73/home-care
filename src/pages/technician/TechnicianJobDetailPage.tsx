@@ -175,7 +175,7 @@ export default function TechnicianJobDetailPage() {
       </div>
 
       <SmartDelayPrompt
-        scheduledTime={booking.time_slot}
+        scheduledTime={booking.time_slot ?? ''}
         preferredDate={booking.preferred_date}
         bookingStatus={s}
         startedAt={booking.started_at ?? null}
