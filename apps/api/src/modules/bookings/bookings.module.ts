@@ -8,6 +8,7 @@ import {
   VendorEntity,
   TechnicianEntity,
   DelayEventEntity,
+  RescheduleRequestEntity,
 } from '@/database/entities';
 import { BookingsController } from './bookings.controller';
 import { BookingsService } from './bookings.service';
@@ -24,6 +25,7 @@ import { NotificationsModule } from '@/modules/notifications/notifications.modul
       VendorEntity,
       TechnicianEntity,
       DelayEventEntity,
+      RescheduleRequestEntity,
     ]),
     NotificationsModule,
   ],

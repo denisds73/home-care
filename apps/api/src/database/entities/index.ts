@@ -20,3 +20,4 @@ export {
   DelayReason,
   ClientDelayResponse,
 } from './delay-event.entity';
+export { RescheduleRequestEntity, RescheduleStatus, RescheduleInitiator } from './reschedule-request.entity';
