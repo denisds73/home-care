@@ -63,7 +63,7 @@ export default function NotificationsPage() {
   if (isLoading) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-6">
-        <h1 className="text-xl font-bold text-primary mb-4">Notifications</h1>
+        <h1 className="font-brand text-xl font-bold text-primary mb-4">Notifications</h1>
         <div className="flex flex-col items-center justify-center py-16">
           <div className="w-8 h-8 border-3 border-muted border-t-brand rounded-full animate-spin" />
           <p className="text-muted text-sm mt-3">Loading notifications...</p>
@@ -75,7 +75,7 @@ export default function NotificationsPage() {
   if (error) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-6">
-        <h1 className="text-xl font-bold text-primary mb-4">Notifications</h1>
+        <h1 className="font-brand text-xl font-bold text-primary mb-4">Notifications</h1>
         <div className="flex flex-col items-center justify-center py-16 text-center fade-in">
           <p className="text-error text-sm font-medium">{error}</p>
           <button
@@ -93,22 +93,31 @@ export default function NotificationsPage() {
   if (notifications.length === 0) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-6">
-        <h1 className="text-xl font-bold text-primary mb-4">Notifications</h1>
-        <div className="flex flex-col items-center justify-center py-16 text-center fade-in">
-          <BellIcon className="w-10 h-10 text-muted mx-auto mb-3" />
-          <h3 className="font-brand text-base font-semibold text-primary">No notifications yet</h3>
-          <p className="text-muted text-sm mt-1">You will see your notifications here.</p>
+        <h1 className="font-brand text-xl font-bold text-primary mb-4">Notifications</h1>
+        <div className="glass-card no-hover p-10 text-center fade-in">
+          <BellIcon className="w-12 h-12 text-muted mx-auto mb-4" />
+          <h3 className="font-brand text-base font-bold text-primary">No notifications yet</h3>
+          <p className="text-muted text-sm mt-2">You will see your notifications here.</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold text-primary">Notifications</h1>
+    <div className="max-w-3xl mx-auto px-4 py-6 fade-in">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <h1 className="font-brand text-xl font-bold text-primary">Notifications</h1>
+          {unreadCount > 0 && (
+            <span className="badge badge-pending">{unreadCount} new</span>
+          )}
+        </div>
         {unreadCount > 0 && (
-          <button type="button" onClick={markAllRead} className="text-xs text-brand font-semibold">
+          <button
+            type="button"
+            onClick={markAllRead}
+            className="btn-base btn-ghost text-xs px-3 py-1.5 min-h-[36px] text-brand font-semibold"
+          >
             Mark all as read
           </button>
         )}
@@ -116,18 +125,24 @@ export default function NotificationsPage() {
 
       {Object.entries(grouped).map(([date, items]) => (
         <div key={date} className="mb-6">
-          <p className="text-xs font-semibold text-muted uppercase mb-2">{date}</p>
+          <p className="text-xs font-semibold text-muted uppercase tracking-wide border-b border-default pb-1 mb-3">
+            {date}
+          </p>
           <div className="space-y-2">
             {items.map(n => (
               <button
                 key={n.id}
                 type="button"
                 onClick={() => { if (!n.read) markAsRead(n.id) }}
-                className={`glass-card p-4 flex items-start gap-3 w-full text-left ${!n.read ? 'border-l-[3px] border-l-brand cursor-pointer' : 'cursor-default'}`}
+                className={`glass-card p-4 flex items-start gap-3 w-full text-left transition-all ${
+                  !n.read
+                    ? 'border-l-[3px] border-l-brand bg-[var(--color-primary-soft)]/30 cursor-pointer'
+                    : 'opacity-60 cursor-default'
+                }`}
                 aria-label={n.read ? n.title : `Mark "${n.title}" as read`}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-primary">{n.title}</p>
+                  <p className="text-sm font-brand font-semibold text-primary">{n.title}</p>
                   <p className="text-xs text-secondary mt-0.5">{n.description}</p>
                   <p className="text-xs text-muted mt-1">
                     {new Date(n.timestamp).toLocaleTimeString('en-IN', {

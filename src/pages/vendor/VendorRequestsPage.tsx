@@ -1,8 +1,8 @@
-import { memo, useCallback, useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { bookingService } from '../../services/bookingService'
-import { StatusBadge } from '../../components/bookings/StatusBadge'
-import { formatDate } from '../../data/helpers'
+import { VendorRequestCard, EmptyState } from '../../components/vendor'
+import { CalendarIcon, ClipboardIcon, WrenchIcon, PackageIcon } from '../../components/common/Icons'
 import useStore from '../../store/useStore'
 import type { Booking, BookingStatus } from '../../types/domain'
 
@@ -16,75 +16,12 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'rejected', label: 'Rejected' },
 ]
 
-const VendorRequestCard = memo(function VendorRequestCard({
-  booking,
-  onAccept,
-  onReject,
-  isAccepting,
-  isRejecting,
-}: {
-  booking: Booking
-  onAccept: (bookingId: string) => void
-  onReject: (bookingId: string) => void
-  isAccepting: boolean
-  isRejecting: boolean
-}) {
-  const showInlineActions = booking.booking_status === 'assigned'
-
-  return (
-    <div className="glass-card p-4 hover:shadow-md transition-shadow">
-      <Link
-        to={`/vendor/requests/${booking.booking_id}`}
-        className="block"
-        aria-label={`Open request ${booking.booking_id.slice(0, 8)}`}
-      >
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-primary truncate">
-              {booking.service_name}
-            </p>
-            <p className="text-xs text-muted mt-0.5">
-              #{booking.booking_id.slice(0, 8)} · {booking.customer_name}
-            </p>
-            <p className="text-xs text-secondary mt-1 truncate">
-              {booking.address}
-            </p>
-            <p className="text-xs text-secondary mt-1">
-              {formatDate(booking.preferred_date)} · {booking.time_slot}
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <StatusBadge status={booking.booking_status} />
-            <span className="font-brand font-bold text-brand text-base">
-              ₹{booking.price.toLocaleString('en-IN')}
-            </span>
-          </div>
-        </div>
-      </Link>
-
-      {showInlineActions && (
-        <div className="mt-3 pt-3 border-t border-default flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => onReject(booking.booking_id)}
-            disabled={isAccepting || isRejecting}
-            className="btn-base btn-secondary text-xs px-3 py-2 min-h-[40px] disabled:opacity-60"
-          >
-            {isRejecting ? 'Rejecting…' : 'Reject'}
-          </button>
-          <button
-            type="button"
-            onClick={() => onAccept(booking.booking_id)}
-            disabled={isAccepting || isRejecting}
-            className="btn-base btn-primary text-xs px-3 py-2 min-h-[40px] disabled:opacity-60"
-          >
-            {isAccepting ? 'Accepting…' : 'Accept'}
-          </button>
-        </div>
-      )}
-    </div>
-  )
-})
+const EMPTY_MESSAGES: Partial<Record<TabKey, { title: string; desc: string; icon: typeof CalendarIcon }>> = {
+  assigned: { title: 'No new assignments', desc: 'New admin assignments will appear here.', icon: CalendarIcon },
+  accepted: { title: 'No accepted jobs', desc: 'Jobs you accept will appear here.', icon: ClipboardIcon },
+  in_progress: { title: 'No jobs in progress', desc: 'Active jobs will appear here once started.', icon: WrenchIcon },
+  completed: { title: 'No completed jobs yet', desc: 'Finished jobs will appear here.', icon: PackageIcon },
+}
 
 export default function VendorRequestsPage() {
   const showToast = useStore((s) => s.showToast)
@@ -110,9 +47,7 @@ export default function VendorRequestsPage() {
     }
   }, [tab])
 
-  useEffect(() => {
-    load()
-  }, [load])
+  useEffect(() => { load() }, [load])
 
   const handleAccept = async (bookingId: string) => {
     try {
@@ -149,9 +84,13 @@ export default function VendorRequestsPage() {
     setSearchParams({ status: next }, { replace: true })
   }
 
+  const emptyInfo = EMPTY_MESSAGES[tab]
+  const EmptyIcon = emptyInfo?.icon ?? CalendarIcon
+
   return (
-    <div className="fade-in space-y-5">
-      <div className="flex flex-wrap gap-2">
+    <div className="space-y-5">
+      {/* Pill tab bar */}
+      <div className="glass-card no-hover p-1.5 inline-flex gap-1 flex-wrap">
         {TABS.map((t) => {
           const active = tab === t.key
           return (
@@ -159,11 +98,16 @@ export default function VendorRequestsPage() {
               key={t.key}
               type="button"
               onClick={() => changeTab(t.key)}
-              className={`btn-base text-xs px-4 py-1.5 min-h-[44px] ${
-                active ? 'btn-primary' : 'btn-ghost'
+              className={`text-xs px-4 py-2 min-h-[40px] rounded-lg font-medium transition-colors ${
+                active
+                  ? 'btn-base btn-primary'
+                  : 'text-secondary hover:bg-surface'
               }`}
             >
               {t.label}
+              {!isLoading && active && items.length > 0 && (
+                <span className="ml-1.5 opacity-70">({items.length})</span>
+              )}
             </button>
           )
         })}
@@ -172,11 +116,7 @@ export default function VendorRequestsPage() {
       {error ? (
         <div className="glass-card p-6 text-center">
           <p className="text-error text-sm mb-3">{error}</p>
-          <button
-            type="button"
-            onClick={load}
-            className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px]"
-          >
+          <button type="button" onClick={load} className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px]">
             Retry
           </button>
         </div>
@@ -184,26 +124,29 @@ export default function VendorRequestsPage() {
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="glass-card p-4 animate-pulse">
-              <div className="h-4 w-40 bg-surface rounded mb-2" />
-              <div className="h-3 w-64 bg-surface rounded" />
+              <div className="flex gap-3">
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-40 bg-surface rounded" />
+                  <div className="h-3 w-64 bg-surface rounded" />
+                  <div className="h-3 w-48 bg-surface rounded" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-5 w-16 bg-surface rounded-full" />
+                  <div className="h-5 w-14 bg-surface rounded" />
+                </div>
+              </div>
             </div>
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="glass-card p-8 text-center">
-          <p className="text-sm text-muted">
-            No requests in this category.
-            {tab === 'assigned' && (
-              <>
-                {' '}
-                New assignments from admin will appear here.
-              </>
-            )}
-          </p>
-        </div>
+        <EmptyState
+          icon={<EmptyIcon className="w-12 h-12" />}
+          title={emptyInfo?.title ?? 'No requests in this category'}
+          description={emptyInfo?.desc ?? 'Requests matching this filter will appear here.'}
+        />
       ) : (
         <div className="space-y-3">
-          {items.map((b) => (
+          {items.map((b, i) => (
             <VendorRequestCard
               key={b.booking_id}
               booking={b}
@@ -211,6 +154,7 @@ export default function VendorRequestsPage() {
               onReject={handleReject}
               isAccepting={updatingBookingId === b.booking_id && updatingAction === 'accept'}
               isRejecting={updatingBookingId === b.booking_id && updatingAction === 'reject'}
+              index={i}
             />
           ))}
         </div>
