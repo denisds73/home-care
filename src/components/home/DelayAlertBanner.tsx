@@ -126,28 +126,12 @@ export default function DelayAlertBanner() {
               </p>
             </div>
 
-            {/* View CTA */}
-            <span
-              className="shrink-0 self-center text-[11px] font-bold px-2.5 py-1 rounded-full"
-              style={{
-                background: isCannotAttend ? 'rgba(220, 38, 38, 0.08)' : 'rgba(217, 119, 6, 0.08)',
-                color: isCannotAttend ? '#DC2626' : '#92400E',
-              }}
-            >
-              View
+            {/* Arrow CTA */}
+            <span className="shrink-0 self-center w-6 h-6 rounded-full flex items-center justify-center bg-muted">
+              <svg className="w-3 h-3 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
             </span>
-          </button>
-
-          {/* Close */}
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); dismiss() }}
-            className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full hover:bg-muted/80 transition-colors text-muted"
-            aria-label="Dismiss"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
           </button>
         </div>
       </div>
