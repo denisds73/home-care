@@ -35,6 +35,12 @@ export default function BookingDetailPage() {
   const [activeReschedule, setActiveReschedule] = useState<RescheduleRequest | null>(null)
   const [rescheduleCount, setRescheduleCount] = useState(0)
   const [showRescheduleSheet, setShowRescheduleSheet] = useState(false)
+  const [dismissedDelayIds, setDismissedDelayIds] = useState<Set<string>>(() => {
+    try {
+      const stored = sessionStorage.getItem('hc_dismissed_delays')
+      return stored ? new Set(JSON.parse(stored) as string[]) : new Set()
+    } catch { return new Set() }
+  })
 
   const load = useCallback(async () => {
     if (!id) return
@@ -251,11 +257,20 @@ export default function BookingDetailPage() {
           />
         )}
 
-        {activeDelay && activeDelay.delay_type === 'cannot_attend' && (
+        {activeDelay && activeDelay.delay_type === 'cannot_attend' && !dismissedDelayIds.has(activeDelay.id) && (
           <CriticalDelayModal
             mode="cannot_attend"
             isOpen={true}
-            onClose={() => setActiveDelay(null)}
+            onClose={() => {
+              if (activeDelay) {
+                setDismissedDelayIds(prev => {
+                  const next = new Set(prev).add(activeDelay.id)
+                  try { sessionStorage.setItem('hc_dismissed_delays', JSON.stringify([...next])) } catch {}
+                  return next
+                })
+              }
+              setActiveDelay(null)
+            }}
             delay={activeDelay}
             bookingName={booking.service_name}
             bookingId={booking.booking_id}
