@@ -20,6 +20,7 @@ export const VendorNotificationsDropdown = memo(
     const mergeItems = useNotificationStore((s) => s.mergeItems)
     const prepend = useNotificationStore((s) => s.prepend)
     const markReadInStore = useNotificationStore((s) => s.markRead)
+    const markAllReadInStore = useNotificationStore((s) => s.markAllRead)
     const rootRef = useRef<HTMLDivElement>(null)
     const loadedRef = useRef(false)
 
@@ -54,6 +55,15 @@ export const VendorNotificationsDropdown = memo(
     }, [open])
 
     const unreadCount = items.filter((n) => !n.read).length
+
+    const onMarkAllRead = async () => {
+      markAllReadInStore()
+      try {
+        await notificationService.markAllAsRead()
+      } catch {
+        /* best-effort */
+      }
+    }
 
     const onPick = async (n: { id: string; read: boolean; booking_id?: string | null }) => {
       try {
@@ -119,9 +129,13 @@ export const VendorNotificationsDropdown = memo(
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <h3 className="font-brand text-sm font-bold text-primary">Notifications</h3>
               {unreadCount > 0 && (
-                <span className="text-[0.65rem] font-semibold text-muted bg-muted px-2 py-0.5 rounded-full">
-                  {unreadCount} unread
-                </span>
+                <button
+                  type="button"
+                  className="text-[0.65rem] font-semibold text-brand hover:text-brand-dark transition-colors"
+                  onClick={() => void onMarkAllRead()}
+                >
+                  Mark all read
+                </button>
               )}
             </div>
 
@@ -143,13 +157,13 @@ export const VendorNotificationsDropdown = memo(
                       >
                         <div
                           className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                            n.priority === 'urgent'
-                              ? 'bg-error'
-                              : n.priority === 'high'
-                                ? 'bg-[#D97706]'
-                                : !n.read
-                                  ? 'bg-brand'
-                                  : 'bg-border'
+                            n.read
+                              ? 'bg-border'
+                              : n.priority === 'urgent'
+                                ? 'bg-error'
+                                : n.priority === 'high'
+                                  ? 'bg-[#D97706]'
+                                  : 'bg-brand'
                           }`}
                         />
                         <div className="flex-1 min-w-0">
