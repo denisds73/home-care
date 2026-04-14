@@ -17,7 +17,7 @@ import {
   NotificationType,
   NotificationPriority,
 } from '@/database/entities';
-import { UserEntity, Role } from '@/database/entities/user.entity';
+// Raw SQL queries used for vendor/admin notification lookups
 import { NotificationsService } from '@/modules/notifications/notifications.service';
 import { BookingActor } from './bookings.service';
 
@@ -121,13 +121,13 @@ export class DelayService {
 
     // Notify the vendor (booking owner)
     if (booking.vendor_id) {
-      const vendorUser = await this.bookingRepo.manager.findOne(
-        UserEntity,
-        { where: { vendor_id: booking.vendor_id, role: Role.VENDOR } },
+      const vendorUsers: { id: string }[] = await this.bookingRepo.manager.query(
+        `SELECT id FROM users WHERE vendor_id = $1 AND role = 'vendor' LIMIT 1`,
+        [booking.vendor_id],
       );
-      if (vendorUser) {
+      if (vendorUsers.length > 0) {
         await this.notificationsService.create(
-          vendorUser.id,
+          vendorUsers[0].id,
           NotificationType.BOOKING,
           title,
           `${dto.delay_type === 'cannot_attend' ? 'Technician cannot attend' : 'Technician running late'} for booking ${booking.service_name} (${bookingId.slice(0, 8)})`,
@@ -138,9 +138,9 @@ export class DelayService {
     }
 
     // Notify all admins
-    const admins = await this.bookingRepo.manager.find(UserEntity, {
-      where: { role: Role.ADMIN },
-    });
+    const admins: { id: string }[] = await this.bookingRepo.manager.query(
+      `SELECT id FROM users WHERE role = 'admin'`,
+    );
     for (const admin of admins) {
       await this.notificationsService.create(
         admin.id,
