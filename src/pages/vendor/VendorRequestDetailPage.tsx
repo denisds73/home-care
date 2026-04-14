@@ -265,6 +265,10 @@ export default function VendorRequestDetailPage() {
           delay={activeDelay}
           role="vendor"
           onReschedule={() => setShowRescheduleSheet(true)}
+          onReassign={() => {
+            document.getElementById('dispatch-section')?.scrollIntoView({ behavior: 'smooth' })
+            showToast('Use the dispatch section below to reassign', 'info')
+          }}
         />
       )}
 
@@ -281,7 +285,7 @@ export default function VendorRequestDetailPage() {
       />
 
       {showDispatch && (
-        <div className="glass-card p-5">
+        <div id="dispatch-section" className="glass-card p-5">
           <h2 className="font-brand text-base font-bold text-primary mb-1">
             Dispatch technician
           </h2>

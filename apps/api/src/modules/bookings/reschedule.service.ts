@@ -193,6 +193,22 @@ export class RescheduleService {
       }
     } else if (dto.response === 'rejected') {
       request.status = RescheduleStatus.REJECTED;
+
+      // Notify the customer that their reschedule was declined
+      const rejBooking = await this.bookingRepo.findOne({ where: { booking_id: bookingId } });
+      if (rejBooking?.customer_id) {
+        try {
+          await this.notificationsService.create(
+            rejBooking.customer_id,
+            NotificationType.BOOKING,
+            'Reschedule Declined',
+            `Your reschedule request for ${rejBooking.service_name} was not accepted.`,
+            bookingId,
+          );
+        } catch {
+          // best-effort notification
+        }
+      }
     } else if (dto.response === 'counter_proposed') {
       if (!dto.counter_date || !dto.counter_time_slot) {
         throw new BadRequestException(

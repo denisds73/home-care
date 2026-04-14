@@ -16,8 +16,8 @@ function parseSlotStart(slot: string): string {
 
 function isOverdue(preferredDate: string, timeSlot: string): boolean {
   const now = new Date()
-  const today = now.toISOString().slice(0, 10)
-  if (preferredDate !== today) return false
+  const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  if (preferredDate !== todayLocal) return false
 
   const start = parseSlotStart(timeSlot)
   const match = start.match(/^(\d{1,2})(AM|PM)$/i)
@@ -28,8 +28,7 @@ function isOverdue(preferredDate: string, timeSlot: string): boolean {
   if (period === 'PM' && hour !== 12) hour += 12
   if (period === 'AM' && hour === 12) hour = 0
 
-  const slotDate = new Date(preferredDate)
-  slotDate.setHours(hour, 0, 0, 0)
+  const slotDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, 0, 0, 0)
   return now > slotDate
 }
 

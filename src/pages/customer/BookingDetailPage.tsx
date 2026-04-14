@@ -101,6 +101,7 @@ export default function BookingDetailPage() {
     try {
       await delayService.respondToDelay(id, activeDelay.id, { response: 'reschedule_requested' })
       showToast('Request sent to vendor', 'success')
+      setActiveDelay(null)
       await load()
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to request', 'danger')
