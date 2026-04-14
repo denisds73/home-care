@@ -264,7 +264,7 @@ export default function BookingDetailPage() {
           />
         )}
 
-        {activeReschedule && (
+        {activeReschedule && activeReschedule.initiated_by_role !== 'client' && (
           <CriticalDelayModal
             mode="reschedule_proposed"
             isOpen={true}
