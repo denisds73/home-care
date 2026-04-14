@@ -5,7 +5,7 @@ export function CartBar() {
   const location = useLocation()
   const navigate = useNavigate()
   const toggleCartDrawer = useStore(s => s.toggleCartDrawer)
-  const count = useStore(s => s.getCartCount())
+  const count = useStore(s => s.cart.reduce((sum, c) => sum + c.qty, 0))
   const total = useStore(s => s.getCartTotal())
 
   const isServicePage = location.pathname.startsWith('/services') || location.pathname.startsWith('/app/services')

@@ -1,36 +1,40 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import useStore from '../../store/useStore'
 import { notificationService } from '../../services/notificationService'
 import { BellIcon } from '../../components/common/Icons'
 import type { Notification } from '../../types/domain'
+import { useNotificationStore } from '../../store/useNotificationStore'
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const notifications = useNotificationStore((s) => s.items)
+  const storeLoading = useNotificationStore((s) => s.loading)
+  const mergeItems = useNotificationStore((s) => s.mergeItems)
+  const markReadInStore = useNotificationStore((s) => s.markRead)
+  const markAllReadInStore = useNotificationStore((s) => s.markAllRead)
   const [error, setError] = useState<string | null>(null)
   const showToast = useStore(state => state.showToast)
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setError(null)
       const result = await notificationService.getAll()
-      setNotifications(result.data)
+      const list = Array.isArray(result.data) ? result.data : []
+      mergeItems(list as unknown as Record<string, unknown>[])
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load notifications'
       setError(message)
-    } finally {
-      setIsLoading(false)
     }
-  }
+  }, [mergeItems])
 
-  useEffect(() => {
-    fetchNotifications()
-  }, [])
+  // Initial REST load — run once on mount via empty dep array
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { void fetchNotifications() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const isLoading = storeLoading
 
   const markAsRead = async (id: string) => {
     try {
+      markReadInStore(id)
       await notificationService.markAsRead(id)
-      setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)))
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to mark notification as read'
       showToast(message, 'danger')
@@ -39,8 +43,8 @@ export default function NotificationsPage() {
 
   const markAllRead = async () => {
     try {
+      markAllReadInStore()
       await notificationService.markAllAsRead()
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to mark all as read'
       showToast(message, 'danger')
@@ -80,7 +84,7 @@ export default function NotificationsPage() {
           <p className="text-error text-sm font-medium">{error}</p>
           <button
             className="btn-base btn-secondary px-4 py-2 text-sm mt-4"
-            onClick={() => { setIsLoading(true); fetchNotifications() }}
+            onClick={() => { void fetchNotifications() }}
             aria-label="Retry loading notifications"
           >
             Retry

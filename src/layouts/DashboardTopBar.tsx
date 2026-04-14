@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { useAuthStore } from '../store/useAuthStore'
 import { AdminNotificationsDropdown } from '../components/admin/AdminNotificationsDropdown'
+import { VendorNotificationsDropdown } from '../components/vendor/VendorNotificationsDropdown'
 
 interface DashboardTopBarProps {
   title: string
@@ -11,6 +12,11 @@ interface DashboardTopBarProps {
   }
   /** When true, bell loads notifications, badge, and deep-links to bookings. */
   adminNotificationsEnabled?: boolean
+  /** Vendor/technician notification config — renders a simpler notification dropdown. */
+  vendorNotifications?: {
+    notificationsPath: string
+    bookingDetailPath: (id: string) => string
+  }
 }
 
 export const DashboardTopBar = memo(
@@ -19,6 +25,7 @@ export const DashboardTopBar = memo(
     onMenuClick,
     availabilityToggle,
     adminNotificationsEnabled,
+    vendorNotifications,
   }: DashboardTopBarProps) => {
     const user = useAuthStore((s) => s.user)
     const logout = useAuthStore((s) => s.logout)
@@ -67,6 +74,11 @@ export const DashboardTopBar = memo(
 
         {adminNotificationsEnabled ? (
           <AdminNotificationsDropdown />
+        ) : vendorNotifications ? (
+          <VendorNotificationsDropdown
+            notificationsPath={vendorNotifications.notificationsPath}
+            bookingDetailPath={vendorNotifications.bookingDetailPath}
+          />
         ) : (
           <button
             type="button"

@@ -52,6 +52,6 @@ export class NotificationEntity {
   @Column({ type: 'enum', enum: NotificationPriority, default: NotificationPriority.NORMAL })
   priority!: NotificationPriority;
 
-  @CreateDateColumn({ name: 'timestamp' })
+  @CreateDateColumn({ name: 'timestamp', type: 'timestamptz' })
   timestamp!: Date;
 }

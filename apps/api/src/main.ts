@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { AppModule } from './app.module';
@@ -75,7 +76,8 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
+  const reflector = app.get(Reflector);
+  app.useGlobalInterceptors(new ResponseEnvelopeInterceptor(reflector));
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   const swaggerConfig = new DocumentBuilder()

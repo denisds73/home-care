@@ -69,6 +69,10 @@ export default function TechnicianLayout() {
         <DashboardTopBar
           title={title}
           onMenuClick={() => setMobileOpen(true)}
+          vendorNotifications={{
+            notificationsPath: '/technician/notifications',
+            bookingDetailPath: (id) => `/technician/jobs/${id}`,
+          }}
         />
         <main className="p-4 md:p-6">
           <Outlet />

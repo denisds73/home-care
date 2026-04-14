@@ -2,58 +2,37 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { notificationService } from '../../services/notificationService'
 import { bookingService } from '../../services/bookingService'
-import type { Booking, Notification } from '../../types/domain'
+import type { Booking } from '../../types/domain'
 import { formatDate } from '../../data/helpers'
 import { adminBookingDetail, ADMIN_NOTIFICATIONS } from '../../lib/adminRoutes'
+import { useNotificationStore } from '../../store/useNotificationStore'
+import { useNotificationStream } from '../../hooks/useNotificationStream'
 
-const POLL_MS = 30_000
-
-function normalizeNotification(raw: Record<string, unknown>): Notification {
-  const bookingId =
-    (raw.booking_id as string | null | undefined) ??
-    (raw.bookingId as string | null | undefined) ??
-    null
-  return {
-    id: String(raw.id),
-    type: raw.type as Notification['type'],
-    title: String(raw.title ?? ''),
-    description: String(raw.description ?? ''),
-    timestamp:
-      typeof raw.timestamp === 'string'
-        ? raw.timestamp
-        : (raw.timestamp as Date)?.toISOString?.() ?? new Date().toISOString(),
-    read: Boolean(raw.read),
-    booking_id: bookingId,
-    priority: (raw.priority as string) ?? 'normal',
-  } as Notification
-}
+const PENDING_POLL_MS = 30_000
 
 export const AdminNotificationsDropdown = memo(() => {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
-  const [items, setItems] = useState<Notification[]>([])
+  const items = useNotificationStore((s) => s.items)
+  const storeLoading = useNotificationStore((s) => s.loading)
+  const mergeItems = useNotificationStore((s) => s.mergeItems)
+  const prepend = useNotificationStore((s) => s.prepend)
+  const markReadInStore = useNotificationStore((s) => s.markRead)
   const [pendingBookings, setPendingBookings] = useState<Booking[]>([])
   const [pendingTotal, setPendingTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [pendingLoading, setPendingLoading] = useState(true)
   const rootRef = useRef<HTMLDivElement>(null)
+  const loadedRef = useRef(false)
 
-  const load = useCallback(async () => {
-    if (document.visibilityState !== 'visible') return
+  // Initial load: notifications (REST, one-time) + pending bookings
+  const loadInitial = useCallback(async () => {
     try {
       const [notifRes, bookingPage] = await Promise.all([
         notificationService.getAll(),
         bookingService.listForAdmin({ status: 'pending', limit: 15, page: 1 }),
       ])
-      const normalized = Array.isArray(notifRes.data)
-        ? notifRes.data.map((n) =>
-            normalizeNotification(n as unknown as Record<string, unknown>),
-          )
-        : []
-      normalized.sort((a, b) => {
-        const order: Record<string, number> = { urgent: 0, high: 1, normal: 2 }
-        return (order[a.priority ?? 'normal'] ?? 2) - (order[b.priority ?? 'normal'] ?? 2)
-      })
-      setItems(normalized)
+      const list = Array.isArray(notifRes.data) ? notifRes.data : []
+      mergeItems(list as unknown as Record<string, unknown>[])
       setPendingBookings(bookingPage.items ?? [])
       setPendingTotal(
         typeof bookingPage.total === 'number'
@@ -61,26 +40,50 @@ export const AdminNotificationsDropdown = memo(() => {
           : bookingPage.items?.length ?? 0,
       )
     } catch {
-      setItems([])
       setPendingBookings([])
       setPendingTotal(0)
     } finally {
-      setLoading(false)
+      setPendingLoading(false)
+    }
+  }, [mergeItems])
+
+  // Load pending bookings only (polled separately — not a notification concern)
+  const loadPending = useCallback(async () => {
+    if (document.visibilityState !== 'visible') return
+    try {
+      const bookingPage = await bookingService.listForAdmin({ status: 'pending', limit: 15, page: 1 })
+      setPendingBookings(bookingPage.items ?? [])
+      setPendingTotal(
+        typeof bookingPage.total === 'number'
+          ? bookingPage.total
+          : bookingPage.items?.length ?? 0,
+      )
+    } catch {
+      /* best-effort */
     }
   }, [])
 
   useEffect(() => {
-    void load()
-    const id = window.setInterval(() => void load(), POLL_MS)
+    if (!loadedRef.current) {
+      loadedRef.current = true
+      void loadInitial()
+    }
+    // Keep polling pending bookings (separate concern from notifications)
+    const id = window.setInterval(() => void loadPending(), PENDING_POLL_MS)
     const onVis = () => {
-      if (document.visibilityState === 'visible') void load()
+      if (document.visibilityState === 'visible') {
+        void loadPending()
+      }
     }
     document.addEventListener('visibilitychange', onVis)
     return () => {
       window.clearInterval(id)
       document.removeEventListener('visibilitychange', onVis)
     }
-  }, [load])
+  }, [loadInitial, loadPending])
+
+  // SSE stream for real-time notification updates
+  useNotificationStream({ enabled: true, onNotification: prepend })
 
   useEffect(() => {
     if (!open) return
@@ -97,11 +100,13 @@ export const AdminNotificationsDropdown = memo(() => {
   // Surface whichever signal is higher: live pending queue vs unread inbox items.
   const badgeCount = Math.max(pendingTotal, unread)
 
-  const onPick = async (n: Notification) => {
+  const loading = storeLoading || pendingLoading
+
+  const onPick = async (n: { id: string; read: boolean; booking_id?: string | null }) => {
     try {
       if (!n.read) {
+        markReadInStore(n.id)
         await notificationService.markAsRead(n.id)
-        setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)))
       }
     } catch {
       /* best-effort */
