@@ -78,8 +78,11 @@ export default function DelayAlertBanner() {
             type="button"
             className="w-full text-left flex items-start gap-3 px-4 py-3"
             onClick={() => {
-              if (latest.booking_id) navigate(`/app/bookings/${latest.booking_id}`)
-              else navigate('/app/notifications')
+              dismiss()
+              setTimeout(() => {
+                if (latest.booking_id) navigate(`/app/bookings/${latest.booking_id}`)
+                else navigate('/app/notifications')
+              }, 100)
             }}
           >
             {/* Icon */}
