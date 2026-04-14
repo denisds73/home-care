@@ -88,9 +88,10 @@ export const CustomerNotificationsDropdown = memo(() => {
                       onClick={() => void onPick(n)}
                     >
                       <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                        n.read ? 'bg-border' :
                         n.priority === 'urgent' ? 'bg-error' :
                         n.priority === 'high' ? 'bg-[#D97706]' :
-                        !n.read ? 'bg-brand' : 'bg-border'
+                        'bg-brand'
                       }`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">

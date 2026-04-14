@@ -18,6 +18,7 @@ export const AdminNotificationsDropdown = memo(() => {
   const mergeItems = useNotificationStore((s) => s.mergeItems)
   const prepend = useNotificationStore((s) => s.prepend)
   const markReadInStore = useNotificationStore((s) => s.markRead)
+  const markAllReadInStore = useNotificationStore((s) => s.markAllRead)
   const [pendingBookings, setPendingBookings] = useState<Booking[]>([])
   const [pendingTotal, setPendingTotal] = useState(0)
   const [pendingLoading, setPendingLoading] = useState(true)
@@ -102,6 +103,15 @@ export const AdminNotificationsDropdown = memo(() => {
 
   const loading = storeLoading || pendingLoading
 
+  const onMarkAllRead = async () => {
+    markAllReadInStore()
+    try {
+      await notificationService.markAllAsRead()
+    } catch {
+      /* best-effort */
+    }
+  }
+
   const onPick = async (n: { id: string; read: boolean; booking_id?: string | null }) => {
     try {
       if (!n.read) {
@@ -174,9 +184,13 @@ export const AdminNotificationsDropdown = memo(() => {
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h3 className="font-brand text-sm font-bold text-primary">Notifications</h3>
             {unread > 0 && (
-              <span className="text-[0.65rem] font-semibold text-muted bg-muted px-2 py-0.5 rounded-full">
-                {unread} unread
-              </span>
+              <button
+                type="button"
+                className="text-[0.65rem] font-semibold text-brand hover:text-brand-dark transition-colors"
+                onClick={() => void onMarkAllRead()}
+              >
+                Mark all read
+              </button>
             )}
           </div>
 
@@ -236,9 +250,10 @@ export const AdminNotificationsDropdown = memo(() => {
                           >
                             {/* Priority indicator dot */}
                             <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                              n.read ? 'bg-border' :
                               n.priority === 'urgent' ? 'bg-error' :
                               n.priority === 'high' ? 'bg-[#D97706]' :
-                              !n.read ? 'bg-brand' : 'bg-border'
+                              'bg-brand'
                             }`} />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
