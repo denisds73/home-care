@@ -15,6 +15,7 @@ import type {
   Vendor,
 } from '../../types/domain'
 import { TechnicianContactButtons } from '../../components/common/TechnicianContactButtons'
+import Dropdown from '../../components/common/Dropdown'
 import { DelayBanner, RescheduleSheet } from '../../components/delay'
 import { delayService } from '../../services/delayService'
 import { rescheduleService } from '../../services/rescheduleService'
@@ -121,6 +122,33 @@ export default function AdminBookingDetailPage() {
         ? technicians.find((t) => t.id === booking.technician_id) ?? null
         : null,
     [technicians, booking],
+  )
+
+  const activeTechnicians = useMemo(
+    () => technicians.filter((t) => t.status === 'active'),
+    [technicians],
+  )
+
+  const vendorDropdownOptions = useMemo(
+    () => [
+      { value: '', label: 'Select vendor…' },
+      ...vendors.map((v) => ({ value: v.id, label: v.company_name })),
+    ],
+    [vendors],
+  )
+
+  const techDropdownOptions = useMemo(
+    () => [
+      {
+        value: '',
+        label: assignedTechnician ? 'Change to…' : 'Select technician…',
+      },
+      ...activeTechnicians.map((t) => ({
+        value: t.id,
+        label: t.full_name,
+      })),
+    ],
+    [assignedTechnician, activeTechnicians],
   )
 
   if (isLoading) {
@@ -233,19 +261,14 @@ export default function AdminBookingDetailPage() {
 
         {canAssignVendor && (
           <div className="flex gap-2 flex-wrap mt-3">
-            <select
+            <Dropdown
+              id="admin-booking-assign-vendor"
+              options={vendorDropdownOptions}
               value={selectedVendor}
-              onChange={(e) => setSelectedVendor(e.target.value)}
-              aria-label="Select vendor"
-              className="input-base flex-1 min-w-[180px] px-3 py-2 text-sm"
-            >
-              <option value="">Select vendor…</option>
-              {vendors.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.company_name}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedVendor}
+              placeholder="Select vendor…"
+              className="flex-1 min-w-[180px]"
+            />
             <button
               type="button"
               onClick={() =>
@@ -296,29 +319,22 @@ export default function AdminBookingDetailPage() {
 
           {!dispatchLocked && (
             <div className="flex gap-2 flex-wrap mt-3">
-              {technicians.filter((t) => t.status === 'active').length === 0 ? (
+              {activeTechnicians.length === 0 ? (
                 <p className="text-xs text-muted">
                   Vendor has no active technicians.
                 </p>
               ) : (
                 <>
-                  <select
+                  <Dropdown
+                    id="admin-booking-assign-tech"
+                    options={techDropdownOptions}
                     value={selectedTech}
-                    onChange={(e) => setSelectedTech(e.target.value)}
-                    aria-label="Select technician"
-                    className="input-base flex-1 min-w-[180px] px-3 py-2 text-sm"
-                  >
-                    <option value="">
-                      {assignedTechnician ? 'Change to…' : 'Select technician…'}
-                    </option>
-                    {technicians
-                      .filter((t) => t.status === 'active')
-                      .map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.full_name}
-                        </option>
-                      ))}
-                  </select>
+                    onChange={setSelectedTech}
+                    placeholder={
+                      assignedTechnician ? 'Change to…' : 'Select technician…'
+                    }
+                    className="flex-1 min-w-[180px]"
+                  />
                   <button
                     type="button"
                     onClick={() =>

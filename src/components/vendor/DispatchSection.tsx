@@ -1,6 +1,7 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { TechnicianContactButtons } from '../common/TechnicianContactButtons'
+import Dropdown from '../common/Dropdown'
 import type { Booking, Technician } from '../../types/domain'
 
 interface DispatchSectionProps {
@@ -26,6 +27,20 @@ export const DispatchSection = memo(function DispatchSection({
   dispatchLocked,
   noSkillMatch,
 }: DispatchSectionProps) {
+  const techOptions = useMemo(
+    () => [
+      {
+        value: '',
+        label: assignedTechnician ? 'Change to…' : 'Select technician…',
+      },
+      ...eligibleTechnicians.map((t) => ({
+        value: t.id,
+        label: t.full_name,
+      })),
+    ],
+    [assignedTechnician, eligibleTechnicians],
+  )
+
   return (
     <div id="dispatch-section" className="glass-card no-hover p-5 md:p-6 slide-up" style={{ animationDelay: '100ms' }}>
       <h2 className="font-brand text-sm font-bold text-primary uppercase tracking-wide mb-1">
@@ -72,19 +87,16 @@ export const DispatchSection = memo(function DispatchSection({
                 </p>
               )}
               <div className="flex gap-2 flex-wrap">
-                <select
+                <Dropdown
+                  id={`dispatch-tech-${booking.booking_id}`}
+                  options={techOptions}
                   value={selectedTech}
-                  onChange={(e) => onSelectTech(e.target.value)}
-                  aria-label="Select technician"
-                  className="input-base flex-1 min-w-[180px] px-3 py-2 text-sm"
-                >
-                  <option value="">
-                    {assignedTechnician ? 'Change to…' : 'Select technician…'}
-                  </option>
-                  {eligibleTechnicians.map((t) => (
-                    <option key={t.id} value={t.id}>{t.full_name}</option>
-                  ))}
-                </select>
+                  onChange={onSelectTech}
+                  placeholder={
+                    assignedTechnician ? 'Change to…' : 'Select technician…'
+                  }
+                  className="flex-1 min-w-[180px]"
+                />
                 <button
                   type="button"
                   onClick={onDispatch}

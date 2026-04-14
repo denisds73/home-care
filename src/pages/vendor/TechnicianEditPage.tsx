@@ -3,7 +3,14 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { technicianService } from '../../services/technicianService'
 import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
+import Dropdown from '../../components/common/Dropdown'
 import type { CategoryId, Technician, TechnicianStatus } from '../../types/domain'
+
+const TECHNICIAN_STATUS_OPTIONS: { value: TechnicianStatus; label: string }[] = [
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'on_leave', label: 'On leave' },
+]
 
 interface FormState {
   full_name: string
@@ -152,11 +159,17 @@ export default function TechnicianEditPage() {
           </div>
           <div className="flex flex-col gap-1 max-w-xs">
             <label htmlFor="status" className="label-base">Status</label>
-            <select id="status" value={form.status} onChange={(e) => setForm((f) => f ? { ...f, status: e.target.value as TechnicianStatus } : f)} className="input-base w-full px-3 py-2 text-sm">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="on_leave">On leave</option>
-            </select>
+            <Dropdown
+              id="status"
+              options={TECHNICIAN_STATUS_OPTIONS}
+              value={form.status}
+              onChange={(v) =>
+                setForm((f) =>
+                  f ? { ...f, status: v as TechnicianStatus } : f,
+                )
+              }
+              className="w-full"
+            />
           </div>
         </div>
 

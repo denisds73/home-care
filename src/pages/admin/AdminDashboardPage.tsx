@@ -9,6 +9,7 @@ import type { Booking, Vendor } from '../../types/domain'
 import { monthlyRevenue } from '../../data/mockData'
 import { formatDate } from '../../data/helpers'
 import { StatusBadge } from '../../components/bookings/StatusBadge'
+import Dropdown from '../../components/common/Dropdown'
 import {
   buildAdminBookingsUrl,
   buildAdminVendorsUrl,
@@ -500,19 +501,24 @@ export default function AdminDashboardPage() {
                   </td>
                   <td className="px-4 py-3 hidden lg:table-cell">
                     {(b.booking_status === 'pending' || b.booking_status === 'rejected') ? (
-                      <select
-                        className="input-base py-1 px-2 text-xs max-w-[160px]"
-                        defaultValue=""
-                        aria-label={`Assign vendor for booking ${b.booking_id}`}
-                        onChange={(e) => handleAssign(b.booking_id, e.target.value)}
-                      >
-                        <option value="">Assign vendor…</option>
-                        {activeVendors.map((v) => (
-                          <option key={v.id} value={v.id}>
-                            {v.company_name}
-                          </option>
-                        ))}
-                      </select>
+                      <Dropdown
+                        key={`${b.booking_id}-assign-vendor`}
+                        id={`dashboard-assign-vendor-${b.booking_id}`}
+                        options={[
+                          { value: '', label: 'Assign vendor…' },
+                          ...activeVendors.map((v) => ({
+                            value: v.id,
+                            label: v.company_name,
+                          })),
+                        ]}
+                        value=""
+                        onChange={(v) => {
+                          if (v) void handleAssign(b.booking_id, v)
+                        }}
+                        placeholder="Assign vendor…"
+                        disabled={activeVendors.length === 0}
+                        className="max-w-[160px] [&_button]:py-1.5 [&_button]:px-2 [&_button]:text-xs"
+                      />
                     ) : (
                       <span className="text-xs text-secondary">
                         {b.vendor_id
