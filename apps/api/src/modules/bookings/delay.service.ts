@@ -136,8 +136,8 @@ export class DelayService {
             NotificationPriority.URGENT,
           );
         }
-      } catch (err) {
-        console.error('[delay] Failed to notify vendor:', err);
+      } catch {
+        // best-effort vendor notification
       }
     }
 
@@ -146,7 +146,6 @@ export class DelayService {
       const admins: { id: string }[] = await this.bookingRepo.manager.query(
         `SELECT id FROM users WHERE role = 'admin'`,
       );
-      console.log('[delay] Found %d admins to notify', admins.length);
       for (const admin of admins) {
         await this.notificationsService.create(
           admin.id,
@@ -157,8 +156,8 @@ export class DelayService {
           NotificationPriority.URGENT,
         );
       }
-    } catch (err) {
-      console.error('[delay] Failed to notify admins:', err);
+    } catch {
+      // best-effort admin notification
     }
 
     return saved;

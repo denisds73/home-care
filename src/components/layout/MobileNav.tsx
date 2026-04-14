@@ -18,7 +18,7 @@ export default function MobileNav() {
   const toggleCartDrawer = useStore(s => s.toggleCartDrawer)
   const cartCount = useStore(s => s.getCartCount())
   const isAuthenticated = useAuthStore(s => s.isAuthenticated)
-  const { unreadCount } = useCustomerNotifications()
+  const { unreadCount } = useCustomerNotifications(isAuthenticated)
   const prevCartRef = useRef(cartCount)
   const [cartPulse, setCartPulse] = useState(false)
 

@@ -26,12 +26,13 @@ function normalize(raw: Record<string, unknown>): Notification {
 
 const PRIORITY_ORDER: Record<string, number> = { urgent: 0, high: 1, normal: 2 }
 
-export function useCustomerNotifications() {
+export function useCustomerNotifications(enabled = true) {
   const [items, setItems] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const load = useCallback(async () => {
+    if (!enabled) return
     if (document.visibilityState !== 'visible') return
     try {
       const res = await notificationService.getAll()
@@ -49,9 +50,13 @@ export function useCustomerNotifications() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [enabled])
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false)
+      return
+    }
     void load()
     intervalRef.current = setInterval(() => void load(), POLL_MS)
     const onVis = () => {

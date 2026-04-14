@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Modal from '../common/Modal'
 import { DelayReasonPicker } from './DelayReasonPicker'
 import { delayService } from '../../services/delayService'
@@ -17,6 +17,13 @@ export function CannotAttendSheet({ isOpen, onClose, bookingId, onSuccess }: Can
   const [reason, setReason] = useState<DelayReason | null>(null)
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) {
+      setReason(null)
+      setNote('')
+    }
+  }, [isOpen])
 
   const canSubmit = reason !== null && note.trim().length > 0 && !submitting
 

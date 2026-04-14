@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Modal from '../common/Modal'
 import { DelayReasonPicker } from './DelayReasonPicker'
 import { RevisedEtaPicker } from './RevisedEtaPicker'
@@ -19,6 +19,14 @@ export function ReportDelaySheet({ isOpen, onClose, bookingId, onSuccess }: Repo
   const [eta, setEta] = useState('')
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) {
+      setReason(null)
+      setEta('')
+      setNote('')
+    }
+  }, [isOpen])
 
   const canSubmit = reason !== null && eta !== '' && !submitting
 

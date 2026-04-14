@@ -5,7 +5,7 @@ import { useCustomerNotifications } from '../../hooks/useCustomerNotifications'
 
 export default function DelayAlertBanner() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const { highPriorityItems } = useCustomerNotifications()
+  const { highPriorityItems } = useCustomerNotifications(isAuthenticated)
   const navigate = useNavigate()
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [exiting, setExiting] = useState(false)
