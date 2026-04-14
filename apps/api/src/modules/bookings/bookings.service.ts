@@ -171,6 +171,7 @@ export class BookingsService {
   async findByCustomer(customerId: string): Promise<BookingEntity[]> {
     return this.bookingsRepository.find({
       where: { customer_id: customerId },
+      relations: ['technician'],
       order: { created_at: 'DESC' },
     });
   }
@@ -239,6 +240,7 @@ export class BookingsService {
   ): Promise<BookingEntity> {
     const booking = await this.bookingsRepository.findOne({
       where: { booking_id: bookingId },
+      relations: ['technician'],
     });
 
     if (!booking) {

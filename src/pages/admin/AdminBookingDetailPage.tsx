@@ -14,6 +14,7 @@ import type {
   Technician,
   Vendor,
 } from '../../types/domain'
+import { TechnicianContactButtons } from '../../components/common/TechnicianContactButtons'
 import { DelayBanner, RescheduleSheet } from '../../components/delay'
 import { delayService } from '../../services/delayService'
 import { rescheduleService } from '../../services/rescheduleService'
@@ -277,9 +278,17 @@ export default function AdminBookingDetailPage() {
                 </p>
                 <p className="text-xs text-muted">{assignedTechnician.phone}</p>
               </div>
-              {dispatchLocked && (
-                <span className="badge badge-warning">Locked — in progress</span>
-              )}
+              <div className="flex items-center gap-2">
+                <TechnicianContactButtons
+                  phone={assignedTechnician.phone}
+                  technicianName={assignedTechnician.full_name}
+                  serviceName={booking.service_name}
+                  bookingId={booking.booking_id}
+                />
+                {dispatchLocked && (
+                  <span className="badge badge-warning">Locked — in progress</span>
+                )}
+              </div>
             </div>
           ) : (
             <p className="text-xs text-muted mb-3">No technician dispatched.</p>

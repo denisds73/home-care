@@ -5,6 +5,7 @@ import { StatusTimeline } from '../../components/bookings/StatusTimeline'
 import { StatusBadge } from '../../components/bookings/StatusBadge'
 import { formatDate } from '../../data/helpers'
 import useStore from '../../store/useStore'
+import { TechnicianContactButtons } from '../../components/common/TechnicianContactButtons'
 import type {
   Booking,
   BookingReview,
@@ -230,6 +231,29 @@ export default function BookingDetailPage() {
               <p className="text-muted text-xs">Address</p>
               <p className="text-secondary">{booking.address}</p>
             </div>
+            {booking.technician && (
+              <div className="md:col-span-2 mt-1">
+                <p className="text-muted text-xs mb-1.5">Technician</p>
+                <div className="flex items-center justify-between gap-3 rounded-xl bg-[var(--color-surface)] px-4 py-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-full bg-[var(--color-primary-soft)] flex items-center justify-center">
+                      <span className="text-sm font-bold text-[var(--color-primary)]">
+                        {booking.technician.full_name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-secondary font-semibold truncate">
+                      {booking.technician.full_name}
+                    </p>
+                  </div>
+                  <TechnicianContactButtons
+                    phone={booking.technician.phone}
+                    technicianName={booking.technician.full_name}
+                    serviceName={booking.service_name}
+                    bookingId={booking.booking_id}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {canCancel && (

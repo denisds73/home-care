@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import { Link } from 'react-router-dom'
+import { TechnicianContactButtons } from '../common/TechnicianContactButtons'
 import type { Booking, Technician } from '../../types/domain'
 
 interface DispatchSectionProps {
@@ -42,7 +43,15 @@ export const DispatchSection = memo(function DispatchSection({
             <p className="text-sm text-primary font-medium">{assignedTechnician.full_name}</p>
             <p className="text-xs text-muted">{assignedTechnician.phone}</p>
           </div>
-          {dispatchLocked && <span className="badge badge-warning">Locked</span>}
+          <div className="flex items-center gap-2">
+            <TechnicianContactButtons
+              phone={assignedTechnician.phone}
+              technicianName={assignedTechnician.full_name}
+              serviceName={booking.service_name}
+              bookingId={booking.booking_id}
+            />
+            {dispatchLocked && <span className="badge badge-warning">Locked</span>}
+          </div>
         </div>
       ) : (
         <p className="text-xs text-muted mb-3">No technician assigned yet.</p>

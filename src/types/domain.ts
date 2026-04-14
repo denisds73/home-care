@@ -153,6 +153,10 @@ export interface Booking {
   created_at: string
   updated_at: string
   technician_id?: string | null
+  technician_name?: string | null
+  technician_phone?: string | null
+  /** Nested technician relation — populated when backend loads with relations */
+  technician?: Pick<Technician, 'id' | 'full_name' | 'phone'> | null
   completion_otp?: string | null
   completion_otp_expires_at?: string | null
 }

@@ -15,6 +15,7 @@ import {
   CheckCircleIcon,
   BanIcon,
 } from '../../components/common/Icons'
+import { TechnicianContactButtons } from '../../components/common/TechnicianContactButtons'
 import type { Booking, BookingStatus } from '../../types/domain'
 
 type Tab = 'upcoming' | 'past' | 'cancelled'
@@ -80,7 +81,16 @@ const BookingCard = memo(function BookingCard({
         <span className="font-brand font-bold text-brand text-base">
           ₹{booking.price.toLocaleString('en-IN')}
         </span>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {booking.technician && (
+            <TechnicianContactButtons
+              phone={booking.technician.phone}
+              technicianName={booking.technician.full_name}
+              serviceName={booking.service_name}
+              bookingId={booking.booking_id}
+              compact
+            />
+          )}
           <Link
             to={`/app/bookings/${booking.booking_id}`}
             className="btn-base btn-secondary px-3 py-1.5 text-sm min-h-[44px] inline-flex items-center"
