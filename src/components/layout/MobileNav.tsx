@@ -2,6 +2,8 @@ import type { ReactElement } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import useStore from '../../store/useStore'
+import { useAuthStore } from '../../store/useAuthStore'
+import { useCustomerNotifications } from '../../hooks/useCustomerNotifications'
 
 interface TabItem {
   id: string
@@ -15,6 +17,8 @@ export default function MobileNav() {
   const location = useLocation()
   const toggleCartDrawer = useStore(s => s.toggleCartDrawer)
   const cartCount = useStore(s => s.getCartCount())
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
+  const { unreadCount } = useCustomerNotifications()
   const prevCartRef = useRef(cartCount)
   const [cartPulse, setCartPulse] = useState(false)
 
@@ -90,6 +94,20 @@ export default function MobileNav() {
     },
   ]
 
+  if (isAuthenticated) {
+    tabs[3] = {
+      id: 'notifications',
+      label: 'Alerts',
+      icon: (
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+        />
+      ),
+    }
+  }
+
   const handleClick = (tab: TabItem) => {
     if (tab.id === 'cart') {
       toggleCartDrawer()
@@ -108,6 +126,10 @@ export default function MobileNav() {
             ?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
         200,
       )
+      return
+    }
+    if (tab.id === 'notifications') {
+      navigate('/app/notifications')
       return
     }
     if (tab.id === 'offers') {
@@ -133,6 +155,8 @@ export default function MobileNav() {
     )
       return true
     if (id === 'services' && location.pathname.startsWith('/app/services'))
+      return true
+    if (id === 'notifications' && location.pathname.startsWith('/app/notifications'))
       return true
     return false
   }
@@ -182,16 +206,21 @@ export default function MobileNav() {
               </div>
             ) : (
               <>
-                <svg
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="w-6 h-6"
-                  aria-hidden
-                >
-                  {tab.icon}
-                </svg>
+                <span className="relative">
+                  <svg
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="w-6 h-6"
+                    aria-hidden
+                  >
+                    {tab.icon}
+                  </svg>
+                  {tab.id === 'notifications' && unreadCount > 0 && (
+                    <span className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full" aria-hidden />
+                  )}
+                </span>
                 {isActive(tab.id) ? (
                   <span
                     className="nav-tab-dot scale-in mt-0.5"

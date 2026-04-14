@@ -6,6 +6,7 @@ import { useLocationStore } from '../../store/useLocationStore'
 import { NavbarCategoryChips } from './NavbarCategoryChips'
 import { LocationPicker } from '../location/LocationPicker'
 import { useServiceSearch, type SearchResult } from '../../hooks/useServiceSearch'
+import { CustomerNotificationsDropdown } from '../customer/CustomerNotificationsDropdown'
 
 function getInitials(name: string): string {
   return name
@@ -370,6 +371,11 @@ export function Navbar() {
 
           {/* Right zone — Actions */}
           <div className="flex items-center gap-2 shrink-0 justify-end">
+            {isAuthenticated && (
+              <div className="hidden sm:block">
+                <CustomerNotificationsDropdown />
+              </div>
+            )}
             <button
               type="button"
               onClick={toggleCartDrawer}
