@@ -15,7 +15,9 @@ import {
   BookingEntity,
   BookingStatus,
   NotificationType,
+  NotificationPriority,
 } from '@/database/entities';
+import { UserEntity, Role } from '@/database/entities/user.entity';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
 import { BookingActor } from './bookings.service';
 
@@ -94,12 +96,14 @@ export class DelayService {
 
     const saved = await this.delayRepo.save(delay);
 
+    // Notification title shared across customer, vendor and admin
+    const title =
+      dto.delay_type === 'cannot_attend'
+        ? 'Technician Cannot Attend'
+        : 'Service Delayed';
+
     // Notify the customer
     if (booking.customer_id) {
-      const title =
-        dto.delay_type === 'cannot_attend'
-          ? 'Technician Cannot Attend'
-          : 'Service Delayed';
       const desc =
         dto.delay_type === 'cannot_attend'
           ? `Your technician cannot attend for ${booking.service_name}. Please check your booking for options.`
@@ -111,6 +115,40 @@ export class DelayService {
         title,
         desc,
         bookingId,
+        NotificationPriority.HIGH,
+      );
+    }
+
+    // Notify the vendor (booking owner)
+    if (booking.vendor_id) {
+      const vendorUser = await this.bookingRepo.manager.findOne(
+        UserEntity,
+        { where: { vendor_id: booking.vendor_id, role: Role.VENDOR } },
+      );
+      if (vendorUser) {
+        await this.notificationsService.create(
+          vendorUser.id,
+          NotificationType.BOOKING,
+          title,
+          `${dto.delay_type === 'cannot_attend' ? 'Technician cannot attend' : 'Technician running late'} for booking ${booking.service_name} (${bookingId.slice(0, 8)})`,
+          bookingId,
+          NotificationPriority.URGENT,
+        );
+      }
+    }
+
+    // Notify all admins
+    const admins = await this.bookingRepo.manager.find(UserEntity, {
+      where: { role: Role.ADMIN },
+    });
+    for (const admin of admins) {
+      await this.notificationsService.create(
+        admin.id,
+        NotificationType.BOOKING,
+        title,
+        `${dto.delay_type === 'cannot_attend' ? 'Technician cannot attend' : 'Technician running late'} for ${booking.service_name} (${bookingId.slice(0, 8)})`,
+        bookingId,
+        NotificationPriority.URGENT,
       );
     }
 

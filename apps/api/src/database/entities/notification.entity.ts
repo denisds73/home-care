@@ -15,6 +15,12 @@ export enum NotificationType {
   VENDOR = 'vendor',
 }
 
+export enum NotificationPriority {
+  NORMAL = 'normal',
+  HIGH = 'high',
+  URGENT = 'urgent',
+}
+
 @Entity('notifications')
 export class NotificationEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -42,6 +48,9 @@ export class NotificationEntity {
 
   @Column({ default: false })
   read!: boolean;
+
+  @Column({ type: 'enum', enum: NotificationPriority, default: NotificationPriority.NORMAL })
+  priority!: NotificationPriority;
 
   @CreateDateColumn({ name: 'timestamp' })
   timestamp!: Date;

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NotificationEntity, NotificationType } from '@/database/entities';
+import { NotificationEntity, NotificationType, NotificationPriority } from '@/database/entities';
 
 @Injectable()
 export class NotificationsService {
@@ -56,6 +56,7 @@ export class NotificationsService {
     title: string,
     description: string,
     bookingId?: string | null,
+    priority?: NotificationPriority,
   ): Promise<NotificationEntity> {
     const notification = this.notificationsRepository.create({
       user_id: userId,
@@ -63,6 +64,7 @@ export class NotificationsService {
       title,
       description,
       booking_id: bookingId ?? null,
+      priority: priority ?? NotificationPriority.NORMAL,
     });
     return this.notificationsRepository.save(notification);
   }
