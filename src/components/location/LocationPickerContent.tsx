@@ -16,6 +16,7 @@ export const LocationPickerContent = memo(({ onClose }: LocationPickerContentPro
   const [manualAddress, setManualAddress] = useState('')
   const [searchResults, setSearchResults] = useState<LocationData[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
 
   const handleDetect = async () => {
     await detectCurrentLocation()
@@ -41,8 +42,13 @@ export const LocationPickerContent = memo(({ onClose }: LocationPickerContentPro
       setSearchResults([])
       return
     }
-    const results = await locationService.searchPlaces(query)
-    setSearchResults(results)
+    setIsSearching(true)
+    try {
+      const results = await locationService.searchPlaces(query)
+      setSearchResults(results)
+    } finally {
+      setIsSearching(false)
+    }
   }
 
   const handleSelectResult = (result: LocationData) => {
@@ -104,34 +110,60 @@ export const LocationPickerContent = memo(({ onClose }: LocationPickerContentPro
         </div>
       )}
 
-      {/* Google Places search — only when API key is available */}
-      {locationService.hasPlacesApi && (
+      {/* Search */}
+      <div className="relative">
         <div className="relative">
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" strokeLinecap="round" />
+          </svg>
           <input
             type="text"
             value={searchQuery}
             onChange={e => handleSearch(e.target.value)}
-            className="input-base w-full px-4 py-2.5 text-sm"
+            className="input-base w-full pl-9 pr-4 py-2.5 text-sm"
             placeholder="Search for area, street name..."
+            autoComplete="off"
           />
-          {searchResults.length > 0 && (
-            <ul className="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl border border-default shadow-lg z-10 max-h-48 overflow-y-auto">
-              {searchResults.map((r, i) => (
-                <li key={r.placeId ?? i}>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectResult(r)}
-                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition min-h-[44px]"
-                  >
-                    <p className="font-medium text-primary">{r.label}</p>
-                    <p className="text-xs text-muted truncate">{r.fullAddress}</p>
-                  </button>
-                </li>
-              ))}
-            </ul>
+          {isSearching && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
           )}
         </div>
-      )}
+        {searchResults.length > 0 && (
+          <ul className="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl border border-default shadow-lg z-10 max-h-48 overflow-y-auto">
+            {searchResults.map((r, i) => (
+              <li key={r.placeId ?? `osm-${i}`}>
+                <button
+                  type="button"
+                  onClick={() => handleSelectResult(r)}
+                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-surface transition min-h-[44px] flex items-start gap-2.5"
+                >
+                  <svg
+                    className="w-4 h-4 shrink-0 text-brand mt-0.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <div className="min-w-0">
+                    <p className="font-medium text-primary">{r.label}</p>
+                    <p className="text-xs text-muted truncate">{r.fullAddress}</p>
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       {/* Divider */}
       <div className="flex items-center gap-3">

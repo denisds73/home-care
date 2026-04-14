@@ -109,10 +109,6 @@ export default function TechnicianJobDetailPage() {
   const canComplete = s === 'in_progress'
   const isDone = s === 'completed'
 
-  const mapsHref = `https://maps.google.com/?q=${encodeURIComponent(
-    booking.address,
-  )}`
-
   return (
     <div className="fade-in space-y-4">
       <div>
@@ -157,7 +153,7 @@ export default function TechnicianJobDetailPage() {
             <p className="text-muted text-xs">Address</p>
             <p className="text-secondary">{booking.address}</p>
             <a
-              href={mapsHref}
+              href={`https://maps.google.com/?q=${encodeURIComponent(booking.address)}`}
               target="_blank"
               rel="noreferrer"
               className="text-xs text-brand font-semibold inline-block mt-1"

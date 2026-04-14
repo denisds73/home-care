@@ -153,6 +153,12 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
 .map-pin { position: absolute; transform: translate(-50%, -100%); transition: all .2s; z-index: 2; }
 .map-road { position: absolute; background: rgba(255,255,255,.6); z-index: 1; }
 
+/* Google Maps — brand pin pulse */
+@keyframes mapPulse {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.8); opacity: 0; }
+}
+
 /* OTP timer */
 .otp-timer { font-family: 'Courier New', monospace; font-size: 1.1rem; font-weight: 700; }
 
