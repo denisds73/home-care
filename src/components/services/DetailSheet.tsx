@@ -46,7 +46,7 @@ export default function DetailSheet() {
 
       {/* Sheet — bottom sheet on mobile, centered modal on desktop */}
       <div
-        className="fixed z-[56] bg-white overflow-y-auto transition-transform
+        className="fixed z-[56] bg-white flex flex-col transition-transform
           bottom-0 left-0 right-0 max-h-[88vh] rounded-t-2xl
           md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2
           md:w-[640px] md:max-w-[90vw] md:max-h-[85vh] md:rounded-2xl"
@@ -76,7 +76,7 @@ export default function DetailSheet() {
           </svg>
         </button>
 
-        <div className="px-5 md:px-8 pb-20 md:pb-24 pt-2 md:pt-6">
+        <div className="px-5 md:px-8 pb-6 md:pb-8 pt-2 md:pt-6 overflow-y-auto flex-1 min-h-0">
           {/* Header: image + title + price */}
           <div
             className="flex items-center gap-4 mb-5 rounded-2xl p-4"
@@ -214,29 +214,29 @@ export default function DetailSheet() {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Fixed add-to-cart footer */}
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-white px-5 md:px-8 pt-3 pb-4 md:pb-5"
-            style={{ boxShadow: '0 -1px 0 rgba(0,0,0,0.06), 0 -6px 16px rgba(0,0,0,0.05)' }}
-          >
-            {qty === 0 ? (
-              <button type="button" onClick={handleAdd} className="btn-base btn-primary w-full py-3.5 font-bold text-sm">
-                Add to Cart — ₹{svc.price}
-              </button>
-            ) : (
-              <div className="flex items-center justify-between">
-                <div className="inline-flex items-center border-2 border-brand rounded-xl overflow-hidden">
-                  <button type="button" onClick={() => removeFromCart(svc.id)} className="w-10 h-10 bg-brand text-white flex items-center justify-center font-bold text-lg">−</button>
-                  <span className="w-10 text-center font-bold text-sm text-brand-dark">{qty}</span>
-                  <button type="button" onClick={handleAdd} className="w-10 h-10 bg-brand text-white flex items-center justify-center font-bold text-lg">+</button>
-                </div>
-                <button type="button" onClick={() => { closeDetailSheet(); toggleCartDrawer() }} className="btn-base btn-primary px-6 py-3 font-bold text-sm">
-                  View Cart
-                </button>
+        {/* Add-to-cart footer — pinned below scroll area */}
+        <div
+          className="flex-none bg-white px-5 md:px-8 pt-3 pb-4 md:pb-5 rounded-b-2xl"
+          style={{ boxShadow: '0 -1px 0 rgba(0,0,0,0.06), 0 -6px 16px rgba(0,0,0,0.05)' }}
+        >
+          {qty === 0 ? (
+            <button type="button" onClick={handleAdd} className="btn-base btn-primary w-full py-3.5 font-bold text-sm">
+              Add to Cart — ₹{svc.price}
+            </button>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div className="inline-flex items-center border-2 border-brand rounded-xl overflow-hidden">
+                <button type="button" onClick={() => removeFromCart(svc.id)} className="w-10 h-10 bg-brand text-white flex items-center justify-center font-bold text-lg">-</button>
+                <span className="w-10 text-center font-bold text-sm text-brand-dark">{qty}</span>
+                <button type="button" onClick={handleAdd} className="w-10 h-10 bg-brand text-white flex items-center justify-center font-bold text-lg">+</button>
               </div>
-            )}
-          </div>
+              <button type="button" onClick={() => { closeDetailSheet(); toggleCartDrawer() }} className="btn-base btn-primary px-6 py-3 font-bold text-sm">
+                View Cart
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>
