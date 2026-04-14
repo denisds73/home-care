@@ -6,6 +6,7 @@ import { CartBar } from '../components/cart/CartBar'
 import DetailSheet from '../components/services/DetailSheet'
 import AccountSheet from '../components/layout/AccountSheet'
 import Toast from '../components/common/Toast'
+import DelayAlertBanner from '../components/home/DelayAlertBanner'
 import ScrollToTop from '../components/common/ScrollToTop'
 
 /**
@@ -32,6 +33,7 @@ export default function CustomerLayout() {
       <DetailSheet />
       <AccountSheet />
       <Toast />
+      <DelayAlertBanner />
     </div>
   )
 }
