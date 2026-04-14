@@ -158,7 +158,7 @@ function DetailsStep({
                 onClick={() => { setBooking(b => ({ ...b, timeSlot: s })); setErrors(er => ({ ...er, timeSlot: undefined })) }}
                 className={`flex-1 py-2.5 rounded-xl text-[0.8rem] font-semibold border-[1.5px] transition-all min-h-[44px] ${
                   booking.timeSlot === s
-                    ? 'border-brand bg-brand text-white shadow-sm'
+                    ? 'border-brand bg-brand-soft text-brand-dark ring-brand'
                     : 'border-border bg-card text-text-secondary hover:border-text-muted hover:bg-surface'
                 }`}
               >
