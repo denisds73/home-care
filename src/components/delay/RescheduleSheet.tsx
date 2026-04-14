@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Modal from '../common/Modal'
+import { DatePicker } from '../common/DatePicker'
 import { DelayReasonPicker } from './DelayReasonPicker'
 import { RescheduleCounter } from './RescheduleCounter'
 import { rescheduleService } from '../../services/rescheduleService'
@@ -31,22 +32,6 @@ function getTomorrowDate(): string {
   const d = new Date()
   d.setDate(d.getDate() + 1)
   return d.toISOString().slice(0, 10)
-}
-
-function formatDateDisplay(dateStr: string): string {
-  if (!dateStr) return ''
-  const d = new Date(dateStr + 'T00:00:00')
-  const today = new Date()
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-
-  if (d.toDateString() === tomorrow.toDateString()) return 'Tomorrow'
-
-  const dayDiff = Math.ceil((d.getTime() - today.getTime()) / 86400000)
-  if (dayDiff <= 7) {
-    return d.toLocaleDateString('en-IN', { weekday: 'long' })
-  }
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 // ─── Customer-facing reschedule (simple, friendly) ─────────────────
@@ -121,20 +106,13 @@ function CustomerRescheduleView({
       ) : (
         <div className="p-6 pt-5 space-y-5">
           {/* Date picker */}
-          <div>
-            <p className="text-sm font-semibold text-primary mb-2">When works for you?</p>
-            <input
-              type="date"
-              value={date}
-              min={getTomorrowDate()}
-              onChange={(e) => setDate(e.target.value)}
-              className="input-base w-full px-3 py-2.5 text-sm font-medium min-h-[44px]"
-              aria-label="New date"
-            />
-            {date && (
-              <p className="text-xs text-brand font-semibold mt-1.5">{formatDateDisplay(date)}</p>
-            )}
-          </div>
+          <DatePicker
+            label="When works for you?"
+            value={date || null}
+            onChange={setDate}
+            minDate={getTomorrowDate()}
+            placeholder="Pick a date"
+          />
 
           {/* Time slot picker — card-style for customer */}
           <div>
@@ -257,19 +235,13 @@ function OperationalRescheduleView({
         </div>
       ) : (
         <>
-          <div>
-            <p className="text-[0.7rem] font-bold uppercase tracking-wide text-muted mb-2">
-              New Date <span className="text-error">*</span>
-            </p>
-            <input
-              type="date"
-              value={date}
-              min={getTomorrowDate()}
-              onChange={(e) => setDate(e.target.value)}
-              className="input-base w-full px-3 py-2.5 text-sm font-medium min-h-[44px]"
-              aria-label="New date"
-            />
-          </div>
+          <DatePicker
+            label="New Date"
+            value={date || null}
+            onChange={setDate}
+            minDate={getTomorrowDate()}
+            placeholder="Select a date"
+          />
 
           <div>
             <p className="text-[0.7rem] font-bold uppercase tracking-wide text-muted mb-2">
