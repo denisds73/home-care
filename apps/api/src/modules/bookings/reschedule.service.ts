@@ -45,6 +45,12 @@ export class RescheduleService {
       reason_note?: string;
     },
   ): Promise<RescheduleRequestEntity> {
+    // Validate proposed date is not in the past
+    const today = new Date().toISOString().slice(0, 10);
+    if (dto.proposed_date <= today) {
+      throw new BadRequestException('Proposed date must be in the future');
+    }
+
     const booking = await this.bookingRepo.findOne({
       where: { booking_id: bookingId },
     });
@@ -90,7 +96,7 @@ export class RescheduleService {
       reason: dto.reason ?? 'other',
       reason_note: dto.reason_note ?? null,
       original_date: booking.preferred_date,
-      original_time_slot: booking.time_slot,
+      original_time_slot: booking.time_slot ?? '9AM-12PM',
       proposed_date: dto.proposed_date,
       proposed_time_slot: dto.proposed_time_slot,
       status: RescheduleStatus.PROPOSED,
@@ -101,22 +107,34 @@ export class RescheduleService {
     const saved = await this.rescheduleRepo.save(request);
 
     // Notify the appropriate party
-    if (actor.role === 'customer' && booking.vendor_id) {
-      await this.notificationsService.create(
-        booking.vendor_id,
-        NotificationType.BOOKING,
-        'Reschedule Requested',
-        `Customer requests to reschedule ${booking.service_name} to ${dto.proposed_date} ${dto.proposed_time_slot}`,
-        bookingId,
-      );
-    } else if (booking.customer_id) {
-      await this.notificationsService.create(
-        booking.customer_id,
-        NotificationType.BOOKING,
-        'Reschedule Proposed',
-        `A reschedule has been proposed for ${booking.service_name} to ${dto.proposed_date} ${dto.proposed_time_slot}`,
-        bookingId,
-      );
+    try {
+      if (actor.role === 'customer' && booking.vendor_id) {
+        // Notify all vendor org users
+        const vendorUsers: { id: string }[] =
+          await this.bookingRepo.manager.query(
+            `SELECT id FROM users WHERE vendor_id = $1 AND role = 'vendor'`,
+            [booking.vendor_id],
+          );
+        for (const vu of vendorUsers) {
+          await this.notificationsService.create(
+            vu.id,
+            NotificationType.BOOKING,
+            'Reschedule Requested',
+            `Customer requests to reschedule ${booking.service_name} to ${dto.proposed_date} ${dto.proposed_time_slot}`,
+            bookingId,
+          );
+        }
+      } else if (booking.customer_id) {
+        await this.notificationsService.create(
+          booking.customer_id,
+          NotificationType.BOOKING,
+          'Reschedule Proposed',
+          `A reschedule has been proposed for ${booking.service_name} to ${dto.proposed_date} ${dto.proposed_time_slot}`,
+          bookingId,
+        );
+      }
+    } catch {
+      // Don't fail the reschedule if notification fails
     }
 
     return saved;
