@@ -119,24 +119,22 @@ export class DelayService {
       );
     }
 
-    // Notify the vendor (booking owner)
+    // Notify all users in the vendor org
     if (booking.vendor_id) {
       try {
         const vendorUsers: { id: string }[] = await this.bookingRepo.manager.query(
-          `SELECT id FROM users WHERE vendor_id = $1 AND role = 'vendor' LIMIT 1`,
+          `SELECT id FROM users WHERE vendor_id = $1 AND role = 'vendor'`,
           [booking.vendor_id],
         );
-        console.log('[delay] Vendor lookup for vendor_id=%s found %d users', booking.vendor_id, vendorUsers.length);
-        if (vendorUsers.length > 0) {
+        for (const vu of vendorUsers) {
           await this.notificationsService.create(
-            vendorUsers[0].id,
+            vu.id,
             NotificationType.BOOKING,
             title,
             `${dto.delay_type === 'cannot_attend' ? 'Technician cannot attend' : 'Technician running late'} for booking ${booking.service_name} (${bookingId.slice(0, 8)})`,
             bookingId,
             NotificationPriority.URGENT,
           );
-          console.log('[delay] Vendor notification created for user %s', vendorUsers[0].id);
         }
       } catch (err) {
         console.error('[delay] Failed to notify vendor:', err);
