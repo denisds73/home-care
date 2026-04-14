@@ -114,6 +114,21 @@ export class BookingsService {
     dto: CreateBookingDto,
   ): Promise<BookingEntity> {
     const saved = await this.dataSource.transaction(async (manager) => {
+      const duplicate = await manager.findOne(BookingEntity, {
+        where: {
+          customer_id: customerId,
+          category: dto.category,
+          preferred_date: dto.preferred_date,
+          time_slot: dto.time_slot,
+          booking_status: BookingStatus.PENDING,
+        },
+      });
+      if (duplicate) {
+        throw new ConflictException(
+          'A pending booking already exists for this category, date, and time slot',
+        );
+      }
+
       const booking = manager.create(BookingEntity, {
         ...dto,
         customer_id: customerId,

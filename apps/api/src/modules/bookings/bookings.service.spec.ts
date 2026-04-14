@@ -182,8 +182,14 @@ function makeCreateFakeStore() {
   };
 }
 
-function makeCreateFakeManager(store: ReturnType<typeof makeCreateFakeStore>) {
+function makeCreateFakeManager(
+  store: ReturnType<typeof makeCreateFakeStore>,
+  existingDuplicate: BookingEntity | null = null,
+) {
   return {
+    async findOne(_entity: unknown, _opts: unknown): Promise<unknown> {
+      return existingDuplicate;
+    },
     create(entity: unknown, data: unknown) {
       if (entity === BookingStatusEventEntity) {
         return { ...(data as object) } as BookingStatusEventEntity;
@@ -206,7 +212,9 @@ function makeCreateFakeManager(store: ReturnType<typeof makeCreateFakeStore>) {
   };
 }
 
-function makeServiceForCreate(): {
+function makeServiceForCreate(opts: {
+  existingDuplicate?: BookingEntity | null;
+} = {}): {
   service: BookingsService;
   store: ReturnType<typeof makeCreateFakeStore>;
   notificationsService: { create: jest.Mock };
@@ -218,7 +226,7 @@ function makeServiceForCreate(): {
   } as never;
   const fakeDataSource = {
     transaction: async <T>(cb: (m: unknown) => Promise<T>): Promise<T> =>
-      cb(makeCreateFakeManager(store)),
+      cb(makeCreateFakeManager(store, opts.existingDuplicate ?? null)),
   } as never;
   const notificationsService = {
     create: jest.fn(async () => undefined),
@@ -325,6 +333,30 @@ describe('BookingsService.create', () => {
       'db',
     );
     expect(notificationsService.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects duplicate pending booking for same customer/category/date/slot', async () => {
+    const existing = makeBooking({
+      customer_id: 'cust-1',
+      category: 'ac',
+      preferred_date: '2026-05-01',
+      time_slot: '9AM-12PM',
+      booking_status: BookingStatus.PENDING,
+    });
+    const { service, notificationsService } = makeServiceForCreate({
+      existingDuplicate: existing,
+    });
+    await expect(service.create('cust-1', minimalCreateDto)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+    expect(notificationsService.create).not.toHaveBeenCalled();
+  });
+
+  it('allows booking when no pending duplicate exists', async () => {
+    const { service } = makeServiceForCreate({ existingDuplicate: null });
+    const result = await service.create('cust-1', minimalCreateDto);
+    expect(result.booking_id).toBe(TEST_NEW_BOOKING_ID);
+    expect(result.booking_status).toBe(BookingStatus.PENDING);
   });
 });
 

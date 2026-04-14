@@ -55,10 +55,18 @@ function DetailsStep({
   onNext,
   booking,
   setBooking,
+  duplicateConflict,
+  checkingDuplicate,
+  onClearDuplicate,
+  onViewBookings,
 }: {
   onNext: () => void
   booking: BookingDraft
   setBooking: Dispatch<SetStateAction<BookingDraft>>
+  duplicateConflict: boolean
+  checkingDuplicate: boolean
+  onClearDuplicate: () => void
+  onViewBookings: () => void
 }) {
   const cart = useStore(s => s.cart)
   const getCartTotal = useStore(s => s.getCartTotal)
@@ -141,7 +149,7 @@ function DetailsStep({
           id="booking-date"
           label="Preferred Date"
           value={booking.date ?? null}
-          onChange={(date) => { setBooking(b => ({ ...b, date })); setErrors(er => ({ ...er, date: undefined })) }}
+          onChange={(date) => { setBooking(b => ({ ...b, date })); setErrors(er => ({ ...er, date: undefined })); onClearDuplicate() }}
           minDate={minDate}
           placeholder="Select a date"
           error={errors.date}
@@ -155,7 +163,7 @@ function DetailsStep({
               <button
                 key={s}
                 type="button"
-                onClick={() => { setBooking(b => ({ ...b, timeSlot: s })); setErrors(er => ({ ...er, timeSlot: undefined })) }}
+                onClick={() => { setBooking(b => ({ ...b, timeSlot: s })); setErrors(er => ({ ...er, timeSlot: undefined })); onClearDuplicate() }}
                 className={`flex-1 py-2.5 rounded-xl text-[0.8rem] font-semibold border-[1.5px] transition-all min-h-[44px] ${
                   booking.timeSlot === s
                     ? 'border-brand bg-brand-soft text-brand-dark ring-brand'
@@ -171,7 +179,35 @@ function DetailsStep({
           )}
         </div>
       </div>
-      <button type="button" onClick={handleSubmit} className="btn-base btn-primary w-full py-3 font-semibold mt-6 text-sm">Continue to Payment</button>
+
+      {duplicateConflict ? (
+        <div className="mt-6">
+          <DuplicateBookingNotice
+            booking={booking}
+            onChangeSlot={() => {
+              setBooking(b => ({ ...b, date: '', timeSlot: '' }))
+              onClearDuplicate()
+            }}
+            onViewBookings={onViewBookings}
+          />
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={checkingDuplicate}
+          className="btn-base btn-primary w-full py-3 font-semibold mt-6 text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {checkingDuplicate ? (
+            <>
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Checking availability...
+            </>
+          ) : (
+            'Continue to Payment'
+          )}
+        </button>
+      )}
     </div>
   )
 }
@@ -210,16 +246,101 @@ function PaymentAuthGate({ booking }: { booking: BookingDraft }) {
 }
 
 
+function DuplicateBookingNotice({
+  booking,
+  onChangeSlot,
+  onViewBookings,
+}: {
+  booking: BookingDraft
+  onChangeSlot: () => void
+  onViewBookings: () => void
+}) {
+  return (
+    <div className="slide-up">
+      <div className="relative overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50">
+        {/* Decorative background shapes */}
+        <div className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-amber-100/60" />
+        <div className="absolute -left-4 -bottom-4 h-20 w-20 rounded-full bg-orange-100/40" />
+
+        <div className="relative p-5 sm:p-6">
+          {/* Icon + heading */}
+          <div className="flex items-start gap-3 mb-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+              <svg className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <h4 className="text-base font-bold text-primary leading-tight">
+                You already have this booking
+              </h4>
+              <p className="text-sm text-secondary mt-1 leading-relaxed">
+                A pending booking for the same service on{' '}
+                <span className="font-semibold text-primary">{formatDate(booking.date)}</span>{' '}
+                at <span className="font-semibold text-primary">{booking.timeSlot}</span>{' '}
+                is already in your queue.
+              </p>
+            </div>
+          </div>
+
+          {/* Slot detail chip */}
+          <div className="flex items-center gap-2 rounded-xl bg-white/80 border border-amber-200/60 px-4 py-3 mb-5">
+            <svg className="h-4 w-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm text-secondary">
+              {formatDate(booking.date)} &middot; {booking.timeSlot}
+            </span>
+            <span className="ml-auto badge badge-pending text-xs font-semibold px-2 py-0.5 rounded-full">
+              Pending
+            </span>
+          </div>
+
+          {/* Actions */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={onChangeSlot}
+              className="btn-base btn-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Change Date &amp; Time
+            </button>
+            <button
+              type="button"
+              onClick={onViewBookings}
+              className="btn-base btn-secondary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              View My Bookings
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PaymentStep({
   booking,
   onPayNow,
   onPayAfter,
   submitting,
+  duplicateConflict,
+  onChangeSlot,
+  onViewBookings,
 }: {
   booking: BookingDraft
   onPayNow: (amount: number) => void
   onPayAfter: () => void
   submitting: boolean
+  duplicateConflict: boolean
+  onChangeSlot: () => void
+  onViewBookings: () => void
 }) {
   const cart = useStore(s => s.cart)
   const pricing = calculatePricing(cart)
@@ -262,7 +383,13 @@ function PaymentStep({
         <div className="flex justify-between py-2 text-base font-extrabold border-t-2 border-gray-200 mt-1"><span className="text-primary">Total Amount</span><span className="text-brand-dark">₹{pricing.grandTotal}</span></div>
       </div>
 
-      {!isCustomerAuthenticated ? (
+      {duplicateConflict ? (
+        <DuplicateBookingNotice
+          booking={booking}
+          onChangeSlot={onChangeSlot}
+          onViewBookings={onViewBookings}
+        />
+      ) : !isCustomerAuthenticated ? (
         <PaymentAuthGate booking={booking} />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -341,6 +468,8 @@ export default function BookingFlow() {
   const [confirmedId, setConfirmedId] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [bookingError, setBookingError] = useState<string | null>(null)
+  const [duplicateConflict, setDuplicateConflict] = useState(false)
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false)
   const showToast = useStore(s => s.showToast)
 
   // Redirect to home if cart is empty (unless on confirmation step)
@@ -365,7 +494,57 @@ export default function BookingFlow() {
 
   const goBack = () => {
     if (step <= 1) navigate('/app')
-    else setStep(s => Math.max(1, s - 1))
+    else {
+      setDuplicateConflict(false)
+      setBookingError(null)
+      setStep(s => Math.max(1, s - 1))
+    }
+  }
+
+  const handleChangeSlot = () => {
+    setDuplicateConflict(false)
+    setBookingError(null)
+    setStep(1)
+  }
+
+  const handleViewBookings = () => {
+    navigate('/app/bookings')
+  }
+
+  const handleDetailsNext = async () => {
+    const isAuthenticated = useAuthStore.getState().isAuthenticated
+    const currentRole = useAuthStore.getState().role
+    if (!isAuthenticated || currentRole !== 'customer') {
+      setStep(2)
+      return
+    }
+
+    const categories = [...new Set(cart.map(c => c.service.category))]
+    const category = categories.length === 1 ? categories[0] : categories.join(',')
+
+    setCheckingDuplicate(true)
+    setDuplicateConflict(false)
+    try {
+      const bookings = await bookingService.listForCustomer()
+      const hasDuplicate = bookings.some(
+        b =>
+          b.booking_status === 'pending' &&
+          b.category === category &&
+          b.preferred_date === booking.date &&
+          b.time_slot === booking.timeSlot,
+      )
+      if (hasDuplicate) {
+        setDuplicateConflict(true)
+      } else {
+        setStep(2)
+      }
+    } catch {
+      // If the check fails (network error, etc.), let the user proceed —
+      // the backend 409 guard will still catch true duplicates on submit.
+      setStep(2)
+    } finally {
+      setCheckingDuplicate(false)
+    }
   }
 
   const buildPayload = (paymentMode: PaymentMode) => {
@@ -421,8 +600,14 @@ export default function BookingFlow() {
       return id
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Something went wrong'
-      setBookingError(message)
-      showToast(`Booking failed: ${message}. Please try again.`, 'danger')
+      const is409 = (error as { status?: number }).status === 409
+      if (is409) {
+        setDuplicateConflict(true)
+        setBookingError(null)
+      } else {
+        setBookingError(message)
+        showToast(`Booking failed: ${message}. Please try again.`, 'danger')
+      }
       setSubmitting(false)
       return null
     }
@@ -483,10 +668,10 @@ export default function BookingFlow() {
 
         <StepIndicator current={step} />
 
-        {step === 1 && <DetailsStep onNext={() => setStep(2)} booking={booking} setBooking={setBooking} />}
+        {step === 1 && <DetailsStep onNext={handleDetailsNext} booking={booking} setBooking={setBooking} duplicateConflict={duplicateConflict} checkingDuplicate={checkingDuplicate} onClearDuplicate={() => setDuplicateConflict(false)} onViewBookings={handleViewBookings} />}
         {step === 2 && (
           <>
-            <PaymentStep booking={booking} onPayNow={handlePayNow} onPayAfter={handlePayAfter} submitting={submitting} />
+            <PaymentStep booking={booking} onPayNow={handlePayNow} onPayAfter={handlePayAfter} submitting={submitting} duplicateConflict={duplicateConflict} onChangeSlot={handleChangeSlot} onViewBookings={handleViewBookings} />
             {bookingError && (
               <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-center slide-up">
                 <p className="text-sm text-error font-medium">{bookingError}</p>
