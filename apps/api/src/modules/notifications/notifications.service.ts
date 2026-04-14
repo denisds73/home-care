@@ -6,12 +6,14 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NotificationEntity, NotificationType, NotificationPriority } from '@/database/entities';
+import { NotificationSseService } from './notification-sse.service';
 
 @Injectable()
 export class NotificationsService {
   constructor(
     @InjectRepository(NotificationEntity)
     private readonly notificationsRepository: Repository<NotificationEntity>,
+    private readonly sseService: NotificationSseService,
   ) {}
 
   async findByUser(userId: string): Promise<NotificationEntity[]> {
@@ -66,6 +68,11 @@ export class NotificationsService {
       booking_id: bookingId ?? null,
       priority: priority ?? NotificationPriority.NORMAL,
     });
-    return this.notificationsRepository.save(notification);
+    const saved = await this.notificationsRepository.save(notification);
+
+    // Push to the user's SSE stream (best-effort, never blocks)
+    this.sseService.pushToUser(userId, saved);
+
+    return saved;
   }
 }

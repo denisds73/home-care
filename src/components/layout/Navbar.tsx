@@ -216,7 +216,7 @@ export function Navbar() {
   const authLoading = useAuthStore(s => s.isLoading)
   const toggleCartDrawer = useStore(s => s.toggleCartDrawer)
   const showToast = useStore(s => s.showToast)
-  const cartCount = useStore(s => s.getCartCount())
+  const cartCount = useStore(s => s.cart.reduce((sum, c) => sum + c.qty, 0))
   const location = useLocationStore(s => s.location)
   const locationStatus = useLocationStore(s => s.status)
   const detectCurrentLocation = useLocationStore(s => s.detectCurrentLocation)

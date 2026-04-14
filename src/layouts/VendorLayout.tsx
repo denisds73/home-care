@@ -76,7 +76,10 @@ export default function VendorLayout() {
         <DashboardTopBar
           title={title}
           onMenuClick={() => setMobileOpen(true)}
-          adminNotificationsEnabled
+          vendorNotifications={{
+            notificationsPath: '/vendor/notifications',
+            bookingDetailPath: (id) => `/vendor/requests/${id}`,
+          }}
         />
         <main className="p-4 md:p-6">
           <Outlet />

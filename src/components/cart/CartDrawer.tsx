@@ -15,7 +15,7 @@ export function CartDrawer() {
   const removeItemFromCart = useStore(s => s.removeItemFromCart)
   const clearCart = useStore(s => s.clearCart)
   const showToast = useStore(s => s.showToast)
-  const count = useStore(s => s.getCartCount())
+  const count = useStore(s => s.cart.reduce((sum, c) => sum + c.qty, 0))
   const navigate = useNavigate()
   const closeRef = useRef<HTMLButtonElement>(null)
 

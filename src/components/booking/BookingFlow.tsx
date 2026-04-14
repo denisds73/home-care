@@ -443,6 +443,7 @@ export default function BookingFlow() {
   const navigate = useNavigate()
   const addBooking = useStore(s => s.addBooking)
   const cart = useStore(s => s.cart)
+  const clearCart = useStore(s => s.clearCart)
   const [step, setStep] = useState(1)
   const user = useAuthStore(s => s.user)
   const role = useAuthStore(s => s.role)
@@ -622,6 +623,7 @@ export default function BookingFlow() {
     setShowRazorpay(false)
     const id = await createBooking('PAY_NOW')
     if (id) {
+      clearCart()
       setStep(3)
       showToast(`Booking ${id} created!`, 'success')
     }
@@ -630,6 +632,7 @@ export default function BookingFlow() {
   const handlePayAfter = async () => {
     const id = await createBooking('PAY_AFTER_SERVICE')
     if (id) {
+      clearCart()
       setStep(3)
       showToast(`Booking ${id} created!`, 'success')
     }
