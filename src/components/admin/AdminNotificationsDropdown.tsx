@@ -24,7 +24,8 @@ function normalizeNotification(raw: Record<string, unknown>): Notification {
         : (raw.timestamp as Date)?.toISOString?.() ?? new Date().toISOString(),
     read: Boolean(raw.read),
     booking_id: bookingId,
-  }
+    priority: (raw.priority as string) ?? 'normal',
+  } as Notification
 }
 
 export const AdminNotificationsDropdown = memo(() => {
@@ -43,12 +44,16 @@ export const AdminNotificationsDropdown = memo(() => {
         notificationService.getAll(),
         bookingService.listForAdmin({ status: 'pending', limit: 15, page: 1 }),
       ])
-      const list = Array.isArray(notifRes.data)
+      const normalized = Array.isArray(notifRes.data)
         ? notifRes.data.map((n) =>
             normalizeNotification(n as unknown as Record<string, unknown>),
           )
         : []
-      setItems(list)
+      normalized.sort((a, b) => {
+        const order: Record<string, number> = { urgent: 0, high: 1, normal: 2 }
+        return (order[a.priority ?? 'normal'] ?? 2) - (order[b.priority ?? 'normal'] ?? 2)
+      })
+      setItems(normalized)
       setPendingBookings(bookingPage.items ?? [])
       setPendingTotal(
         typeof bookingPage.total === 'number'
@@ -198,12 +203,19 @@ export const AdminNotificationsDropdown = memo(() => {
                       <li key={n.id}>
                         <button
                           type="button"
-                          className={`w-full text-left px-3 py-2.5 text-sm hover:bg-surface transition ${
-                            !n.read ? 'border-l-[3px] border-l-brand' : ''
+                          className={`w-full text-left px-3 py-2.5 text-sm hover:bg-surface transition border-l-[3px] ${
+                            n.priority === 'urgent' ? 'border-l-error' : n.priority === 'high' ? 'border-l-[#D97706]' : !n.read ? 'border-l-brand' : 'border-l-transparent'
                           }`}
                           onClick={() => void onPick(n)}
                         >
-                          <span className="font-medium text-primary block truncate">{n.title}</span>
+                          <p className="text-xs font-semibold text-primary leading-snug">
+                            {n.priority === 'urgent' && (
+                              <span className="inline-block text-[0.6rem] font-bold uppercase tracking-wider text-error bg-error-soft px-1.5 py-0.5 rounded mr-1.5">
+                                Urgent
+                              </span>
+                            )}
+                            {n.title}
+                          </p>
                           <span className="text-xs text-muted line-clamp-2 mt-0.5">{n.description}</span>
                         </button>
                       </li>
