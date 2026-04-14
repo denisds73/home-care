@@ -129,6 +129,12 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
 .badge-failed { background: #fee2e2; color: #DC2626; }
 .badge-pay-pending { background: #FEF3C7; color: #B45309; }
 
+/* Delay communication badges */
+.badge-delayed { background: #FEF3C7; color: #92400E; }
+.badge-cannot-attend { background: #FEE2E2; color: #991B1B; }
+.badge-rescheduling { background: #EDE9FE; color: #4C1D95; }
+.badge-rescheduled { background: #DBEAFE; color: #1E40AF; }
+
 /* Stat borders */
 .stat-border-primary { border-left: 4px solid var(--color-primary); }
 .stat-border-success { border-left: 4px solid var(--color-success); }

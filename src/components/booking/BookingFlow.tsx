@@ -19,6 +19,7 @@ interface BookingDraft {
   phone?: string
   address?: string
   date?: string
+  timeSlot?: string
 }
 
 function formatDate(d: string | undefined): string {
@@ -71,6 +72,7 @@ function DetailsStep({
     if (!booking.phone?.trim() || !/^[6-9]\d{9}$/.test(booking.phone.trim())) e.phone = 'Enter a valid 10-digit Indian mobile number'
     if (!booking.address?.trim()) e.address = 'Address is required'
     if (!booking.date) e.date = 'Please select a date'
+    if (!booking.timeSlot) e.timeSlot = 'Please select a time slot'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -144,6 +146,30 @@ function DetailsStep({
           placeholder="Select a date"
           error={errors.date}
         />
+        <div>
+          <label className="label-base text-sm font-semibold text-primary mb-2 block">
+            Preferred Time <span className="text-error">*</span>
+          </label>
+          <div className="flex gap-2">
+            {(['9AM-12PM', '12PM-3PM', '3PM-6PM'] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => { setBooking(b => ({ ...b, timeSlot: s })); setErrors(er => ({ ...er, timeSlot: undefined })) }}
+                className={`flex-1 py-2.5 rounded-xl text-[0.8rem] font-semibold border-[1.5px] transition-all min-h-[44px] ${
+                  booking.timeSlot === s
+                    ? 'border-brand bg-brand-soft text-brand-dark ring-brand'
+                    : 'border-border bg-card text-text-secondary hover:border-text-muted hover:bg-surface'
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          {errors.timeSlot && (
+            <p className="text-xs text-error mt-1">{errors.timeSlot}</p>
+          )}
+        </div>
       </div>
       <button type="button" onClick={handleSubmit} className="btn-base btn-primary w-full py-3 font-semibold mt-6 text-sm">Continue to Payment</button>
     </div>
@@ -307,6 +333,7 @@ export default function BookingFlow() {
       phone: user?.phone ?? '',
       address: useLocationStore.getState().location?.fullAddress ?? '',
       date: '',
+      timeSlot: '',
     }
   })
   const [showRazorpay, setShowRazorpay] = useState(false)
@@ -360,6 +387,7 @@ export default function BookingFlow() {
         qty: c.qty,
       })),
       preferred_date: booking.date ?? '',
+      time_slot: booking.timeSlot ?? '9AM-12PM',
       payment_mode: paymentMode,
     }
   }

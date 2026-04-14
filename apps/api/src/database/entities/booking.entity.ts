@@ -77,6 +77,9 @@ export class BookingEntity {
   @Column({ type: 'date' })
   preferred_date!: string;
 
+  @Column({ type: 'varchar', length: 20, default: '9AM-12PM' })
+  time_slot!: string;
+
   @Column({ type: 'enum', enum: PaymentMode })
   payment_mode!: PaymentMode;
 

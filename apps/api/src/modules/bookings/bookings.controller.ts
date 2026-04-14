@@ -17,12 +17,18 @@ import { JwtAuthGuard, RolesGuard } from '@/common/guards';
 import { Roles, CurrentUser } from '@/common/decorators';
 import { Role, UserEntity, BookingStatus } from '@/database/entities';
 import { BookingsService, BookingActor } from './bookings.service';
+import { DelayService } from './delay.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { AssignBookingDto } from './dto/assign-booking.dto';
 import { AssignTechnicianDto } from './dto/assign-technician.dto';
 import { TransitionNoteDto } from './dto/transition-note.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { BookingFiltersDto } from './dto/booking-filters.dto';
+import { ReportDelayDto } from './dto/report-delay.dto';
+import { RespondDelayDto } from './dto/respond-delay.dto';
+import { RescheduleService } from './reschedule.service';
+import { ProposeRescheduleDto } from './dto/propose-reschedule.dto';
+import { RespondRescheduleDto } from './dto/respond-reschedule.dto';
 
 function toActor(user: UserEntity): BookingActor {
   return {
@@ -38,7 +44,11 @@ function toActor(user: UserEntity): BookingActor {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller()
 export class BookingsController {
-  constructor(private readonly bookingsService: BookingsService) {}
+  constructor(
+    private readonly bookingsService: BookingsService,
+    private readonly delayService: DelayService,
+    private readonly rescheduleService: RescheduleService,
+  ) {}
 
   @Post('bookings')
   @Roles(Role.CUSTOMER)
@@ -222,5 +232,67 @@ export class BookingsController {
     @CurrentUser() user: UserEntity,
   ) {
     return this.bookingsService.getReview(id, toActor(user));
+  }
+
+  // ─── Delay Communication ───────────────────────────
+
+  @Post('bookings/:id/delay')
+  @Roles(Role.TECHNICIAN, Role.VENDOR, Role.ADMIN)
+  @ApiOperation({ summary: 'Report a delay on a booking' })
+  async reportDelay(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: UserEntity,
+    @Body() dto: ReportDelayDto,
+  ) {
+    return this.delayService.reportDelay(id, toActor(user), dto);
+  }
+
+  @Post('bookings/:id/delay/:delayId/respond')
+  @Roles(Role.CUSTOMER)
+  @ApiOperation({ summary: 'Respond to a delay event' })
+  async respondToDelay(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('delayId', ParseUUIDPipe) delayId: string,
+    @CurrentUser() user: UserEntity,
+    @Body() dto: RespondDelayDto,
+  ) {
+    return this.delayService.respondToDelay(id, delayId, toActor(user), dto);
+  }
+
+  @Get('bookings/:id/delay-events')
+  @ApiOperation({ summary: 'Get all delay events for a booking' })
+  async getDelayEvents(@Param('id', ParseUUIDPipe) id: string) {
+    return this.delayService.getDelayEvents(id);
+  }
+
+  // ─── Reschedule Communication ──────────────────────
+
+  @Post('bookings/:id/reschedule')
+  @ApiOperation({ summary: 'Propose a reschedule for a booking' })
+  async proposeReschedule(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: UserEntity,
+    @Body() dto: ProposeRescheduleDto,
+  ) {
+    return this.rescheduleService.propose(id, toActor(user), dto);
+  }
+
+  @Post('bookings/:id/reschedule/:rescheduleId/respond')
+  @ApiOperation({ summary: 'Respond to a reschedule request' })
+  async respondToReschedule(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('rescheduleId', ParseUUIDPipe) rescheduleId: string,
+    @CurrentUser() user: UserEntity,
+    @Body() dto: RespondRescheduleDto,
+  ) {
+    return this.rescheduleService.respond(id, rescheduleId, toActor(user), dto);
+  }
+
+  @Get('bookings/:id/reschedule-requests')
+  @ApiOperation({ summary: 'Get all reschedule requests for a booking' })
+  async getRescheduleRequests(
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.rescheduleService.getRequests(id);
   }
 }

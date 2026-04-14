@@ -85,7 +85,7 @@ export type ToastType = 'success' | 'danger' | 'warning' | 'info'
 
 export type TransactionType = 'credit' | 'debit'
 
-export type NotificationType = 'booking' | 'payment' | 'system' | 'vendor'
+export type NotificationType = 'booking' | 'payment' | 'system' | 'vendor' | 'delay' | 'reschedule'
 
 export interface ServiceFaq {
   question: string
@@ -138,6 +138,7 @@ export interface Booking {
   price: number
   services_list: ServiceListItem[]
   preferred_date: string
+  time_slot: string
   payment_mode: PaymentMode
   payment_status: PaymentStatus
   razorpay_order_id: string | null
@@ -169,6 +170,7 @@ export interface CreateBookingPayload {
   price: number
   services_list: ServiceListItem[]
   preferred_date: string
+  time_slot: string
   payment_mode: PaymentMode
 }
 
@@ -400,3 +402,6 @@ export interface PaginatedVendors {
   page: number
   limit: number
 }
+
+// Delay communication types
+export type { DelayType, DelayReason, DelayEvent, DelayReporterRole, ClientDelayResponse, ReportDelayPayload, RespondToDelayPayload, RescheduleRequest, RescheduleStatus, RescheduleInitiator, DisplayStatus, BookingWithDelay } from './delay'

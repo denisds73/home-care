@@ -46,7 +46,7 @@ export default function DetailSheet() {
 
       {/* Sheet — bottom sheet on mobile, centered modal on desktop */}
       <div
-        className="fixed z-[56] bg-white overflow-y-auto transition-transform
+        className="fixed z-[56] bg-white flex flex-col transition-transform
           bottom-0 left-0 right-0 max-h-[88vh] rounded-t-2xl
           md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2
           md:w-[640px] md:max-w-[90vw] md:max-h-[85vh] md:rounded-2xl"
@@ -62,15 +62,21 @@ export default function DetailSheet() {
         <button
           type="button"
           onClick={closeDetailSheet}
-          className="absolute top-3 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition z-10"
+          className="absolute top-3 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all z-10 border border-border/60 hover:border-border hover:scale-105 active:scale-95"
+          style={{
+            background: 'rgba(255,255,255,0.85)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          }}
           aria-label="Close details"
         >
-          <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+          <svg className="w-4 h-4 text-text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
-        <div className="px-5 md:px-8 pb-6 md:pb-8 pt-2 md:pt-6">
+        <div className="px-5 md:px-8 pb-6 md:pb-8 pt-2 md:pt-6 overflow-y-auto flex-1 min-h-0">
           {/* Header: image + title + price */}
           <div
             className="flex items-center gap-4 mb-5 rounded-2xl p-4"
@@ -208,26 +214,29 @@ export default function DetailSheet() {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Sticky add-to-cart footer */}
-          <div className="sticky bottom-0 bg-white pt-4 pb-2 -mx-5 md:-mx-8 px-5 md:px-8 mt-4" style={{ boxShadow: '0 -1px 0 rgba(0,0,0,0.04), 0 -4px 12px rgba(0,0,0,0.03)' }}>
-            {qty === 0 ? (
-              <button type="button" onClick={handleAdd} className="btn-base btn-primary w-full py-3.5 font-bold text-sm">
-                Add to Cart — ₹{svc.price}
-              </button>
-            ) : (
-              <div className="flex items-center justify-between">
-                <div className="inline-flex items-center border-2 border-brand rounded-xl overflow-hidden">
-                  <button type="button" onClick={() => removeFromCart(svc.id)} className="w-10 h-10 bg-brand text-white flex items-center justify-center font-bold text-lg">−</button>
-                  <span className="w-10 text-center font-bold text-sm text-brand-dark">{qty}</span>
-                  <button type="button" onClick={handleAdd} className="w-10 h-10 bg-brand text-white flex items-center justify-center font-bold text-lg">+</button>
-                </div>
-                <button type="button" onClick={() => { closeDetailSheet(); toggleCartDrawer() }} className="btn-base btn-primary px-6 py-3 font-bold text-sm">
-                  View Cart
-                </button>
+        {/* Add-to-cart footer — pinned below scroll area */}
+        <div
+          className="flex-none bg-white px-5 md:px-8 pt-3 pb-4 md:pb-5 rounded-b-2xl"
+          style={{ boxShadow: '0 -1px 0 rgba(0,0,0,0.06), 0 -6px 16px rgba(0,0,0,0.05)' }}
+        >
+          {qty === 0 ? (
+            <button type="button" onClick={handleAdd} className="btn-base btn-primary w-full py-3.5 font-bold text-sm">
+              Add to Cart — ₹{svc.price}
+            </button>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div className="inline-flex items-center border-2 border-brand rounded-xl overflow-hidden">
+                <button type="button" onClick={() => removeFromCart(svc.id)} className="w-10 h-10 bg-brand text-white flex items-center justify-center font-bold text-lg">-</button>
+                <span className="w-10 text-center font-bold text-sm text-brand-dark">{qty}</span>
+                <button type="button" onClick={handleAdd} className="w-10 h-10 bg-brand text-white flex items-center justify-center font-bold text-lg">+</button>
               </div>
-            )}
-          </div>
+              <button type="button" onClick={() => { closeDetailSheet(); toggleCartDrawer() }} className="btn-base btn-primary px-6 py-3 font-bold text-sm">
+                View Cart
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>
