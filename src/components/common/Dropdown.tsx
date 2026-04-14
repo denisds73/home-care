@@ -1,4 +1,12 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import {
+  useState,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useMemo,
+} from 'react'
+import { createPortal } from 'react-dom'
 
 export interface DropdownOption {
   value: string
@@ -37,8 +45,16 @@ export default function Dropdown({
   const [activeIndex, setActiveIndex] = useState(-1)
 
   const containerRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const menuPanelRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
+
+  const [menuCoords, setMenuCoords] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+  })
 
   const selected = useMemo(
     () => options.find((o) => o.value === value),
@@ -54,11 +70,16 @@ export default function Dropdown({
   const toggle = useCallback(() => {
     if (disabled) return
     setOpen((prev) => {
-      if (!prev) {
+      const next = !prev
+      if (next) {
         setQuery('')
         setActiveIndex(-1)
+        const r = buttonRef.current?.getBoundingClientRect()
+        if (r) {
+          setMenuCoords({ top: r.bottom + 4, left: r.left, width: r.width })
+        }
       }
-      return !prev
+      return next
     })
   }, [disabled])
 
@@ -77,16 +98,33 @@ export default function Dropdown({
     }
   }, [open, searchable])
 
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current) return
+    const update = () => {
+      const r = buttonRef.current!.getBoundingClientRect()
+      setMenuCoords({
+        top: r.bottom + 4,
+        left: r.left,
+        width: r.width,
+      })
+    }
+    update()
+    window.addEventListener('scroll', update, true)
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('scroll', update, true)
+      window.removeEventListener('resize', update)
+    }
+  }, [open])
+
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false)
-        setQuery('')
-      }
+      const t = e.target as Node
+      if (containerRef.current?.contains(t)) return
+      if (menuPanelRef.current?.contains(t)) return
+      setOpen(false)
+      setQuery('')
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -152,6 +190,7 @@ export default function Dropdown({
       )}
 
       <button
+        ref={buttonRef}
         id={id}
         type="button"
         disabled={disabled}
@@ -186,91 +225,101 @@ export default function Dropdown({
         <p className="text-xs text-error mt-1">{error}</p>
       )}
 
-      {open && (
-        <div
-          className="
-            absolute z-50 left-0 right-0 mt-1
-            bg-white border border-border rounded-xl shadow-lg
-            overflow-hidden animate-in fade-in slide-in-from-top-1
-          "
-          style={{ animation: 'dropdown-in 150ms ease-out' }}
-        >
-          {searchable && (
-            <div className="p-2 border-b border-border">
-              <div className="relative">
-                <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="M21 21l-4.35-4.35" />
-                </svg>
-                <input
-                  ref={searchRef}
-                  type="text"
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value)
-                    setActiveIndex(-1)
-                  }}
-                  placeholder={searchPlaceholder}
-                  className="
-                    w-full pl-9 pr-3 py-2 text-sm rounded-lg
-                    border border-border bg-surface
-                    text-text-primary placeholder:text-text-muted
-                    focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15
-                  "
-                  aria-label="Search options"
-                />
-              </div>
-            </div>
-          )}
-
-          <ul
-            ref={listRef}
-            id={listboxId}
-            role="listbox"
-            aria-label={label ?? 'Options'}
-            className="max-h-56 overflow-y-auto py-1"
+      {open &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={menuPanelRef}
+            className="
+              fixed z-[300]
+              bg-white border border-border rounded-xl shadow-lg
+              overflow-hidden animate-in fade-in slide-in-from-top-1
+            "
+            style={{
+              top: menuCoords.top,
+              left: menuCoords.left,
+              width: menuCoords.width,
+              animation: 'dropdown-in 150ms ease-out',
+            }}
+            role="presentation"
           >
-            {filtered.length === 0 ? (
-              <li className="px-3.5 py-2.5 text-sm text-text-muted text-center">
-                No results found
-              </li>
-            ) : (
-              filtered.map((opt, i) => {
-                const isSelected = opt.value === value
-                const isActive = i === activeIndex
-                return (
-                  <li
-                    key={opt.value}
-                    role="option"
-                    aria-selected={isSelected}
-                    onClick={() => select(opt)}
-                    onMouseEnter={() => setActiveIndex(i)}
-                    className={`
-                      px-3.5 py-2.5 text-sm cursor-pointer transition-colors
-                      ${isSelected
-                        ? 'bg-primary/8 text-primary font-medium'
-                        : isActive
-                          ? 'bg-muted text-text-primary'
-                          : 'text-text-primary hover:bg-muted'
-                      }
-                    `}
+            {searchable && (
+              <div className="p-2 border-b border-border">
+                <div className="relative">
+                  <svg
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   >
-                    {opt.label}
-                  </li>
-                )
-              })
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="M21 21l-4.35-4.35" />
+                  </svg>
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    value={query}
+                    onChange={(e) => {
+                      setQuery(e.target.value)
+                      setActiveIndex(-1)
+                    }}
+                    placeholder={searchPlaceholder}
+                    className="
+                      w-full pl-9 pr-3 py-2 text-sm rounded-lg
+                      border border-border bg-surface
+                      text-text-primary placeholder:text-text-muted
+                      focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15
+                    "
+                    aria-label="Search options"
+                  />
+                </div>
+              </div>
             )}
-          </ul>
-        </div>
-      )}
+
+            <ul
+              ref={listRef}
+              id={listboxId}
+              role="listbox"
+              aria-label={label ?? 'Options'}
+              className="max-h-56 overflow-y-auto py-1"
+            >
+              {filtered.length === 0 ? (
+                <li className="px-3.5 py-2.5 text-sm text-text-muted text-center">
+                  No results found
+                </li>
+              ) : (
+                filtered.map((opt, i) => {
+                  const isSelected = opt.value === value
+                  const isActive = i === activeIndex
+                  return (
+                    <li
+                      key={opt.value}
+                      role="option"
+                      aria-selected={isSelected}
+                      onClick={() => select(opt)}
+                      onMouseEnter={() => setActiveIndex(i)}
+                      className={`
+                        px-3.5 py-2.5 text-sm cursor-pointer transition-colors
+                        ${isSelected
+                          ? 'bg-primary/8 text-primary font-medium'
+                          : isActive
+                            ? 'bg-muted text-text-primary'
+                            : 'text-text-primary hover:bg-muted'
+                        }
+                      `}
+                    >
+                      {opt.label}
+                    </li>
+                  )
+                })
+              )}
+            </ul>
+          </div>,
+          document.body,
+        )}
 
       <style>{`
         @keyframes dropdown-in {

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { bookingService } from '../../services/bookingService'
 import { vendorService } from '../../services/vendorService'
 import { Pagination } from '../../components/common/Pagination'
+import Dropdown from '../../components/common/Dropdown'
 import { StatusBadge } from '../../components/bookings/StatusBadge'
 import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
@@ -127,36 +128,34 @@ export default function BookingManagementPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
-          <select
-            className="input-base py-2 px-3 text-sm min-w-[160px]"
+          <Dropdown
+            id="booking-admin-status-filter"
+            options={[
+              { value: '', label: 'All Statuses' },
+              { value: 'pending', label: 'Pending' },
+              { value: 'assigned', label: 'Assigned' },
+              { value: 'accepted', label: 'Accepted' },
+              { value: 'in_progress', label: 'In Progress' },
+              { value: 'completed', label: 'Completed' },
+              { value: 'cancelled', label: 'Cancelled' },
+              { value: 'rejected', label: 'Rejected' },
+            ]}
             value={statusFilter}
-            onChange={(e) =>
-              handleStatusFilterChange(e.target.value as BookingStatus | '')
-            }
-            aria-label="Filter by status"
-          >
-            <option value="">All Statuses</option>
-            <option value="pending">Pending</option>
-            <option value="assigned">Assigned</option>
-            <option value="accepted">Accepted</option>
-            <option value="in_progress">In Progress</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-            <option value="rejected">Rejected</option>
-          </select>
-          <select
-            className="input-base py-2 px-3 text-sm min-w-[170px]"
+            onChange={v => handleStatusFilterChange(v as BookingStatus | '')}
+            placeholder="All Statuses"
+            className="min-w-[160px]"
+          />
+          <Dropdown
+            id="booking-admin-category-filter"
+            options={[
+              { value: '', label: 'All Categories' },
+              ...CATEGORIES.map(c => ({ value: c.id, label: c.name })),
+            ]}
             value={categoryFilter}
-            onChange={e => setCategoryFilter(e.target.value as CategoryId | '')}
-            aria-label="Filter by category"
-          >
-            <option value="">All Categories</option>
-            {CATEGORIES.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            onChange={v => setCategoryFilter(v as CategoryId | '')}
+            placeholder="All Categories"
+            className="min-w-[170px]"
+          />
         </div>
       </div>
 
@@ -221,20 +220,24 @@ export default function BookingManagementPage() {
                       </td>
                       <td className="p-3">
                         {(b.booking_status === 'pending' || b.booking_status === 'rejected') && (
-                          <select
+                          <Dropdown
                             key={`${b.booking_id}-assign`}
-                            className="input-base py-1 px-2 text-xs max-w-[180px]"
-                            defaultValue=""
-                            aria-label={`Assign vendor for booking ${b.booking_id}`}
-                            onChange={e => handleAssign(b.booking_id, e.target.value)}
-                          >
-                            <option value="">Assign vendor…</option>
-                            {activeVendors.map(v => (
-                              <option key={v.id} value={v.id}>
-                                {v.company_name}
-                              </option>
-                            ))}
-                          </select>
+                            id={`assign-vendor-${b.booking_id}`}
+                            options={[
+                              { value: '', label: 'Assign vendor…' },
+                              ...activeVendors.map(v => ({
+                                value: v.id,
+                                label: v.company_name,
+                              })),
+                            ]}
+                            value=""
+                            onChange={v => {
+                              if (v) void handleAssign(b.booking_id, v)
+                            }}
+                            placeholder="Assign vendor…"
+                            disabled={activeVendors.length === 0}
+                            className="max-w-[180px] [&_button]:py-1.5 [&_button]:px-2 [&_button]:text-xs"
+                          />
                         )}
                         {b.booking_status !== 'pending' && b.booking_status !== 'rejected' && (
                           <span className="text-xs text-secondary">
