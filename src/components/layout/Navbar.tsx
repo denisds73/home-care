@@ -354,12 +354,16 @@ export function Navbar() {
             <SearchBar inputId="navbar-search-desktop" onNavigate={() => {}} />
           </div>
 
-          {/* Mobile: search icon in center zone */}
-          <div className="flex sm:hidden justify-center">
+          {/* Center zone spacer — hidden on mobile, search lives in right zone */}
+          <div className="sm:hidden" />
+
+          {/* Right zone — Actions */}
+          <div className="flex items-center gap-2 shrink-0 justify-end">
+            {/* Mobile search icon — in action bar alongside cart */}
             <button
               type="button"
               onClick={() => setMobileSearchOpen(true)}
-              className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-secondary hover:bg-muted transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/20"
+              className="sm:hidden w-11 h-11 rounded-full bg-muted flex items-center justify-center text-secondary hover:bg-muted/80 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/20"
               aria-label="Open search"
               aria-expanded={mobileSearchOpen}
             >
@@ -367,10 +371,6 @@ export function Navbar() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </button>
-          </div>
-
-          {/* Right zone — Actions */}
-          <div className="flex items-center gap-2 shrink-0 justify-end">
             {isAuthenticated && (
               <div className="hidden sm:block">
                 <CustomerNotificationsDropdown />
