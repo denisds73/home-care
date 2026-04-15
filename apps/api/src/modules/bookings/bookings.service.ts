@@ -237,6 +237,9 @@ export class BookingsService {
     if (filters.status) {
       qb.andWhere('b.booking_status = :status', { status: filters.status });
     }
+    if (filters.category) {
+      qb.andWhere('b.category = :category', { category: filters.category });
+    }
     if (filters.vendor_id) {
       qb.andWhere('b.vendor_id = :vid', { vid: filters.vendor_id });
     }
