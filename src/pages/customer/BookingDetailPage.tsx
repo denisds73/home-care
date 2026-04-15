@@ -11,6 +11,7 @@ import type {
   BookingReview,
   BookingStatusEvent,
 } from '../../types/domain'
+import { ServiceLocationMap } from '../../components/maps'
 import { DelayBanner, CriticalDelayModal, RescheduleSheet } from '../../components/delay'
 import { delayService } from '../../services/delayService'
 import { rescheduleService } from '../../services/rescheduleService'
@@ -230,6 +231,17 @@ export default function BookingDetailPage() {
             <div className="md:col-span-2">
               <p className="text-muted text-xs">Address</p>
               <p className="text-secondary">{booking.address}</p>
+              {booking.lat !== undefined && booking.lng !== undefined && (
+                <div className="mt-2">
+                  <ServiceLocationMap
+                    lat={booking.lat}
+                    lng={booking.lng}
+                    address={booking.address}
+                    height="180px"
+                    showDirectionsLink
+                  />
+                </div>
+              )}
             </div>
             {booking.technician && (
               <div className="md:col-span-2 mt-1">

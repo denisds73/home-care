@@ -17,6 +17,7 @@ import type {
 import { TechnicianContactButtons } from '../../components/common/TechnicianContactButtons'
 import Dropdown from '../../components/common/Dropdown'
 import { DelayBanner, RescheduleSheet } from '../../components/delay'
+import { ServiceLocationMap } from '../../components/maps'
 import { delayService } from '../../services/delayService'
 import { rescheduleService } from '../../services/rescheduleService'
 import type { DelayEvent, RescheduleRequest } from '../../types/delay'
@@ -229,6 +230,17 @@ export default function AdminBookingDetailPage() {
           <div className="md:col-span-2">
             <p className="text-muted text-xs">Address</p>
             <p className="text-secondary">{booking.address}</p>
+            {booking.lat !== undefined && booking.lng !== undefined && (
+              <div className="mt-2">
+                <ServiceLocationMap
+                  lat={booking.lat}
+                  lng={booking.lng}
+                  address={booking.address}
+                  height="160px"
+                  showDirectionsLink
+                />
+              </div>
+            )}
           </div>
           <div>
             <p className="text-muted text-xs">Amount</p>

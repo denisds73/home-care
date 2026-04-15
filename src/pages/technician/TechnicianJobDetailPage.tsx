@@ -6,6 +6,7 @@ import { StatusBadge } from '../../components/bookings/StatusBadge'
 import { formatDate } from '../../data/helpers'
 import useStore from '../../store/useStore'
 import type { Booking, BookingStatusEvent } from '../../types/domain'
+import { ServiceLocationMap } from '../../components/maps'
 import { ReportDelaySheet, CannotAttendSheet, SmartDelayPrompt } from '../../components/delay'
 
 export default function TechnicianJobDetailPage() {
@@ -152,14 +153,17 @@ export default function TechnicianJobDetailPage() {
           <div>
             <p className="text-muted text-xs">Address</p>
             <p className="text-secondary">{booking.address}</p>
-            <a
-              href={`https://maps.google.com/?q=${encodeURIComponent(booking.address)}`}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-brand font-semibold inline-block mt-1"
-            >
-              Open in Maps
-            </a>
+            {booking.lat !== undefined && booking.lng !== undefined && (
+              <div className="mt-2">
+                <ServiceLocationMap
+                  lat={booking.lat}
+                  lng={booking.lng}
+                  address={booking.address}
+                  height="180px"
+                  showDirectionsLink
+                />
+              </div>
+            )}
           </div>
           <div>
             <p className="text-muted text-xs">Amount</p>

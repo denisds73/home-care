@@ -10,6 +10,8 @@ interface PlacesAutocompleteProps {
   placeholder?: string
   className?: string
   error?: boolean
+  /** Borderless transparent mode for floating over map backgrounds */
+  floating?: boolean
 }
 
 interface Prediction {
@@ -29,6 +31,7 @@ export const PlacesAutocomplete = memo(function PlacesAutocomplete({
   placeholder = 'Search for area, street name...',
   className = '',
   error = false,
+  floating = false,
 }: PlacesAutocompleteProps) {
   const placesLib = useMapsLibrary('places')
   const [predictions, setPredictions] = useState<Prediction[]>([])
@@ -149,7 +152,7 @@ export const PlacesAutocomplete = memo(function PlacesAutocomplete({
           value={value}
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => { if (predictions.length > 0) setIsOpen(true) }}
-          className={`input-base w-full pl-9 pr-4 py-2.5 text-sm ${error ? 'border-red-400 ring-2 ring-red-100' : ''}`}
+          className={`w-full pl-9 pr-4 py-2.5 text-sm ${floating ? 'bg-transparent border-0 outline-none rounded-2xl' : 'input-base'} ${error ? 'border-red-400 ring-2 ring-red-100' : ''}`}
           placeholder={placeholder}
           autoComplete="off"
           role="combobox"

@@ -1,5 +1,6 @@
 export { GoogleMapsProvider } from './GoogleMapsProvider'
 export { ServiceLocationMap } from './ServiceLocationMap'
 export { DraggableLocationMap } from './DraggableLocationMap'
+export { ImmersiveLocationMap } from './ImmersiveLocationMap'
 export { PlacesAutocomplete } from './PlacesAutocomplete'
 export { MapWithFallback, OsmMapEmbed } from './MapWithFallback'
