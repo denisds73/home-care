@@ -296,7 +296,7 @@ export default function CatalogPage() {
       ) : (
         <>
           <div className="glass-card overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm [&_th]:align-top [&_td]:align-top">
               <thead>
                 <tr className="text-left text-xs text-muted bg-surface">
                   <th className="p-3">Service</th>
@@ -313,32 +313,53 @@ export default function CatalogPage() {
                     key={svc.id}
                     className={`border-t border-gray-50 hover:bg-surface/50 ${!svc.is_active ? 'opacity-70' : ''}`}
                   >
-                    <td className="p-3">
-                      <p className="font-medium text-primary">{svc.service_name}</p>
-                      {svc.is_basic && (
-                        <span className="inline-block mt-1 text-[0.65rem] font-semibold uppercase tracking-wide text-brand">
-                          Basic
-                        </span>
-                      )}
+                    <td className="p-3 align-top">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <p className="font-medium text-primary">{svc.service_name}</p>
+                        {svc.is_basic && (
+                          <span className="inline-flex shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-brand">
+                            Basic
+                          </span>
+                        )}
+                      </div>
                     </td>
-                    <td className="p-3 text-muted">{categoryLabel(svc.category)}</td>
-                    <td className="p-3 text-muted max-w-md">
+                    <td className="p-3 text-muted align-top">{categoryLabel(svc.category)}</td>
+                    <td className="p-3 text-muted max-w-md align-top">
                       <p className="line-clamp-2" title={svc.description}>
                         {svc.description || '—'}
                       </p>
                     </td>
-                    <td className="p-3">
-                      ₹{Number(svc.price).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                    <td className="p-3 align-top">
+                      <div className="flex flex-col gap-0.5 items-start tabular-nums">
+                        <span className="font-medium text-primary">
+                          ₹
+                          {Number(svc.price).toLocaleString('en-IN', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                        {svc.original_price != null &&
+                          svc.original_price > 0 &&
+                          svc.original_price > svc.price && (
+                            <span className="text-xs text-muted line-through">
+                              ₹
+                              {Number(svc.original_price).toLocaleString('en-IN', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                          )}
+                      </div>
                     </td>
-                    <td className="p-3">
+                    <td className="p-3 align-top">
                       {svc.is_active ? (
                         <span className="badge badge-success">Active</span>
                       ) : (
                         <span className="badge bg-muted text-secondary">Disabled</span>
                       )}
                     </td>
-                    <td className="p-3 text-right">
-                      <div className="flex items-center justify-end gap-2 flex-wrap">
+                    <td className="p-3 text-right align-top">
+                      <div className="flex items-start justify-end gap-2 flex-wrap">
                         <button
                           type="button"
                           onClick={() => openEdit(svc)}
