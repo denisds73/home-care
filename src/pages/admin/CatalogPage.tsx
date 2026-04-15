@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { adminService } from '../../services/adminService'
 import { serviceService } from '../../services/serviceService'
 import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
 import Modal from '../../components/common/Modal'
+import { Pagination } from '../../components/common/Pagination'
 import type { CategoryId, Service } from '../../types/domain'
 import Dropdown from '../../components/common/Dropdown'
 
@@ -47,6 +48,12 @@ const EMPTY_FORM: SvcForm = {
   sort_order: '',
 }
 
+const PAGE_SIZE = 10
+
+function categoryLabel(id: CategoryId) {
+  return CATEGORIES.find(c => c.id === id)?.name ?? id.replace(/_/g, ' ')
+}
+
 export default function CatalogPage() {
   const showToast = useStore(s => s.showToast)
 
@@ -64,6 +71,7 @@ export default function CatalogPage() {
   const [newExclusion, setNewExclusion] = useState('')
   const [newFaqQ, setNewFaqQ] = useState('')
   const [newFaqA, setNewFaqA] = useState('')
+  const [page, setPage] = useState(1)
 
   const loadServices = useCallback(async () => {
     try {
@@ -81,6 +89,20 @@ export default function CatalogPage() {
   useEffect(() => {
     loadServices()
   }, [loadServices])
+
+  useEffect(() => {
+    setPage(1)
+  }, [categoryFilter])
+
+  useEffect(() => {
+    const tp = Math.max(1, Math.ceil(services.length / PAGE_SIZE))
+    setPage(p => Math.min(p, tp))
+  }, [services.length])
+
+  const paginatedServices = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE
+    return services.slice(start, start + PAGE_SIZE)
+  }, [services, page])
 
   const resetRepeaterInputs = () => {
     setNewInclusion('')
@@ -236,72 +258,124 @@ export default function CatalogPage() {
 
   return (
     <div className="fade-in space-y-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <Dropdown
-          options={[
-            { value: '', label: 'All Categories' },
-            ...CATEGORIES.map(c => ({ value: c.id, label: c.name })),
-          ]}
-          value={categoryFilter}
-          onChange={v => setCategoryFilter(v as CategoryId | '')}
-          placeholder="All Categories"
-          searchable
-          searchPlaceholder="Search category..."
-          className="min-w-[170px]"
-        />
-        <button type="button" onClick={openAdd} className="btn-base btn-primary text-sm px-4 py-2 ml-auto min-h-[44px]">
-          + Add Service
-        </button>
+      <div className="glass-card p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Dropdown
+            options={[
+              { value: '', label: 'All Categories' },
+              ...CATEGORIES.map(c => ({ value: c.id, label: c.name })),
+            ]}
+            value={categoryFilter}
+            onChange={v => setCategoryFilter(v as CategoryId | '')}
+            placeholder="All Categories"
+            searchable
+            searchPlaceholder="Search category..."
+            className="min-w-[170px]"
+          />
+          <button type="button" onClick={openAdd} className="btn-base btn-primary text-sm px-4 py-2 ml-auto min-h-[44px]">
+            + Add Service
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="glass-card p-4 animate-pulse">
-              <div className="h-4 w-32 bg-surface rounded mb-2" />
-              <div className="h-3 w-16 bg-surface rounded mb-3" />
-              <div className="h-3 w-full bg-surface rounded mb-1" />
-              <div className="h-3 w-3/4 bg-surface rounded" />
-            </div>
-          ))}
+        <div className="glass-card overflow-x-auto">
+          <div className="p-6 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="animate-pulse flex gap-4 flex-wrap">
+                <div className="h-4 w-40 bg-surface rounded" />
+                <div className="h-4 w-24 bg-surface rounded" />
+                <div className="h-4 flex-1 min-w-[120px] max-w-md bg-surface rounded" />
+                <div className="h-4 w-16 bg-surface rounded" />
+                <div className="h-4 w-16 bg-surface rounded" />
+                <div className="h-4 w-28 bg-surface rounded" />
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {services.map(svc => (
-            <div key={svc.id} className={`glass-card p-4 ${!svc.is_active ? 'opacity-50' : ''}`}>
-              <div className="flex items-start justify-between mb-2 gap-2">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-primary">{svc.service_name}</p>
-                  <p className="text-xs text-muted">{svc.category.toUpperCase()}</p>
-                </div>
-                <span className="text-sm font-bold text-brand shrink-0">₹{svc.price}</span>
-              </div>
-              <p className="text-xs text-secondary mb-3 line-clamp-2">{svc.description}</p>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button type="button" onClick={() => openEdit(svc)} className="text-xs text-brand font-semibold min-h-[44px] px-1">
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleToggleActive(svc)}
-                  className="text-xs text-secondary font-semibold min-h-[44px] px-1"
-                >
-                  {svc.is_active ? 'Disable' : 'Enable'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeleteId(svc.id)}
-                  className="text-xs text-error font-semibold ml-auto min-h-[44px] px-1"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-          {services.length === 0 && (
-            <p className="text-sm text-muted col-span-full text-center py-8">No services found</p>
-          )}
-        </div>
+        <>
+          <div className="glass-card overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-muted bg-surface">
+                  <th className="p-3">Service</th>
+                  <th className="p-3">Category</th>
+                  <th className="p-3 min-w-[200px] max-w-md">Description</th>
+                  <th className="p-3">Price</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedServices.map(svc => (
+                  <tr
+                    key={svc.id}
+                    className={`border-t border-gray-50 hover:bg-surface/50 ${!svc.is_active ? 'opacity-70' : ''}`}
+                  >
+                    <td className="p-3">
+                      <p className="font-medium text-primary">{svc.service_name}</p>
+                      {svc.is_basic && (
+                        <span className="inline-block mt-1 text-[0.65rem] font-semibold uppercase tracking-wide text-brand">
+                          Basic
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3 text-muted">{categoryLabel(svc.category)}</td>
+                    <td className="p-3 text-muted max-w-md">
+                      <p className="line-clamp-2" title={svc.description}>
+                        {svc.description || '—'}
+                      </p>
+                    </td>
+                    <td className="p-3">
+                      ₹{Number(svc.price).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="p-3">
+                      {svc.is_active ? (
+                        <span className="badge badge-success">Active</span>
+                      ) : (
+                        <span className="badge bg-muted text-secondary">Disabled</span>
+                      )}
+                    </td>
+                    <td className="p-3 text-right">
+                      <div className="flex items-center justify-end gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(svc)}
+                          className="badge badge-confirmed cursor-pointer border-0 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 rounded-full"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleActive(svc)}
+                          className={
+                            svc.is_active
+                              ? 'badge badge-pending cursor-pointer border-0 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 focus-visible:ring-offset-2 rounded-full'
+                              : 'badge badge-success cursor-pointer border-0 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 rounded-full'
+                          }
+                        >
+                          {svc.is_active ? 'Disable' : 'Enable'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteId(svc.id)}
+                          className="badge badge-cancelled cursor-pointer border-0 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40 focus-visible:ring-offset-2 rounded-full"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {services.length === 0 && (
+              <p className="text-center py-8 text-sm text-muted">No services found</p>
+            )}
+          </div>
+          <Pagination page={page} limit={PAGE_SIZE} total={services.length} onPageChange={setPage} />
+        </>
       )}
 
       <Modal
