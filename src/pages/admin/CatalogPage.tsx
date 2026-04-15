@@ -304,10 +304,14 @@ export default function CatalogPage() {
         </div>
       )}
 
-      <Modal isOpen={modalMode !== null} onClose={() => setModalMode(null)} maxWidth="max-w-2xl">
-        <div className="p-6">
-          <h3 className="text-lg font-bold text-primary mb-4">{modalMode === 'add' ? 'Add Service' : 'Edit Service'}</h3>
-
+      <Modal
+        isOpen={modalMode !== null}
+        onClose={() => setModalMode(null)}
+        maxWidth="max-w-2xl"
+        overlay="layout"
+        title={modalMode === 'add' ? 'Add Service' : modalMode === 'edit' ? 'Edit Service' : undefined}
+      >
+        <>
           {/* Section 1: Basic Info */}
           <h4 className="text-sm font-bold text-primary mb-3">Basic Info</h4>
           <div className="space-y-3">
@@ -607,12 +611,17 @@ export default function CatalogPage() {
               Cancel
             </button>
           </div>
-        </div>
+        </>
       </Modal>
 
-      <Modal isOpen={deleteId !== null} onClose={() => setDeleteId(null)} maxWidth="max-w-sm">
-        <div className="p-6 text-center">
-          <h3 className="text-lg font-bold text-primary mb-2">Delete Service?</h3>
+      <Modal
+        isOpen={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        maxWidth="max-w-sm"
+        overlay="layout"
+        title="Delete service?"
+      >
+        <div className="text-center">
           <p className="text-sm text-secondary mb-4">This action cannot be undone.</p>
           <div className="flex gap-2 justify-center flex-wrap">
             <button type="button" onClick={handleDelete} className="btn-base btn-danger text-sm px-5 py-2 min-h-[44px]">

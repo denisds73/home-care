@@ -952,6 +952,7 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', 'Manrope', system-ui, -apple-sys
   margin-left: 240px;
   min-height: 100vh;
   background: var(--color-surface);
+  position: relative;
 }
 
 /* ── Dashboard stat cards ── */
