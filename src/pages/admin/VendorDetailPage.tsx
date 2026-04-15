@@ -189,7 +189,7 @@ export default function VendorDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="fade-in space-y-4">
+      <div className="fade-in mx-auto w-full max-w-3xl space-y-4">
         <div className="glass-card p-6 animate-pulse">
           <div className="h-5 w-48 bg-surface rounded mb-3" />
           <div className="h-3 w-64 bg-surface rounded" />
@@ -200,7 +200,7 @@ export default function VendorDetailPage() {
 
   if (error || !vendor) {
     return (
-      <div className="glass-card p-8 text-center">
+      <div className="glass-card mx-auto w-full max-w-lg p-8 text-center">
         <p className="text-error text-sm mb-3">{error ?? 'Vendor not found'}</p>
         <Link
           to="/admin/vendors"
@@ -213,7 +213,7 @@ export default function VendorDetailPage() {
   }
 
   return (
-    <div className="fade-in space-y-6 max-w-3xl">
+    <div className="fade-in mx-auto w-full max-w-3xl space-y-6">
       <div>
         <Link
           to="/admin/vendors"
@@ -221,18 +221,18 @@ export default function VendorDetailPage() {
         >
           ← Back to vendors
         </Link>
-        <div className="flex items-start justify-between gap-3 flex-wrap mt-2">
-          <div>
+        <div className="mt-2 flex flex-col items-center text-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <h1 className="font-brand text-xl md:text-2xl font-bold text-primary">
               {vendor.company_name}
             </h1>
-            <p className="text-muted text-sm mt-1">
-              Onboarded {new Date(vendor.created_at).toLocaleDateString()}
-            </p>
+            <span className={vendorStatusBadgeClass(vendor.status)}>
+              {vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
+            </span>
           </div>
-          <span className={vendorStatusBadgeClass(vendor.status)}>
-            {vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
-          </span>
+          <p className="text-muted text-sm">
+            Onboarded {new Date(vendor.created_at).toLocaleDateString()}
+          </p>
         </div>
       </div>
 

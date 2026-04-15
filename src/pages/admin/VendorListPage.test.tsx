@@ -21,6 +21,7 @@ const list = vi.mocked(vendorService.list)
 describe('VendorListPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    Element.prototype.scrollIntoView = vi.fn()
     list.mockResolvedValue({
       items: [],
       total: 0,
@@ -55,8 +56,9 @@ describe('VendorListPage', () => {
       </MemoryRouter>,
     )
 
-    await screen.findByRole('button', { name: 'Pending' })
-    await user.click(screen.getByRole('button', { name: 'Pending' }))
+    await screen.findByRole('button', { name: /all/i })
+    await user.click(screen.getByRole('button', { name: /all/i }))
+    await user.click(await screen.findByRole('option', { name: 'Pending' }))
 
     await waitFor(() => {
       expect(list).toHaveBeenCalledWith(

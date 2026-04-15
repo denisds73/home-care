@@ -119,7 +119,7 @@ export default function VendorCreatePage() {
   }
 
   return (
-    <div className="fade-in space-y-6 max-w-3xl">
+    <div className="fade-in mx-auto w-full max-w-3xl space-y-6">
       <div>
         <Link
           to="/admin/vendors"

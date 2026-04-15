@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
+import Dropdown, { type DropdownOption } from '../../components/common/Dropdown'
 import { vendorService } from '../../services/vendorService'
 import useStore from '../../store/useStore'
 import type { Vendor, VendorStatus } from '../../types/domain'
@@ -18,10 +19,14 @@ const STATUS_TABS: Array<{ key: VendorStatus | ''; label: string }> = [
   { key: 'rejected', label: 'Rejected' },
 ]
 
+const VENDOR_STATUS_OPTIONS: DropdownOption[] = STATUS_TABS.map((tab) => ({
+  value: tab.key,
+  label: tab.label,
+}))
+
 const PAGE_SIZE = 20
 
 export default function VendorListPage() {
-  const navigate = useNavigate()
   const showToast = useStore((s) => s.showToast)
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -113,36 +118,28 @@ export default function VendorListPage() {
         </Link>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {STATUS_TABS.map((tab) => {
-          const active = statusFilter === tab.key
-          return (
-            <button
-              key={tab.key || 'all'}
-              type="button"
-              onClick={() => setStatusTab(tab.key)}
-              className={`btn-base text-xs px-4 py-1.5 min-h-[44px] ${
-                active ? 'btn-primary' : 'btn-ghost'
-              }`}
-            >
-              {tab.label}
-            </button>
-          )
-        })}
-      </div>
-
-      <div className="flex gap-2 flex-wrap">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value)
-            setPage(1)
-          }}
-          placeholder="Search by company name or email"
-          className="input-base py-2 px-3 text-sm flex-1 min-w-[240px]"
-          aria-label="Search vendors"
-        />
+      <div className="glass-card p-4">
+        <div className="flex flex-wrap gap-3 items-end">
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setPage(1)
+            }}
+            placeholder="Search by company name or email"
+            className="input-base py-2 px-3 text-sm flex-1 min-w-[200px]"
+            aria-label="Search vendors"
+          />
+          <Dropdown
+            id="vendor-status-filter"
+            options={VENDOR_STATUS_OPTIONS}
+            value={statusFilter}
+            onChange={(v) => setStatusTab(v as VendorStatus | '')}
+            placeholder="Status"
+            className="min-w-[160px] w-full sm:w-auto sm:min-w-[180px]"
+          />
+        </div>
       </div>
 
       {error && vendors.length === 0 ? (
@@ -156,122 +153,205 @@ export default function VendorListPage() {
             Retry
           </button>
         </div>
-      ) : isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="glass-card p-4 animate-pulse">
-              <div className="h-4 w-40 bg-surface rounded mb-2" />
-              <div className="h-3 w-64 bg-surface rounded" />
-            </div>
-          ))}
-        </div>
-      ) : vendors.length === 0 ? (
-        <div className="glass-card p-8 text-center">
-          <p className="text-sm text-muted">No vendors found</p>
-        </div>
       ) : (
         <>
-          <div className="space-y-3">
-            {vendors.map((v) => (
-              <div key={v.id} className="glass-card p-4">
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => navigate(adminVendorDetail(v.id))}
-                    className="text-left min-w-0 flex-1"
+          <div className="glass-card overflow-x-auto rounded-xl border border-gray-100/80 shadow-sm">
+            {isLoading ? (
+              <div className="p-6 space-y-3 min-w-[min(100%,1180px)]">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="animate-pulse flex gap-4 justify-center items-center"
                   >
-                    <p className="text-sm font-semibold text-primary truncate">
-                      {v.company_name}
-                    </p>
-                    <p className="text-xs text-muted break-all mt-0.5">
-                      {v.email} · {v.contact_number} · {v.city}
-                    </p>
-                    <p className="text-xs text-secondary mt-1">
-                      GSTIN: {v.gst_number}
-                      {v.gst_verified ? ' ✓' : ''}
-                    </p>
-                    {v.categories.length > 0 && (
-                      <p className="text-xs text-secondary mt-1">
-                        Categories:{' '}
-                        {v.categories.map((c) => c.name).join(', ')}
-                      </p>
-                    )}
-                  </button>
-                  <span className={vendorStatusBadgeClass(v.status)}>
-                    {v.status.charAt(0).toUpperCase() + v.status.slice(1)}
-                  </span>
-                </div>
-                <div className="flex gap-2 flex-wrap mt-3">
-                  {v.status === 'pending' && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => quickStatusUpdate(v.id, 'active')}
-                        className="btn-base btn-primary text-xs px-4 py-1.5 min-h-[44px]"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => quickStatusUpdate(v.id, 'rejected')}
-                        className="btn-base btn-danger text-xs px-4 py-1.5 min-h-[44px]"
-                      >
-                        Reject
-                      </button>
-                    </>
-                  )}
-                  {v.status === 'active' && (
-                    <button
-                      type="button"
-                      onClick={() => quickStatusUpdate(v.id, 'suspended')}
-                      className="btn-base btn-danger text-xs px-4 py-1.5 min-h-[44px]"
-                    >
-                      Suspend
-                    </button>
-                  )}
-                  {v.status === 'suspended' && (
-                    <button
-                      type="button"
-                      onClick={() => quickStatusUpdate(v.id, 'active')}
-                      className="btn-base btn-success text-xs px-4 py-1.5 min-h-[44px]"
-                    >
-                      Reactivate
-                    </button>
-                  )}
-                  <Link
-                    to={adminVendorDetail(v.id)}
-                    className="btn-base btn-ghost text-xs px-4 py-1.5 min-h-[44px]"
-                  >
-                    View
-                  </Link>
-                </div>
+                    <div className="h-4 w-28 bg-surface rounded shrink-0" />
+                    <div className="h-4 w-40 bg-surface rounded shrink-0" />
+                    <div className="h-4 w-24 bg-surface rounded shrink-0" />
+                    <div className="h-4 w-32 bg-surface rounded shrink-0" />
+                    <div className="h-4 w-16 bg-surface rounded shrink-0" />
+                    <div className="h-4 w-20 bg-surface rounded shrink-0" />
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <table className="w-full min-w-[1180px] table-fixed border-collapse text-sm">
+                <colgroup>
+                  <col className="w-[13%]" />
+                  <col className="w-[17%]" />
+                  <col className="w-[13%]" />
+                  <col className="w-[24%]" />
+                  <col className="w-[9%]" />
+                  <col className="w-[25%]" />
+                </colgroup>
+                <thead>
+                  <tr className="border-b border-gray-200 bg-surface text-xs font-semibold uppercase tracking-wide text-muted">
+                    <th className="px-3 py-3 text-center align-middle">
+                      Company
+                    </th>
+                    <th className="px-3 py-3 text-center align-middle">
+                      Contact
+                    </th>
+                    <th className="px-3 py-3 text-center align-middle whitespace-nowrap">
+                      GSTIN
+                    </th>
+                    <th className="px-3 py-3 text-center align-middle">
+                      Categories
+                    </th>
+                    <th className="px-3 py-3 text-center align-middle">
+                      Status
+                    </th>
+                    <th className="px-3 py-3 text-center align-middle whitespace-nowrap">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {vendors.map((v) => {
+                    const categoryLabel =
+                      v.categories.length > 0
+                        ? v.categories.map((c) => c.name).join(', ')
+                        : '—'
+                    return (
+                      <tr
+                        key={v.id}
+                        className="hover:bg-surface/50 transition-colors"
+                      >
+                        <td className="px-3 py-4 align-middle text-center">
+                          <Link
+                            to={adminVendorDetail(v.id)}
+                            className="font-medium text-primary hover:underline inline-block max-w-full break-words"
+                          >
+                            {v.company_name}
+                          </Link>
+                        </td>
+                        <td className="px-3 py-4 align-middle text-center text-secondary text-xs">
+                          <div className="mx-auto space-y-1 max-w-full">
+                            <div className="break-all">{v.email}</div>
+                            <div className="tabular-nums">{v.contact_number}</div>
+                            <div>{v.city}</div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-4 align-middle text-center font-mono text-xs whitespace-nowrap">
+                          {v.gst_number}
+                          {v.gst_verified ? (
+                            <span
+                              className="text-success ml-0.5"
+                              title="Verified"
+                            >
+                              ✓
+                            </span>
+                          ) : null}
+                        </td>
+                        <td
+                          className="px-3 py-4 align-middle text-center text-xs text-secondary"
+                          title={categoryLabel !== '—' ? categoryLabel : undefined}
+                        >
+                          <p className="line-clamp-3 break-words hyphens-auto">
+                            {categoryLabel}
+                          </p>
+                        </td>
+                        <td className="px-3 py-4 align-middle text-center">
+                          <span className={vendorStatusBadgeClass(v.status)}>
+                            {v.status.charAt(0).toUpperCase() +
+                              v.status.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-4 align-middle text-center whitespace-nowrap">
+                          <div className="inline-flex flex-nowrap items-center justify-center gap-2">
+                            {v.status === 'pending' && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    quickStatusUpdate(v.id, 'active')
+                                  }
+                                  className="badge badge-completed cursor-pointer border-0 transition-opacity hover:opacity-90"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    quickStatusUpdate(v.id, 'rejected')
+                                  }
+                                  className="badge badge-cancelled cursor-pointer border-0 transition-opacity hover:opacity-90"
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                            {v.status === 'active' && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  quickStatusUpdate(v.id, 'suspended')
+                                }
+                                className="badge badge-cancelled cursor-pointer border-0 transition-opacity hover:opacity-90"
+                              >
+                                Suspend
+                              </button>
+                            )}
+                            {v.status === 'suspended' && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  quickStatusUpdate(v.id, 'active')
+                                }
+                                className="badge badge-completed cursor-pointer border-0 transition-opacity hover:opacity-90"
+                              >
+                                Reactivate
+                              </button>
+                            )}
+                            <Link
+                              to={adminVendorDetail(v.id)}
+                              className="badge badge-completed no-underline transition-opacity hover:opacity-90"
+                            >
+                              View
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                  {vendors.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-4 py-10 text-center text-sm text-muted"
+                      >
+                        No vendors found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
 
-          <div className="flex items-center justify-between text-xs text-muted">
-            <span>
-              Page {page} of {totalPages} · {total} vendors
-            </span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="btn-base btn-ghost px-4 py-1.5 min-h-[44px] disabled:opacity-40"
-              >
-                Prev
-              </button>
-              <button
-                type="button"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="btn-base btn-ghost px-4 py-1.5 min-h-[44px] disabled:opacity-40"
-              >
-                Next
-              </button>
+          {!isLoading && vendors.length > 0 && (
+            <div className="flex items-center justify-between text-xs text-muted">
+              <span>
+                Page {page} of {totalPages} · {total} vendors
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="btn-base btn-ghost px-4 py-1.5 min-h-[44px] disabled:opacity-40"
+                >
+                  Prev
+                </button>
+                <button
+                  type="button"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="btn-base btn-ghost px-4 py-1.5 min-h-[44px] disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </>
       )}
     </div>
