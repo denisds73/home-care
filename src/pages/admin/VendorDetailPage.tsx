@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import Modal from '../../components/common/Modal'
 import { vendorService } from '../../services/vendorService'
 import { CATEGORIES } from '../../data/categories'
@@ -17,18 +17,17 @@ const GST_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/
 
 export default function VendorDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const showToast = useStore((s) => s.showToast)
 
   const [vendor, setVendor] = useState<Vendor | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-  const [confirmAction, setConfirmAction] = useState<
-    | { type: 'status'; status: VendorStatus; label: string }
-    | { type: 'delete' }
-    | null
-  >(null)
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'status'
+    status: VendorStatus
+    label: string
+  } | null>(null)
 
   // editable fields (initialized when vendor loads)
   const [companyName, setCompanyName] = useState('')
@@ -172,21 +171,6 @@ export default function VendorDetailPage() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!id) return
-    try {
-      await vendorService.remove(id)
-      showToast('Vendor deleted', 'success')
-      navigate('/admin/vendors')
-    } catch (err) {
-      showToast(
-        err instanceof Error ? err.message : 'Failed to delete vendor',
-        'danger',
-      )
-      setConfirmAction(null)
-    }
-  }
-
   if (isLoading) {
     return (
       <div className="fade-in mx-auto w-full max-w-3xl space-y-4">
@@ -236,91 +220,73 @@ export default function VendorDetailPage() {
         </div>
       </div>
 
-      {/* Status actions */}
-      <div className="glass-card p-4 flex flex-wrap gap-2">
-        {vendor.status === 'pending' && (
-          <>
+      {/* Suspend active vendors from the list; edit page handles other statuses */}
+      {(vendor.status === 'pending' ||
+        vendor.status === 'suspended' ||
+        vendor.status === 'rejected') && (
+        <div className="glass-card p-4 flex flex-wrap gap-2">
+          {vendor.status === 'pending' && (
+            <>
+              <button
+                type="button"
+                onClick={() =>
+                  setConfirmAction({
+                    type: 'status',
+                    status: 'active',
+                    label: 'Approve this vendor',
+                  })
+                }
+                className="btn-base btn-primary text-xs px-4 py-1.5 min-h-[44px]"
+              >
+                Approve
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setConfirmAction({
+                    type: 'status',
+                    status: 'rejected',
+                    label: 'Reject this vendor application',
+                  })
+                }
+                className="btn-base btn-danger text-xs px-4 py-1.5 min-h-[44px]"
+              >
+                Reject
+              </button>
+            </>
+          )}
+          {vendor.status === 'suspended' && (
             <button
               type="button"
               onClick={() =>
                 setConfirmAction({
                   type: 'status',
                   status: 'active',
-                  label: 'Approve this vendor',
+                  label: 'Reactivate this vendor',
                 })
               }
-              className="btn-base btn-primary text-xs px-4 py-1.5 min-h-[44px]"
+              className="btn-base btn-success text-xs px-4 py-1.5 min-h-[44px]"
             >
-              Approve
+              Reactivate
             </button>
+          )}
+          {vendor.status === 'rejected' && (
             <button
               type="button"
               onClick={() =>
                 setConfirmAction({
                   type: 'status',
-                  status: 'rejected',
-                  label: 'Reject this vendor application',
+                  status: 'pending',
+                  label: 'Move vendor back to pending',
                 })
               }
-              className="btn-base btn-danger text-xs px-4 py-1.5 min-h-[44px]"
+              className="btn-base btn-ghost text-xs px-4 py-1.5 min-h-[44px]"
             >
-              Reject
+              Move to Pending
             </button>
-          </>
-        )}
-        {vendor.status === 'active' && (
-          <button
-            type="button"
-            onClick={() =>
-              setConfirmAction({
-                type: 'status',
-                status: 'suspended',
-                label: 'Suspend this active vendor',
-              })
-            }
-            className="btn-base btn-danger text-xs px-4 py-1.5 min-h-[44px]"
-          >
-            Suspend
-          </button>
-        )}
-        {vendor.status === 'suspended' && (
-          <button
-            type="button"
-            onClick={() =>
-              setConfirmAction({
-                type: 'status',
-                status: 'active',
-                label: 'Reactivate this vendor',
-              })
-            }
-            className="btn-base btn-success text-xs px-4 py-1.5 min-h-[44px]"
-          >
-            Reactivate
-          </button>
-        )}
-        {vendor.status === 'rejected' && (
-          <button
-            type="button"
-            onClick={() =>
-              setConfirmAction({
-                type: 'status',
-                status: 'pending',
-                label: 'Move vendor back to pending',
-              })
-            }
-            className="btn-base btn-ghost text-xs px-4 py-1.5 min-h-[44px]"
-          >
-            Move to Pending
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => setConfirmAction({ type: 'delete' })}
-          className="btn-base btn-danger text-xs px-4 py-1.5 min-h-[44px] ml-auto"
-        >
-          Delete Vendor
-        </button>
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Edit form */}
       <form onSubmit={handleSave} className="space-y-5" noValidate>
@@ -512,17 +478,9 @@ export default function VendorDetailPage() {
       >
         <div className="p-6 space-y-4">
           <h3 className="text-base font-semibold text-primary">
-            {confirmAction?.type === 'delete'
-              ? 'Delete vendor?'
-              : 'Confirm action'}
+            Confirm action
           </h3>
-          <p className="text-sm text-muted">
-            {confirmAction?.type === 'delete'
-              ? 'This permanently removes the vendor and cannot be undone.'
-              : confirmAction?.type === 'status'
-                ? confirmAction.label
-                : ''}
-          </p>
+          <p className="text-sm text-muted">{confirmAction?.label}</p>
           <div className="flex gap-3 justify-end flex-wrap">
             <button
               type="button"
@@ -535,8 +493,7 @@ export default function VendorDetailPage() {
               type="button"
               onClick={() => {
                 if (!confirmAction) return
-                if (confirmAction.type === 'delete') handleDelete()
-                else applyStatus(confirmAction.status)
+                void applyStatus(confirmAction.status)
               }}
               className="btn-base btn-danger text-sm px-4 py-2 min-h-[44px]"
             >
