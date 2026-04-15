@@ -4,6 +4,7 @@ import { DashboardSidebar } from './DashboardSidebar'
 import { DashboardTopBar } from './DashboardTopBar'
 import Toast from '../components/common/Toast'
 import ScrollToTop from '../components/common/ScrollToTop'
+import { GoogleMapsProvider } from '../components/maps'
 import {
   GridIcon,
   BriefcaseIcon,
@@ -56,29 +57,31 @@ export default function TechnicianLayout() {
   const title = PAGE_TITLES[location.pathname] ?? 'Technician'
 
   return (
-    <div className="theme-partner">
-      <ScrollToTop />
-      <DashboardSidebar
-        groups={TECHNICIAN_NAV}
-        logo={logo}
-        bottomItems={[]}
-        mobileOpen={mobileOpen}
-        onMobileClose={() => setMobileOpen(false)}
-      />
-      <div className="dashboard-content">
-        <DashboardTopBar
-          title={title}
-          onMenuClick={() => setMobileOpen(true)}
-          vendorNotifications={{
-            notificationsPath: '/technician/notifications',
-            bookingDetailPath: (id) => `/technician/jobs/${id}`,
-          }}
+    <GoogleMapsProvider>
+      <div className="theme-partner">
+        <ScrollToTop />
+        <DashboardSidebar
+          groups={TECHNICIAN_NAV}
+          logo={logo}
+          bottomItems={[]}
+          mobileOpen={mobileOpen}
+          onMobileClose={() => setMobileOpen(false)}
         />
-        <main className="p-4 md:p-6">
-          <Outlet />
-        </main>
+        <div className="dashboard-content">
+          <DashboardTopBar
+            title={title}
+            onMenuClick={() => setMobileOpen(true)}
+            vendorNotifications={{
+              notificationsPath: '/technician/notifications',
+              bookingDetailPath: (id) => `/technician/jobs/${id}`,
+            }}
+          />
+          <main className="p-4 md:p-6">
+            <Outlet />
+          </main>
+        </div>
+        <Toast />
       </div>
-      <Toast />
-    </div>
+    </GoogleMapsProvider>
   )
 }

@@ -192,6 +192,8 @@ export interface Address {
   state: string
   pincode: string
   landmark?: string
+  lat?: number
+  lng?: number
   isDefault: boolean
 }
 

@@ -49,12 +49,16 @@ function DraggablePin({ isDragging }: { isDragging: boolean }) {
  * Falls back to an OSM static embed when Google isn't available.
  */
 export const DraggableLocationMap = memo(function DraggableLocationMap({
-  lat,
-  lng,
+  lat: rawLat,
+  lng: rawLng,
   onLocationChange,
   height = '250px',
   className = '',
 }: DraggableLocationMapProps) {
+  const lat = typeof rawLat === 'string' ? parseFloat(rawLat as unknown as string) : rawLat
+  const lng = typeof rawLng === 'string' ? parseFloat(rawLng as unknown as string) : rawLng
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
   const [isDragging, setIsDragging] = useState(false)
 
   const handleDragEnd = useCallback(
@@ -93,7 +97,7 @@ export const DraggableLocationMap = memo(function DraggableLocationMap({
   return (
     <MapWithFallback lat={lat} lng={lng} height={height} className={className}>
       <div
-        className={`overflow-hidden rounded-xl border border-default shadow-sm relative ${className}`}
+        className={`overflow-hidden rounded-xl border border-default relative ${className}`}
         style={{ height }}
       >
         <Map

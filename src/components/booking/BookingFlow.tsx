@@ -1,4 +1,4 @@
-import { useState, useEffect, type Dispatch, type SetStateAction } from 'react'
+import { useState, useEffect, useCallback, useRef, type Dispatch, type SetStateAction } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import { useAuthStore } from '../../store/useAuthStore'
@@ -6,10 +6,14 @@ import { bookingService } from '../../services/bookingService'
 import { useLocationStore } from '../../store/useLocationStore'
 import { CATEGORIES } from '../../data/categories'
 import { calculatePricing } from '../../utils/pricing'
-import type { PaymentMode } from '../../types/domain'
+import type { PaymentMode, LocationData } from '../../types/domain'
 import RazorpayModal from './RazorpayModal'
 import { LOGIN_ROUTES } from '../../lib/auth'
 import { DatePicker } from '../common/DatePicker'
+import { PlacesAutocomplete } from '../maps'
+import { ImmersiveLocationMap } from '../maps/ImmersiveLocationMap'
+import { locationService } from '../../services/locationService'
+import { ENV } from '../../config/env'
 
 const DRAFT_KEY = 'hc_booking_draft'
 const stepLabels = ['Details', 'Payment', 'Done']
@@ -18,6 +22,8 @@ interface BookingDraft {
   name?: string
   phone?: string
   address?: string
+  lat?: number
+  lng?: number
   date?: string
   timeSlot?: string
 }
@@ -47,6 +53,103 @@ function StepIndicator({ current }: { current: number }) {
           )
         })}
       </div>
+    </div>
+  )
+}
+
+/** Address input with Places autocomplete + draggable map for precise pin placement. */
+function AddressPickerField({
+  booking,
+  setBooking,
+  savedLocation,
+  error,
+}: {
+  booking: BookingDraft
+  setBooking: Dispatch<SetStateAction<BookingDraft>>
+  savedLocation: LocationData | null
+  error?: string
+}) {
+  const handlePlaceSelect = useCallback(
+    (location: LocationData) => {
+      setBooking((b) => ({
+        ...b,
+        address: location.fullAddress,
+        lat: location.lat,
+        lng: location.lng,
+      }))
+    },
+    [setBooking],
+  )
+
+  const geocodeIdRef = useRef(0)
+
+  const handleMapDrag = useCallback(
+    async (lat: number, lng: number) => {
+      const thisCallId = ++geocodeIdRef.current
+      setBooking((b) => ({ ...b, lat, lng }))
+      try {
+        const result = await locationService.reverseGeocode(lat, lng)
+        if (geocodeIdRef.current !== thisCallId) return
+        setBooking((b) => ({ ...b, address: result.fullAddress }))
+      } catch {
+        // Keep existing address text if reverse geocode fails
+      }
+    },
+    [setBooking],
+  )
+
+  const mapLat = booking.lat ?? savedLocation?.lat ?? 12.9716
+  const mapLng = booking.lng ?? savedLocation?.lng ?? 77.5946
+  const hasCoords = booking.lat !== undefined && booking.lng !== undefined
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-secondary mb-1">
+        Address <span className="text-error">*</span>
+      </label>
+      {ENV.GOOGLE_PLACES_KEY ? (
+        <PlacesAutocomplete
+          value={booking.address || ''}
+          onChange={(value) => setBooking((b) => ({ ...b, address: value }))}
+          onSelect={handlePlaceSelect}
+          placeholder="Search for area, street name..."
+          error={!!error}
+        />
+      ) : (
+        <textarea
+          rows={2}
+          value={booking.address || ''}
+          onChange={(e) => setBooking((b) => ({ ...b, address: e.target.value }))}
+          className={`input-base w-full px-4 py-2.5 text-sm ${error ? 'border-red-400 ring-2 ring-red-100' : ''}`}
+          placeholder="Enter your complete address"
+        />
+      )}
+      {error && <p className="text-xs text-error mt-1">{error}</p>}
+      {savedLocation && booking.address !== savedLocation.fullAddress && (
+        <button
+          type="button"
+          onClick={() =>
+            setBooking((b) => ({
+              ...b,
+              address: savedLocation.fullAddress,
+              lat: savedLocation.lat,
+              lng: savedLocation.lng,
+            }))
+          }
+          className="text-xs text-brand font-medium mt-1 hover:underline"
+        >
+          Use saved location
+        </button>
+      )}
+      {hasCoords && (
+        <div className="mt-3 rounded-xl overflow-hidden border border-default" style={{ height: '200px' }}>
+          <ImmersiveLocationMap
+            lat={mapLat}
+            lng={mapLng}
+            onLocationChange={handleMapDrag}
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -129,22 +232,12 @@ function DetailsStep({
             placeholder="10-digit mobile number" inputMode="numeric" />
           {errors.phone && <p className="text-xs text-error mt-1">{errors.phone}</p>}
         </div>
-        <div>
-          <label className="block text-sm font-medium text-secondary mb-1">Address <span className="text-error">*</span></label>
-          <textarea rows={2} value={booking.address || ''} onChange={e => setBooking(b => ({ ...b, address: e.target.value }))}
-            className={`input-base w-full px-4 py-2.5 text-sm ${errors.address ? 'border-red-400 ring-2 ring-red-100' : ''}`}
-            placeholder="Enter your complete address" />
-          {errors.address && <p className="text-xs text-error mt-1">{errors.address}</p>}
-          {savedLocation && booking.address !== savedLocation.fullAddress && (
-            <button
-              type="button"
-              onClick={() => setBooking(b => ({ ...b, address: savedLocation.fullAddress }))}
-              className="text-xs text-brand font-medium mt-1 hover:underline"
-            >
-              Use saved location
-            </button>
-          )}
-        </div>
+        <AddressPickerField
+          booking={booking}
+          setBooking={setBooking}
+          savedLocation={savedLocation}
+          error={errors.address}
+        />
         <DatePicker
           id="booking-date"
           label="Preferred Date"
@@ -456,10 +549,13 @@ export default function BookingFlow() {
       localStorage.removeItem(DRAFT_KEY)
       try { return JSON.parse(saved) as BookingDraft } catch { /* fall through */ }
     }
+    const loc = useLocationStore.getState().location
     return {
       name: user?.name ?? '',
       phone: user?.phone ?? '',
-      address: useLocationStore.getState().location?.fullAddress ?? '',
+      address: loc?.fullAddress ?? '',
+      lat: loc?.lat,
+      lng: loc?.lng,
       date: '',
       timeSlot: '',
     }
@@ -554,8 +650,8 @@ export default function BookingFlow() {
       customer_name: booking.name ?? '',
       phone: booking.phone ?? '',
       address: booking.address ?? '',
-      lat: Number(useLocationStore.getState().location?.lat ?? 12.9716),
-      lng: Number(useLocationStore.getState().location?.lng ?? 77.5946),
+      lat: Number(booking.lat ?? useLocationStore.getState().location?.lat ?? 12.9716),
+      lng: Number(booking.lng ?? useLocationStore.getState().location?.lng ?? 77.5946),
       category: categories.length === 1 ? categories[0] : categories.join(','),
       service_id: cart.length === 1 ? cart[0].service.id : undefined,
       service_name: cart.map(c => c.service.service_name).join(', '),

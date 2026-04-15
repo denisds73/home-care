@@ -1,7 +1,9 @@
-import { memo, useState } from 'react'
+import { memo, useState, useCallback } from 'react'
 import Modal from '../common/Modal'
-import type { Address } from '../../types/domain'
+import type { Address, LocationData } from '../../types/domain'
 import Dropdown from '../common/Dropdown'
+import { PlacesAutocomplete } from '../maps'
+import { ENV } from '../../config/env'
 
 interface AddressFormModalProps {
   isOpen: boolean
@@ -20,6 +22,8 @@ interface FormState {
   city: string
   state: string
   pincode: string
+  lat?: number
+  lng?: number
   isDefault: boolean
 }
 
@@ -40,6 +44,15 @@ export const AddressFormModal = memo(
     const [touched, setTouched] = useState(false)
     const [lastOpenKey, setLastOpenKey] = useState<string | null>(null)
 
+    const handlePlaceSelect = useCallback((location: LocationData) => {
+      setForm((f) => ({
+        ...f,
+        line1: location.fullAddress,
+        lat: location.lat,
+        lng: location.lng,
+      }))
+    }, [])
+
     const openKey = isOpen ? (initial?.id ?? 'new') : null
     if (openKey !== null && openKey !== lastOpenKey) {
       setLastOpenKey(openKey)
@@ -53,6 +66,8 @@ export const AddressFormModal = memo(
               city: initial.city,
               state: initial.state,
               pincode: initial.pincode,
+              lat: initial.lat,
+              lng: initial.lng,
               isDefault: initial.isDefault,
             }
           : EMPTY,
@@ -82,6 +97,8 @@ export const AddressFormModal = memo(
         city: form.city.trim(),
         state: form.state.trim(),
         pincode: form.pincode.trim(),
+        lat: form.lat,
+        lng: form.lng,
         isDefault: form.isDefault,
       })
     }
@@ -136,18 +153,30 @@ export const AddressFormModal = memo(
               >
                 Address Line 1
               </label>
-              <input
-                id="addr-line1"
-                type="text"
-                value={form.line1}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, line1: e.target.value }))
-                }
-                maxLength={120}
-                className={`input-base w-full px-3 py-2.5 text-sm ${
-                  touched && errors.line1 ? 'field-invalid' : ''
-                }`}
-              />
+              {ENV.GOOGLE_PLACES_KEY ? (
+                <PlacesAutocomplete
+                  value={form.line1}
+                  onChange={(value) =>
+                    setForm((f) => ({ ...f, line1: value }))
+                  }
+                  onSelect={handlePlaceSelect}
+                  placeholder="Search for area, street name..."
+                  error={touched && !!errors.line1}
+                />
+              ) : (
+                <input
+                  id="addr-line1"
+                  type="text"
+                  value={form.line1}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, line1: e.target.value }))
+                  }
+                  maxLength={120}
+                  className={`input-base w-full px-3 py-2.5 text-sm ${
+                    touched && errors.line1 ? 'field-invalid' : ''
+                  }`}
+                />
+              )}
               {touched && errors.line1 && (
                 <span className="text-xs text-error">{errors.line1}</span>
               )}

@@ -4,6 +4,7 @@ import { DashboardSidebar } from './DashboardSidebar'
 import { DashboardTopBar } from './DashboardTopBar'
 import Toast from '../components/common/Toast'
 import ScrollToTop from '../components/common/ScrollToTop'
+import { GoogleMapsProvider } from '../components/maps'
 import {
   GridIcon,
   ClipboardIcon,
@@ -83,27 +84,29 @@ export default function AdminLayout() {
   const title = PAGE_TITLES[location.pathname] || 'Admin'
 
   return (
-    <div className="theme-admin">
-      <ScrollToTop />
-      <DashboardSidebar
-        groups={ADMIN_NAV}
-        logo={logo}
-        bottomItems={ADMIN_BOTTOM}
-        mobileOpen={mobileOpen}
-        onMobileClose={() => setMobileOpen(false)}
-      />
-      <div className="dashboard-content">
-        {/* Bell polls /notifications every 30s while admin is logged in (any admin route). */}
-        <DashboardTopBar
-          title={title}
-          onMenuClick={() => setMobileOpen(true)}
-          adminNotificationsEnabled
+    <GoogleMapsProvider>
+      <div className="theme-admin">
+        <ScrollToTop />
+        <DashboardSidebar
+          groups={ADMIN_NAV}
+          logo={logo}
+          bottomItems={ADMIN_BOTTOM}
+          mobileOpen={mobileOpen}
+          onMobileClose={() => setMobileOpen(false)}
         />
-        <main className="p-4 md:p-6">
-          <Outlet />
-        </main>
+        <div className="dashboard-content">
+          {/* Bell polls /notifications every 30s while admin is logged in (any admin route). */}
+          <DashboardTopBar
+            title={title}
+            onMenuClick={() => setMobileOpen(true)}
+            adminNotificationsEnabled
+          />
+          <main className="p-4 md:p-6">
+            <Outlet />
+          </main>
+        </div>
+        <Toast />
       </div>
-      <Toast />
-    </div>
+    </GoogleMapsProvider>
   )
 }
