@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { Link, useSearchParams } from 'react-router-dom'
 import Dropdown, { type DropdownOption } from '../../components/common/Dropdown'
 import Modal from '../../components/common/Modal'
@@ -36,13 +35,10 @@ function formatVendorDate(iso: string) {
   })
 }
 
-function VendorReadOnlyPanel({
-  vendor,
-  onClose,
-}: {
-  vendor: Vendor
-  onClose: () => void
-}) {
+const VENDOR_VIEW_FIELD_LABEL =
+  'text-[0.65rem] font-bold uppercase tracking-wide text-black'
+
+function VendorViewDialogContent({ vendor }: { vendor: Vendor }) {
   const categoryLabel =
     vendor.categories.length > 0
       ? vendor.categories.map((c) => c.name).join(', ')
@@ -50,168 +46,88 @@ function VendorReadOnlyPanel({
 
   return (
     <>
-      <button
-        type="button"
-        className="fixed inset-0 z-[60] cursor-default border-0 bg-black/40 p-0"
-        aria-label="Close panel"
-        onClick={onClose}
-      />
-      <aside
-        className="fixed top-0 right-0 z-[62] flex h-full w-full max-w-md flex-col bg-card shadow-2xl border-l border-default"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="vendor-view-title"
-      >
-        <div className="flex items-start justify-between gap-3 border-b border-default px-5 py-4 shrink-0">
-          <div className="min-w-0">
-            <h2
-              id="vendor-view-title"
-              className="font-brand text-lg font-bold text-primary truncate"
-            >
-              {vendor.company_name}
-            </h2>
-            <p className="text-xs text-muted mt-0.5">Read-only details</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-9 h-9 rounded-full bg-muted hover:bg-border flex items-center justify-center transition-colors shrink-0 text-secondary hover:text-primary"
-            aria-label="Close panel"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
-              aria-hidden
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+      <p className="text-xs font-bold text-secondary -mt-1 mb-1">
+        Read-only details
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 pt-1">
+        <div>
+          <p className={VENDOR_VIEW_FIELD_LABEL}>Status</p>
+          <p className="mt-1">
+            <span className={vendorStatusBadgeClass(vendor.status)}>
+              {vendor.status.charAt(0).toUpperCase() +
+                vendor.status.slice(1)}
+            </span>
+          </p>
         </div>
-
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
-          <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted">
-              Status
-            </p>
-            <p className="mt-1">
-              <span className={vendorStatusBadgeClass(vendor.status)}>
-                {vendor.status.charAt(0).toUpperCase() +
-                  vendor.status.slice(1)}
+        <div>
+          <p className={VENDOR_VIEW_FIELD_LABEL}>Contact</p>
+          <p className="text-sm text-primary mt-1 tabular-nums">
+            {vendor.contact_number}
+          </p>
+        </div>
+        <div className="sm:col-span-2">
+          <p className={VENDOR_VIEW_FIELD_LABEL}>Email</p>
+          <p className="text-sm text-primary break-all mt-1">{vendor.email}</p>
+        </div>
+        <div>
+          <p className={VENDOR_VIEW_FIELD_LABEL}>City</p>
+          <p className="text-sm text-primary mt-1">{vendor.city}</p>
+        </div>
+        <div>
+          <p className={VENDOR_VIEW_FIELD_LABEL}>GSTIN</p>
+          <p className="text-sm font-mono text-primary mt-1">
+            {vendor.gst_number}
+            {vendor.gst_verified ? (
+              <span className="text-success ml-1 text-xs" title="Verified">
+                ✓ Verified
               </span>
-            </p>
-          </div>
-          <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted">
-              Email
-            </p>
-            <p className="text-sm text-primary break-all mt-1">{vendor.email}</p>
-          </div>
-          <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted">
-              Contact
-            </p>
-            <p className="text-sm text-primary mt-1 tabular-nums">
-              {vendor.contact_number}
-            </p>
-          </div>
-          <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted">
-              City
-            </p>
-            <p className="text-sm text-primary mt-1">{vendor.city}</p>
-          </div>
-          <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted">
-              PIN codes
-            </p>
-            <div className="mt-1 flex flex-wrap gap-1.5">
-              {(vendor.pin_codes ?? []).length === 0 ? (
-                <span className="text-sm text-muted">—</span>
-              ) : (
-                vendor.pin_codes.map((pin) => (
-                  <span
-                    key={pin}
-                    className="badge badge-confirmed text-[0.7rem] py-0.5"
-                  >
-                    {pin}
-                  </span>
-                ))
-              )}
-            </div>
-          </div>
-          <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted">
-              GSTIN
-            </p>
-            <p className="text-sm font-mono mt-1">
-              {vendor.gst_number}
-              {vendor.gst_verified ? (
-                <span className="text-success ml-1 text-xs" title="Verified">
-                  ✓ Verified
+            ) : null}
+          </p>
+        </div>
+        <div className="sm:col-span-2">
+          <p className={VENDOR_VIEW_FIELD_LABEL}>PIN codes</p>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {(vendor.pin_codes ?? []).length === 0 ? (
+              <span className="text-sm text-muted">—</span>
+            ) : (
+              vendor.pin_codes.map((pin) => (
+                <span
+                  key={pin}
+                  className="badge badge-confirmed text-[0.7rem] py-0.5"
+                >
+                  {pin}
                 </span>
-              ) : null}
+              ))
+            )}
+          </div>
+        </div>
+        <div className="sm:col-span-2">
+          <p className={VENDOR_VIEW_FIELD_LABEL}>Categories</p>
+          <p className="text-sm text-secondary mt-1">{categoryLabel}</p>
+        </div>
+        {vendor.notes?.trim() ? (
+          <div className="sm:col-span-2">
+            <p className={VENDOR_VIEW_FIELD_LABEL}>Admin notes</p>
+            <p className="text-sm text-secondary mt-1 whitespace-pre-wrap">
+              {vendor.notes}
+            </p>
+          </div>
+        ) : null}
+        <div className="sm:col-span-2 border-t border-default pt-4 mt-1 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+          <div>
+            <p className={VENDOR_VIEW_FIELD_LABEL}>Onboarded</p>
+            <p className="text-sm text-muted mt-1">
+              {formatVendorDate(vendor.created_at)}
             </p>
           </div>
           <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted">
-              Categories
+            <p className={VENDOR_VIEW_FIELD_LABEL}>Last updated</p>
+            <p className="text-sm text-muted mt-1">
+              {formatVendorDate(vendor.updated_at)}
             </p>
-            <p className="text-sm text-secondary mt-1">{categoryLabel}</p>
-          </div>
-          {vendor.notes?.trim() ? (
-            <div>
-              <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted">
-                Admin notes
-              </p>
-              <p className="text-sm text-secondary mt-1 whitespace-pre-wrap">
-                {vendor.notes}
-              </p>
-            </div>
-          ) : null}
-          <div className="grid grid-cols-1 gap-3 pt-2 border-t border-default">
-            <div>
-              <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted">
-                Onboarded
-              </p>
-              <p className="text-sm text-muted mt-1">
-                {formatVendorDate(vendor.created_at)}
-              </p>
-            </div>
-            <div>
-              <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted">
-                Last updated
-              </p>
-              <p className="text-sm text-muted mt-1">
-                {formatVendorDate(vendor.updated_at)}
-              </p>
-            </div>
           </div>
         </div>
-
-        <div className="border-t border-default p-4 flex flex-wrap gap-2 shrink-0">
-          <Link
-            to={adminVendorDetail(vendor.id)}
-            onClick={onClose}
-            className="btn-base btn-primary text-sm px-4 py-2 min-h-[44px]"
-          >
-            Edit vendor
-          </Link>
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn-base btn-ghost text-sm px-4 py-2 min-h-[44px]"
-          >
-            Close
-          </button>
-        </div>
-      </aside>
+      </div>
     </>
   )
 }
@@ -261,24 +177,6 @@ export default function VendorListPage() {
   useEffect(() => {
     setStatusFilter(parseVendorStatusQuery(searchParams.get('status')))
   }, [searchParams])
-
-  useEffect(() => {
-    if (!viewVendor) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setViewVendor(null)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [viewVendor])
-
-  useEffect(() => {
-    if (!viewVendor) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [viewVendor])
 
   const setStatusTab = (key: VendorStatus | '') => {
     setStatusFilter(key)
@@ -606,19 +504,20 @@ export default function VendorListPage() {
         </>
       )}
 
-      {viewVendor &&
-        typeof document !== 'undefined' &&
-        createPortal(
-          <VendorReadOnlyPanel
-            vendor={viewVendor}
-            onClose={() => setViewVendor(null)}
-          />,
-          document.body,
-        )}
+      <Modal
+        isOpen={viewVendor !== null}
+        onClose={() => setViewVendor(null)}
+        title={viewVendor?.company_name ?? 'Vendor'}
+        maxWidth="max-w-xl"
+        overlay="layout"
+      >
+        {viewVendor ? <VendorViewDialogContent vendor={viewVendor} /> : null}
+      </Modal>
 
       <Modal
         isOpen={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
+        overlay="layout"
       >
         <div className="p-6 space-y-4">
           <h3 className="text-base font-semibold text-primary">
