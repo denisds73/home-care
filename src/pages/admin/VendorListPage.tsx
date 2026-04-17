@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { VendorCreateForm } from '../../components/admin/VendorCreateForm'
+import { VendorEditForm } from '../../components/admin/VendorEditForm'
 import Dropdown, { type DropdownOption } from '../../components/common/Dropdown'
 import Modal from '../../components/common/Modal'
 import { vendorService } from '../../services/vendorService'
 import useStore from '../../store/useStore'
 import type { Vendor, VendorStatus } from '../../types/domain'
 import { vendorStatusBadgeClass } from '../../utils/vendorStatus'
-import {
-  adminVendorDetail,
-  ADMIN_VENDORS_NEW,
-  parseVendorStatusQuery,
-} from '../../lib/adminRoutes'
+import { adminVendorDetail, parseVendorStatusQuery } from '../../lib/adminRoutes'
 
 const STATUS_TABS: Array<{ key: VendorStatus | ''; label: string }> = [
   { key: '', label: 'All' },
@@ -150,6 +148,11 @@ export default function VendorListPage() {
     company_name: string
   } | null>(null)
   const [viewVendor, setViewVendor] = useState<Vendor | null>(null)
+  const [addVendorOpen, setAddVendorOpen] = useState(false)
+  const [editVendor, setEditVendor] = useState<{
+    id: string
+    company_name: string
+  } | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -236,12 +239,13 @@ export default function VendorListPage() {
             Manage vendor companies providing services on the platform.
           </p>
         </div>
-        <Link
-          to={ADMIN_VENDORS_NEW}
+        <button
+          type="button"
+          onClick={() => setAddVendorOpen(true)}
           className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px]"
         >
           + Onboard New Vendor
-        </Link>
+        </button>
       </div>
 
       <div className="glass-card p-4">
@@ -437,12 +441,18 @@ export default function VendorListPage() {
                             >
                               View
                             </button>
-                            <Link
-                              to={adminVendorDetail(v.id)}
-                              className="badge badge-completed no-underline transition-opacity hover:opacity-90"
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditVendor({
+                                  id: v.id,
+                                  company_name: v.company_name,
+                                })
+                              }
+                              className="badge badge-completed cursor-pointer border-0 transition-opacity hover:opacity-90"
                             >
                               Edit
-                            </Link>
+                            </button>
                             <button
                               type="button"
                               onClick={() => {
@@ -512,6 +522,48 @@ export default function VendorListPage() {
         overlay="layout"
       >
         {viewVendor ? <VendorViewDialogContent vendor={viewVendor} /> : null}
+      </Modal>
+
+      <Modal
+        isOpen={addVendorOpen}
+        onClose={() => setAddVendorOpen(false)}
+        title="Onboard New Vendor"
+        maxWidth="max-w-3xl"
+        overlay="layout"
+      >
+        <VendorCreateForm
+          variant="dialog"
+          onCancelDialog={() => setAddVendorOpen(false)}
+          onCreated={() => {
+            setAddVendorOpen(false)
+            void load()
+          }}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={editVendor !== null}
+        onClose={() => setEditVendor(null)}
+        title={
+          editVendor
+            ? `Edit · ${editVendor.company_name}`
+            : 'Edit vendor'
+        }
+        maxWidth="max-w-3xl"
+        overlay="layout"
+      >
+        {editVendor ? (
+          <VendorEditForm
+            key={editVendor.id}
+            vendorId={editVendor.id}
+            variant="dialog"
+            onCloseDialog={() => setEditVendor(null)}
+            onSavedDialog={() => {
+              setEditVendor(null)
+              void load()
+            }}
+          />
+        ) : null}
       </Modal>
 
       <Modal
