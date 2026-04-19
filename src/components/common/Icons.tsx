@@ -349,6 +349,15 @@ export const TrashIcon = multiIcon(
   'TrashIcon',
 )
 
+export const XCircleIcon = multiIcon(
+  [
+    'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z',
+    'M15 9l-6 6',
+    'M9 9l6 6',
+  ],
+  'XCircleIcon',
+)
+
 export const BellIcon = multiIcon(
   [
     'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9',

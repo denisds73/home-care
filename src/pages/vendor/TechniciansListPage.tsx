@@ -4,7 +4,9 @@ import { technicianService } from '../../services/technicianService'
 import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
 import { TechnicianCard, EmptyState } from '../../components/vendor'
-import { UsersIcon } from '../../components/common/Icons'
+import Tooltip from '../../components/common/Tooltip'
+import { BanIcon, CheckCircleIcon, PencilIcon, UsersIcon } from '../../components/common/Icons'
+import { adminRowIconAction } from '../../lib/adminRowIconActionStyles'
 import type { CategoryId, Technician, TechnicianStatus } from '../../types/domain'
 
 const STATUS_LABEL: Record<TechnicianStatus, string> = {
@@ -153,16 +155,45 @@ export default function TechniciansListPage() {
                         <span className={`badge ${STATUS_BADGE[t.status]}`}>{STATUS_LABEL[t.status]}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex gap-1.5">
-                          <Link to={`/vendor/technicians/${t.id}`} className="btn-base btn-ghost text-xs px-3 py-1 min-h-[36px]">Edit</Link>
-                          <button
-                            type="button"
-                            onClick={() => toggleStatus(t)}
-                            disabled={busyId === t.id}
-                            className="btn-base btn-secondary text-xs px-3 py-1 min-h-[36px] disabled:opacity-60"
+                        <div
+                          className="flex items-center gap-1 flex-wrap"
+                          role="group"
+                          aria-label={`Actions for ${t.full_name}`}
+                        >
+                          <Tooltip label="Edit technician">
+                            <Link
+                              to={`/vendor/technicians/${t.id}`}
+                              className={adminRowIconAction.edit}
+                              aria-label={`Edit ${t.full_name}`}
+                            >
+                              <PencilIcon className="w-5 h-5 shrink-0" aria-hidden />
+                            </Link>
+                          </Tooltip>
+                          <Tooltip
+                            label={
+                              t.status === 'active'
+                                ? 'Deactivate technician'
+                                : 'Activate technician'
+                            }
                           >
-                            {t.status === 'active' ? 'Deactivate' : 'Activate'}
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => toggleStatus(t)}
+                              disabled={busyId === t.id}
+                              className={`${t.status === 'active' ? adminRowIconAction.restrict : adminRowIconAction.allow} disabled:opacity-60`}
+                              aria-label={
+                                t.status === 'active'
+                                  ? `Deactivate ${t.full_name}`
+                                  : `Activate ${t.full_name}`
+                              }
+                            >
+                              {t.status === 'active' ? (
+                                <BanIcon className="w-5 h-5 shrink-0" aria-hidden />
+                              ) : (
+                                <CheckCircleIcon className="w-5 h-5 shrink-0" aria-hidden />
+                              )}
+                            </button>
+                          </Tooltip>
                         </div>
                       </td>
                     </tr>

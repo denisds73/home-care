@@ -10,7 +10,17 @@ import type { Vendor, VendorStatus } from '../../types/domain'
 import { vendorStatusBadgeClass } from '../../utils/vendorStatus'
 import { adminVendorDetail, parseVendorStatusQuery } from '../../lib/adminRoutes'
 import { ListEmptyState } from '../../components/common/ListEmptyState'
-import { BriefcaseIcon } from '../../components/common/Icons'
+import Tooltip from '../../components/common/Tooltip'
+import {
+  BanIcon,
+  BriefcaseIcon,
+  CheckCircleIcon,
+  EyeIcon,
+  PencilIcon,
+  TrashIcon,
+  XCircleIcon,
+} from '../../components/common/Icons'
+import { adminRowIconAction } from '../../lib/adminRowIconActionStyles'
 
 const STATUS_TABS: Array<{ key: VendorStatus | ''; label: string }> = [
   { key: '', label: 'All' },
@@ -388,86 +398,111 @@ export default function VendorListPage() {
                           </span>
                         </td>
                         <td className="px-3 py-4 align-middle text-center">
-                          <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-2">
+                          <div
+                            className="inline-flex max-w-full flex-wrap items-center justify-center gap-1"
+                            role="group"
+                            aria-label={`Actions for ${v.company_name}`}
+                          >
                             {v.status === 'pending' && (
                               <>
+                                <Tooltip label="Approve vendor">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      quickStatusUpdate(v.id, 'active')
+                                    }
+                                    className={adminRowIconAction.allow}
+                                    aria-label={`Approve ${v.company_name}`}
+                                  >
+                                    <CheckCircleIcon className="w-5 h-5 shrink-0" aria-hidden />
+                                  </button>
+                                </Tooltip>
+                                <Tooltip label="Reject application">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      quickStatusUpdate(v.id, 'rejected')
+                                    }
+                                    className={adminRowIconAction.reject}
+                                    aria-label={`Reject ${v.company_name}`}
+                                  >
+                                    <XCircleIcon className="w-5 h-5 shrink-0" aria-hidden />
+                                  </button>
+                                </Tooltip>
+                              </>
+                            )}
+                            {v.status === 'active' && (
+                              <Tooltip label="Suspend vendor">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    quickStatusUpdate(v.id, 'suspended')
+                                  }
+                                  className={adminRowIconAction.restrict}
+                                  aria-label={`Suspend ${v.company_name}`}
+                                >
+                                  <BanIcon className="w-5 h-5 shrink-0" aria-hidden />
+                                </button>
+                              </Tooltip>
+                            )}
+                            {v.status === 'suspended' && (
+                              <Tooltip label="Reactivate vendor">
                                 <button
                                   type="button"
                                   onClick={() =>
                                     quickStatusUpdate(v.id, 'active')
                                   }
-                                  className="badge badge-completed cursor-pointer border-0 transition-opacity hover:opacity-90"
+                                  className={adminRowIconAction.allow}
+                                  aria-label={`Reactivate ${v.company_name}`}
                                 >
-                                  Approve
+                                  <CheckCircleIcon className="w-5 h-5 shrink-0" aria-hidden />
                                 </button>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    quickStatusUpdate(v.id, 'rejected')
-                                  }
-                                  className="badge badge-cancelled cursor-pointer border-0 transition-opacity hover:opacity-90"
-                                >
-                                  Reject
-                                </button>
-                              </>
+                              </Tooltip>
                             )}
-                            {v.status === 'active' && (
+                            <Tooltip label="View details">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDeleteTarget(null)
+                                  setViewVendor(v)
+                                }}
+                                className={adminRowIconAction.view}
+                                aria-label={`View ${v.company_name}`}
+                              >
+                                <EyeIcon className="w-5 h-5 shrink-0" aria-hidden />
+                              </button>
+                            </Tooltip>
+                            <Tooltip label="Edit vendor">
                               <button
                                 type="button"
                                 onClick={() =>
-                                  quickStatusUpdate(v.id, 'suspended')
+                                  setEditVendor({
+                                    id: v.id,
+                                    company_name: v.company_name,
+                                  })
                                 }
-                                className="badge badge-cancelled cursor-pointer border-0 transition-opacity hover:opacity-90"
+                                className={adminRowIconAction.edit}
+                                aria-label={`Edit ${v.company_name}`}
                               >
-                                Suspend
+                                <PencilIcon className="w-5 h-5 shrink-0" aria-hidden />
                               </button>
-                            )}
-                            {v.status === 'suspended' && (
+                            </Tooltip>
+                            <Tooltip label="Delete vendor permanently">
                               <button
                                 type="button"
-                                onClick={() =>
-                                  quickStatusUpdate(v.id, 'active')
-                                }
-                                className="badge badge-completed cursor-pointer border-0 transition-opacity hover:opacity-90"
+                                onClick={() => {
+                                  setViewVendor(null)
+                                  setDeleteTarget({
+                                    id: v.id,
+                                    company_name: v.company_name,
+                                  })
+                                }}
+                                className={adminRowIconAction.delete}
+                                aria-label={`Delete ${v.company_name}`}
                               >
-                                Reactivate
+                                <TrashIcon className="w-5 h-5 shrink-0" aria-hidden />
                               </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setDeleteTarget(null)
-                                setViewVendor(v)
-                              }}
-                              className="badge badge-confirmed cursor-pointer border-0 transition-opacity hover:opacity-90"
-                            >
-                              View
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setEditVendor({
-                                  id: v.id,
-                                  company_name: v.company_name,
-                                })
-                              }
-                              className="badge badge-completed cursor-pointer border-0 transition-opacity hover:opacity-90"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setViewVendor(null)
-                                setDeleteTarget({
-                                  id: v.id,
-                                  company_name: v.company_name,
-                                })
-                              }}
-                              className="badge badge-cancelled cursor-pointer border-0 transition-opacity hover:opacity-90"
-                            >
-                              Delete
-                            </button>
+                            </Tooltip>
                           </div>
                         </td>
                       </tr>

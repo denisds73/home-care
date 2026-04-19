@@ -17,6 +17,7 @@ import {
   PencilIcon,
   TrashIcon,
 } from '../../components/common/Icons'
+import { adminRowIconAction } from '../../lib/adminRowIconActionStyles'
 
 interface SvcForm {
   category: CategoryId | ''
@@ -464,7 +465,7 @@ export default function CatalogPage() {
                           <button
                             type="button"
                             onClick={() => void openViewDetail(svc)}
-                            className="inline-flex items-center justify-center rounded-lg p-2 min-h-[44px] min-w-[44px] text-secondary hover:bg-surface hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2"
+                            className={adminRowIconAction.view}
                             aria-label={`View ${svc.service_name}`}
                           >
                             <EyeIcon className="w-5 h-5 shrink-0" aria-hidden />
@@ -474,7 +475,7 @@ export default function CatalogPage() {
                           <button
                             type="button"
                             onClick={() => openEdit(svc)}
-                            className="inline-flex items-center justify-center rounded-lg p-2 min-h-[44px] min-w-[44px] text-brand hover:bg-brand-soft/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2"
+                            className={adminRowIconAction.edit}
                             aria-label={`Edit ${svc.service_name}`}
                           >
                             <PencilIcon className="w-5 h-5 shrink-0" aria-hidden />
@@ -487,9 +488,7 @@ export default function CatalogPage() {
                             type="button"
                             onClick={() => handleToggleActive(svc)}
                             className={
-                              svc.is_active
-                                ? 'inline-flex items-center justify-center rounded-lg p-2 min-h-[44px] min-w-[44px] text-amber-700 hover:bg-amber-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/45 focus-visible:ring-offset-2'
-                                : 'inline-flex items-center justify-center rounded-lg p-2 min-h-[44px] min-w-[44px] text-emerald-700 hover:bg-emerald-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2'
+                              svc.is_active ? adminRowIconAction.restrict : adminRowIconAction.allow
                             }
                             aria-label={
                               svc.is_active ? `Disable ${svc.service_name}` : `Enable ${svc.service_name}`
@@ -506,7 +505,7 @@ export default function CatalogPage() {
                           <button
                             type="button"
                             onClick={() => setDeleteId(svc.id)}
-                            className="inline-flex items-center justify-center rounded-lg p-2 min-h-[44px] min-w-[44px] text-red-600 hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/45 focus-visible:ring-offset-2"
+                            className={adminRowIconAction.delete}
                             aria-label={`Delete ${svc.service_name}`}
                           >
                             <TrashIcon className="w-5 h-5 shrink-0" aria-hidden />
