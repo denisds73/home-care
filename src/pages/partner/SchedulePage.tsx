@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { partnerService } from '../../services/partnerService'
 import useStore from '../../store/useStore'
 import type { Job } from '../../types/domain'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
+import { CalendarIcon } from '../../components/common/Icons'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -88,45 +90,51 @@ export default function SchedulePage() {
           </button>
         </div>
       ) : (
-        <>
-          {scheduleJobs.length > 0 && (
-            <div className="glass-card p-5">
-              <h2 className="text-sm font-semibold text-primary mb-3">
-                This Week's Jobs ({scheduleJobs.length})
-              </h2>
-              <div className="space-y-2">
-                {scheduleJobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-surface border border-default text-sm"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-primary truncate">
-                        {job.serviceName}
-                      </p>
-                      <p className="text-xs text-muted mt-0.5">
-                        {job.customerName} · {job.preferredDate}
-                      </p>
-                    </div>
-                    <span
-                      className={`badge ${
-                        job.status === 'completed'
-                          ? 'badge-completed'
-                          : job.status === 'in_progress'
-                            ? 'badge-in-progress'
-                            : job.status === 'accepted'
-                              ? 'badge-confirmed'
-                              : 'badge-pay-pending'
-                      }`}
-                    >
-                      {job.status.replace('_', ' ')}
-                    </span>
+        <div className="glass-card p-5">
+          <h2 className="text-sm font-semibold text-primary mb-3">
+            This Week&apos;s Jobs
+            {scheduleJobs.length > 0 ? ` (${scheduleJobs.length})` : ''}
+          </h2>
+          {scheduleJobs.length === 0 ? (
+            <ListEmptyState
+              icon={<CalendarIcon className="w-12 h-12" />}
+              title="No jobs this week"
+              description="Scheduled work will appear here when you have upcoming bookings."
+              variant="embedded"
+            />
+          ) : (
+            <div className="space-y-2">
+              {scheduleJobs.map((job) => (
+                <div
+                  key={job.id}
+                  className="flex items-center justify-between p-3 rounded-xl bg-surface border border-default text-sm"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-primary truncate">
+                      {job.serviceName}
+                    </p>
+                    <p className="text-xs text-muted mt-0.5">
+                      {job.customerName} · {job.preferredDate}
+                    </p>
                   </div>
-                ))}
-              </div>
+                  <span
+                    className={`badge ${
+                      job.status === 'completed'
+                        ? 'badge-completed'
+                        : job.status === 'in_progress'
+                          ? 'badge-in-progress'
+                          : job.status === 'accepted'
+                            ? 'badge-confirmed'
+                            : 'badge-pay-pending'
+                    }`}
+                  >
+                    {job.status.replace('_', ' ')}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
-        </>
+        </div>
       )}
 
       <div className="glass-card p-5">

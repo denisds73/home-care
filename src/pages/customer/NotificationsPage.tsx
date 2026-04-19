@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import useStore from '../../store/useStore'
 import { notificationService } from '../../services/notificationService'
 import { BellIcon } from '../../components/common/Icons'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
 import type { Notification } from '../../types/domain'
 import { useNotificationStore } from '../../store/useNotificationStore'
 
@@ -98,11 +99,11 @@ export default function NotificationsPage() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-6">
         <h1 className="font-brand text-xl font-bold text-primary mb-4">Notifications</h1>
-        <div className="glass-card no-hover p-10 text-center fade-in">
-          <BellIcon className="w-12 h-12 text-muted mx-auto mb-4" />
-          <h3 className="font-brand text-base font-bold text-primary">No notifications yet</h3>
-          <p className="text-muted text-sm mt-2">You will see your notifications here.</p>
-        </div>
+        <ListEmptyState
+          icon={<BellIcon className="w-12 h-12" />}
+          title="No notifications yet"
+          description="Booking updates, reminders, and alerts will appear here."
+        />
       </div>
     )
   }

@@ -1,10 +1,4 @@
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useState,
-  type ComponentType,
-} from 'react'
+import { memo, useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import useStore from '../../store/useStore'
 import { bookingService } from '../../services/bookingService'
@@ -15,6 +9,7 @@ import {
   CheckCircleIcon,
   BanIcon,
 } from '../../components/common/Icons'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
 import { TechnicianContactButtons } from '../../components/common/TechnicianContactButtons'
 import type { Booking, BookingStatus } from '../../types/domain'
 
@@ -114,39 +109,6 @@ const BookingCard = memo(function BookingCard({
   )
 })
 
-function EmptyState({ tab }: { tab: Tab }) {
-  const messages: Record<
-    Tab,
-    { Icon: ComponentType<{ className?: string }>; title: string; body: string }
-  > = {
-    upcoming: {
-      Icon: CalendarDaysIcon,
-      title: 'No upcoming bookings',
-      body: 'Book a service to get started.',
-    },
-    past: {
-      Icon: CheckCircleIcon,
-      title: 'No past bookings yet',
-      body: 'Your completed bookings will show here.',
-    },
-    cancelled: {
-      Icon: BanIcon,
-      title: 'No cancelled bookings',
-      body: "You haven't cancelled any bookings.",
-    },
-  }
-  const { Icon, title, body } = messages[tab]
-  return (
-    <div className="flex flex-col items-center justify-center py-16 text-center fade-in">
-      <Icon className="w-10 h-10 text-muted mx-auto mb-3" />
-      <h3 className="font-brand text-base font-semibold text-primary">
-        {title}
-      </h3>
-      <p className="text-muted text-sm mt-1">{body}</p>
-    </div>
-  )
-}
-
 const TABS: { key: Tab; label: string }[] = [
   { key: 'upcoming', label: 'Upcoming' },
   { key: 'past', label: 'Past' },
@@ -198,6 +160,35 @@ export default function MyBookingsPage() {
   )
 
   const filtered = filterByTab(bookings, activeTab)
+
+  const emptyForTab: Record<
+    Tab,
+    { icon: ReactNode; title: string; description: string; action?: ReactNode }
+  > = {
+    upcoming: {
+      icon: <CalendarDaysIcon className="w-12 h-12" />,
+      title: 'No upcoming bookings',
+      description: 'Book a service to get started.',
+      action: (
+        <Link
+          to="/app"
+          className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px] inline-flex"
+        >
+          Browse services
+        </Link>
+      ),
+    },
+    past: {
+      icon: <CheckCircleIcon className="w-12 h-12" />,
+      title: 'No past bookings yet',
+      description: 'Your completed bookings will show here.',
+    },
+    cancelled: {
+      icon: <BanIcon className="w-12 h-12" />,
+      title: 'No cancelled bookings',
+      description: "You haven't cancelled any bookings.",
+    },
+  }
 
   return (
     <main className="min-h-screen bg-surface">
@@ -253,7 +244,10 @@ export default function MyBookingsPage() {
         ) : (
           <section aria-label={`${activeTab} bookings`}>
             {filtered.length === 0 ? (
-              <EmptyState tab={activeTab} />
+              <ListEmptyState
+                {...emptyForTab[activeTab]}
+                variant="embedded"
+              />
             ) : (
               <div className="flex flex-col gap-3">
                 {filtered.map((booking) => (

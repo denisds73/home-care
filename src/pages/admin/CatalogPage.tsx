@@ -7,6 +7,8 @@ import Modal from '../../components/common/Modal'
 import { Pagination } from '../../components/common/Pagination'
 import type { CategoryId, Service } from '../../types/domain'
 import Dropdown from '../../components/common/Dropdown'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
+import { GridIcon } from '../../components/common/Icons'
 
 interface SvcForm {
   category: CategoryId | ''
@@ -293,6 +295,25 @@ export default function CatalogPage() {
             ))}
           </div>
         </div>
+      ) : services.length === 0 ? (
+        <ListEmptyState
+          icon={<GridIcon className="w-12 h-12" />}
+          title={categoryFilter ? 'No services in this category' : 'No services in the catalog'}
+          description={
+            categoryFilter
+              ? 'Try choosing “All Categories” or add a new service for this category.'
+              : 'Add your first service so customers can book it on the platform.'
+          }
+          action={
+            <button
+              type="button"
+              onClick={openAdd}
+              className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px] inline-flex"
+            >
+              + Add Service
+            </button>
+          }
+        />
       ) : (
         <>
           <div className="glass-card overflow-x-auto">
@@ -391,9 +412,6 @@ export default function CatalogPage() {
                 ))}
               </tbody>
             </table>
-            {services.length === 0 && (
-              <p className="text-center py-8 text-sm text-muted">No services found</p>
-            )}
           </div>
           <Pagination page={page} limit={PAGE_SIZE} total={services.length} onPageChange={setPage} />
         </>

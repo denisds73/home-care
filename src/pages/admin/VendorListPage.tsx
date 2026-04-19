@@ -9,6 +9,8 @@ import useStore from '../../store/useStore'
 import type { Vendor, VendorStatus } from '../../types/domain'
 import { vendorStatusBadgeClass } from '../../utils/vendorStatus'
 import { adminVendorDetail, parseVendorStatusQuery } from '../../lib/adminRoutes'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
+import { BriefcaseIcon } from '../../components/common/Icons'
 
 const STATUS_TABS: Array<{ key: VendorStatus | ''; label: string }> = [
   { key: '', label: 'All' },
@@ -473,11 +475,21 @@ export default function VendorListPage() {
                   })}
                   {vendors.length === 0 && (
                     <tr>
-                      <td
-                        colSpan={6}
-                        className="px-4 py-10 text-center text-sm text-muted"
-                      >
-                        No vendors found
+                      <td colSpan={6} className="p-0">
+                        <ListEmptyState
+                          icon={<BriefcaseIcon className="w-12 h-12" />}
+                          title={
+                            total === 0 && !search.trim() && !statusFilter
+                              ? 'No vendors yet'
+                              : 'No vendors found'
+                          }
+                          description={
+                            total === 0 && !search.trim() && !statusFilter
+                              ? 'Onboard a vendor to have them appear in this list.'
+                              : 'Try another search or clear the status filter.'
+                          }
+                          variant="embedded"
+                        />
                       </td>
                     </tr>
                   )}

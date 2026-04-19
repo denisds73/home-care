@@ -29,6 +29,7 @@ import {
   WrenchIcon,
   PackageIcon,
 } from '../../components/common/Icons'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
 
 /* ── Helpers ── */
 
@@ -531,8 +532,13 @@ export default function AdminDashboardPage() {
               ))}
               {recentBookings.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted">
-                    No recent bookings
+                  <td colSpan={6} className="p-0">
+                    <ListEmptyState
+                      icon={<ClipboardIcon className="w-12 h-12" />}
+                      title="No recent bookings"
+                      description="New customer bookings will show up here for quick access and vendor assignment."
+                      variant="embedded"
+                    />
                   </td>
                 </tr>
               )}

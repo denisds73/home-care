@@ -4,6 +4,7 @@ import { bookingService } from '../../services/bookingService'
 import { useAuthStore } from '../../store/useAuthStore'
 import { StatusBadge } from '../../components/bookings/StatusBadge'
 import { VendorKpiCard, EmptyState } from '../../components/vendor'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
 import { formatDate } from '../../data/helpers'
 import {
   CalendarIcon,
@@ -172,7 +173,12 @@ export default function VendorDashboardPage() {
               </Link>
             </div>
             {recentWorks.length === 0 ? (
-              <p className="text-sm text-muted p-4 md:px-6">No recent assignments yet.</p>
+              <ListEmptyState
+                icon={<BriefcaseIcon className="w-12 h-12" />}
+                title="No recent assignments"
+                description="Assigned and in-progress jobs will list here for quick access."
+                variant="embedded"
+              />
             ) : (
               <div className="divide-y divide-gray-50">
                 {recentWorks.map((b, i) => (

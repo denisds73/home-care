@@ -3,6 +3,8 @@ import { adminService } from '../../services/adminService'
 import type { AdminUser } from '../../services/adminService'
 import useStore from '../../store/useStore'
 import { formatDate } from '../../data/helpers'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
+import { UsersIcon } from '../../components/common/Icons'
 
 export default function UserManagementPage() {
   const showToast = useStore(s => s.showToast)
@@ -86,6 +88,13 @@ export default function UserManagementPage() {
                 </div>
               ))}
             </div>
+          ) : users.length === 0 ? (
+            <ListEmptyState
+              icon={<UsersIcon className="w-12 h-12" />}
+              title="No customers yet"
+              description="Registered customers will appear here once they sign up and book services."
+              variant="embedded"
+            />
           ) : (
             <table className="w-full text-sm">
               <thead>
@@ -123,8 +132,13 @@ export default function UserManagementPage() {
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-sm text-muted">
-                      No users found
+                    <td colSpan={6}>
+                      <ListEmptyState
+                        icon={<UsersIcon className="w-12 h-12" />}
+                        title="No matching users"
+                        description="Try another search term."
+                        variant="embedded"
+                      />
                     </td>
                   </tr>
                 )}

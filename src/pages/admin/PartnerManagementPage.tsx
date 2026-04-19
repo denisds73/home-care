@@ -4,6 +4,8 @@ import { CATEGORIES } from '../../data/categories'
 import useStore from '../../store/useStore'
 import type { Partner, PartnerStatus } from '../../types/domain'
 import Dropdown from '../../components/common/Dropdown'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
+import { UsersIcon } from '../../components/common/Icons'
 
 export default function PartnerManagementPage() {
   const showToast = useStore(s => s.showToast)
@@ -196,7 +198,15 @@ export default function PartnerManagementPage() {
             </div>
           ))}
           {filtered.length === 0 && (
-            <p className="text-sm text-muted text-center py-8">No partners found</p>
+            <ListEmptyState
+              icon={<UsersIcon className="w-12 h-12" />}
+              title={partners.length === 0 ? 'No partners yet' : 'No partners in this status'}
+              description={
+                partners.length === 0
+                  ? 'Partners who register will appear here for approval.'
+                  : 'Try selecting a different status filter.'
+              }
+            />
           )}
         </div>
       )}

@@ -5,6 +5,8 @@ import { CATEGORIES } from '../../data/categories'
 import Modal from '../../components/common/Modal'
 import Dropdown from '../../components/common/Dropdown'
 import type { CategoryId, Offer } from '../../types/domain'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
+import { TagIcon } from '../../components/common/Icons'
 
 const GRADIENT_PRESETS = [
   { label: 'Purple', value: 'linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%)' },
@@ -186,9 +188,20 @@ export default function OffersManagementPage() {
           ))}
         </div>
       ) : sorted.length === 0 ? (
-        <div className="glass-card p-8 text-center">
-          <p className="text-sm text-muted">No offers yet. Add your first offer to display on the home page.</p>
-        </div>
+        <ListEmptyState
+          icon={<TagIcon className="w-12 h-12" />}
+          title="No promotional offers yet"
+          description="Create an offer to highlight deals on the home page carousel."
+          action={
+            <button
+              type="button"
+              onClick={openAdd}
+              className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px] inline-flex"
+            >
+              + Add Offer
+            </button>
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {sorted.map(offer => (

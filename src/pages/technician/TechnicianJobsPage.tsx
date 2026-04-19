@@ -4,6 +4,8 @@ import { bookingService } from '../../services/bookingService'
 import { StatusBadge } from '../../components/bookings/StatusBadge'
 import { formatDate } from '../../data/helpers'
 import type { Booking, BookingStatus } from '../../types/domain'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
+import { ClipboardIcon } from '../../components/common/Icons'
 
 type Tab = 'accepted' | 'in_progress' | 'completed'
 
@@ -79,6 +81,21 @@ export default function TechnicianJobsPage() {
     load(tab)
   }, [tab, load])
 
+  const emptyCopy = {
+    accepted: {
+      title: 'Nothing assigned yet',
+      description: 'Your vendor will assign jobs here when they are ready for you.',
+    },
+    in_progress: {
+      title: 'No jobs in progress',
+      description: 'When you start a booked visit, it will appear in this tab.',
+    },
+    completed: {
+      title: 'No completed jobs yet',
+      description: 'Finished visits will show here for your records.',
+    },
+  } as const
+
   return (
     <div className="fade-in space-y-4">
       <div>
@@ -130,9 +147,11 @@ export default function TechnicianJobsPage() {
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="glass-card p-8 text-center">
-          <p className="text-sm text-muted">No jobs in this list.</p>
-        </div>
+        <ListEmptyState
+          icon={<ClipboardIcon className="w-12 h-12" />}
+          title={emptyCopy[tab].title}
+          description={emptyCopy[tab].description}
+        />
       ) : (
         <div className="space-y-3">
           {items.map((b) => (
