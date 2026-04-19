@@ -321,6 +321,34 @@ export const BanIcon = multiIcon(
   'BanIcon',
 )
 
+/** Catalog / row actions — Lucide-style strokes */
+export const EyeIcon = multiIcon(
+  [
+    'M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z',
+    'M12 15a3 3 0 100-6 3 3 0 000 6z',
+  ],
+  'EyeIcon',
+)
+
+export const PencilIcon = multiIcon(
+  [
+    'M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7',
+    'M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z',
+  ],
+  'PencilIcon',
+)
+
+export const TrashIcon = multiIcon(
+  [
+    'M3 6h18',
+    'M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6',
+    'M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2',
+    'M10 11v6',
+    'M14 11v6',
+  ],
+  'TrashIcon',
+)
+
 export const BellIcon = multiIcon(
   [
     'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9',

@@ -8,7 +8,15 @@ import { Pagination } from '../../components/common/Pagination'
 import type { CategoryId, Service } from '../../types/domain'
 import Dropdown from '../../components/common/Dropdown'
 import { ListEmptyState } from '../../components/common/ListEmptyState'
-import { GridIcon } from '../../components/common/Icons'
+import Tooltip from '../../components/common/Tooltip'
+import {
+  BanIcon,
+  CheckCircleIcon,
+  EyeIcon,
+  GridIcon,
+  PencilIcon,
+  TrashIcon,
+} from '../../components/common/Icons'
 
 interface SvcForm {
   category: CategoryId | ''
@@ -447,39 +455,63 @@ export default function CatalogPage() {
                       )}
                     </td>
                     <td className="p-3 text-right align-top">
-                      <div className="flex items-start justify-end gap-2 flex-wrap">
-                        <button
-                          type="button"
-                          onClick={() => void openViewDetail(svc)}
-                          className="badge bg-surface text-secondary border border-border-default cursor-pointer border-solid transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:ring-offset-2 rounded-full"
+                      <div
+                        className="flex items-center justify-end gap-1 flex-wrap"
+                        role="group"
+                        aria-label={`Actions for ${svc.service_name}`}
+                      >
+                        <Tooltip label="View full details">
+                          <button
+                            type="button"
+                            onClick={() => void openViewDetail(svc)}
+                            className="inline-flex items-center justify-center rounded-lg p-2 min-h-[44px] min-w-[44px] text-secondary hover:bg-surface hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2"
+                            aria-label={`View ${svc.service_name}`}
+                          >
+                            <EyeIcon className="w-5 h-5 shrink-0" aria-hidden />
+                          </button>
+                        </Tooltip>
+                        <Tooltip label="Edit service">
+                          <button
+                            type="button"
+                            onClick={() => openEdit(svc)}
+                            className="inline-flex items-center justify-center rounded-lg p-2 min-h-[44px] min-w-[44px] text-brand hover:bg-brand-soft/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2"
+                            aria-label={`Edit ${svc.service_name}`}
+                          >
+                            <PencilIcon className="w-5 h-5 shrink-0" aria-hidden />
+                          </button>
+                        </Tooltip>
+                        <Tooltip
+                          label={svc.is_active ? 'Disable service (hide from customers)' : 'Enable service'}
                         >
-                          View
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openEdit(svc)}
-                          className="badge badge-confirmed cursor-pointer border-0 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 rounded-full"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleActive(svc)}
-                          className={
-                            svc.is_active
-                              ? 'badge badge-pending cursor-pointer border-0 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 focus-visible:ring-offset-2 rounded-full'
-                              : 'badge badge-success cursor-pointer border-0 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 rounded-full'
-                          }
-                        >
-                          {svc.is_active ? 'Disable' : 'Enable'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteId(svc.id)}
-                          className="badge badge-cancelled cursor-pointer border-0 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40 focus-visible:ring-offset-2 rounded-full"
-                        >
-                          Delete
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleActive(svc)}
+                            className={
+                              svc.is_active
+                                ? 'inline-flex items-center justify-center rounded-lg p-2 min-h-[44px] min-w-[44px] text-amber-700 hover:bg-amber-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/45 focus-visible:ring-offset-2'
+                                : 'inline-flex items-center justify-center rounded-lg p-2 min-h-[44px] min-w-[44px] text-emerald-700 hover:bg-emerald-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2'
+                            }
+                            aria-label={
+                              svc.is_active ? `Disable ${svc.service_name}` : `Enable ${svc.service_name}`
+                            }
+                          >
+                            {svc.is_active ? (
+                              <BanIcon className="w-5 h-5 shrink-0" aria-hidden />
+                            ) : (
+                              <CheckCircleIcon className="w-5 h-5 shrink-0" aria-hidden />
+                            )}
+                          </button>
+                        </Tooltip>
+                        <Tooltip label="Delete service permanently">
+                          <button
+                            type="button"
+                            onClick={() => setDeleteId(svc.id)}
+                            className="inline-flex items-center justify-center rounded-lg p-2 min-h-[44px] min-w-[44px] text-red-600 hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/45 focus-visible:ring-offset-2"
+                            aria-label={`Delete ${svc.service_name}`}
+                          >
+                            <TrashIcon className="w-5 h-5 shrink-0" aria-hidden />
+                          </button>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>
