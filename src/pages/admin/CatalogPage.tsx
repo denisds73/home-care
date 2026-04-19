@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 import { adminService } from '../../services/adminService'
 import { serviceService } from '../../services/serviceService'
 import useStore from '../../store/useStore'
@@ -56,6 +56,28 @@ function categoryLabel(id: CategoryId) {
   return CATEGORIES.find(c => c.id === id)?.name ?? id.replace(/_/g, ' ')
 }
 
+function formatInr(n: number) {
+  return `₹${Number(n).toLocaleString('en-IN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`
+}
+
+function DetailBlock({
+  label,
+  children,
+}: {
+  label: string
+  children: ReactNode
+}) {
+  return (
+    <div>
+      <p className="text-xs font-semibold text-secondary mb-1">{label}</p>
+      <div className="text-sm text-primary">{children}</div>
+    </div>
+  )
+}
+
 export default function CatalogPage() {
   const showToast = useStore(s => s.showToast)
 
@@ -68,6 +90,9 @@ export default function CatalogPage() {
   const [modalMode, setModalMode] = useState<'add' | 'edit' | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [detailService, setDetailService] = useState<Service | null>(null)
   const [form, setForm] = useState<SvcForm>(EMPTY_FORM)
   const [isSaving, setIsSaving] = useState(false)
   const [newInclusion, setNewInclusion] = useState('')
@@ -157,6 +182,27 @@ export default function CatalogPage() {
     setEditingId(null)
     resetRepeaterInputs()
     setModalMode('add')
+  }
+
+  const closeDetail = () => {
+    setDetailOpen(false)
+    setDetailService(null)
+    setDetailLoading(false)
+  }
+
+  const openViewDetail = async (svc: Service) => {
+    setDetailOpen(true)
+    setDetailLoading(true)
+    setDetailService(null)
+    try {
+      const res = await serviceService.getServiceById(svc.id)
+      setDetailService(res.data ?? svc)
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to load service', 'danger')
+      closeDetail()
+    } finally {
+      setDetailLoading(false)
+    }
   }
 
   const openEdit = (svc: Service) => {
@@ -402,6 +448,13 @@ export default function CatalogPage() {
                     </td>
                     <td className="p-3 text-right align-top">
                       <div className="flex items-start justify-end gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => void openViewDetail(svc)}
+                          className="badge bg-surface text-secondary border border-border-default cursor-pointer border-solid transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:ring-offset-2 rounded-full"
+                        >
+                          View
+                        </button>
                         <button
                           type="button"
                           onClick={() => openEdit(svc)}
@@ -746,6 +799,163 @@ export default function CatalogPage() {
             </button>
           </div>
         </>
+      </Modal>
+
+      <Modal
+        isOpen={detailOpen}
+        onClose={closeDetail}
+        maxWidth="max-w-2xl"
+        overlay="layout"
+        title={
+          detailLoading
+            ? 'Service details'
+            : detailService?.service_name ?? 'Service details'
+        }
+      >
+        <div className="max-h-[min(70vh,640px)] overflow-y-auto pr-1 space-y-5 text-sm">
+          {detailLoading && (
+            <div className="py-12 text-center text-muted text-sm" role="status">
+              Loading full details…
+            </div>
+          )}
+          {!detailLoading && detailService && (
+            <>
+              <div className="space-y-3">
+                <h4 className="text-sm font-bold text-primary">Basic info</h4>
+                <DetailBlock label="Category">{categoryLabel(detailService.category)}</DetailBlock>
+                <DetailBlock label="Short description">
+                  {detailService.description ? (
+                    <p className="whitespace-pre-wrap">{detailService.description}</p>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
+                </DetailBlock>
+                <DetailBlock label="Long description">
+                  {detailService.long_description ? (
+                    <p className="whitespace-pre-wrap text-secondary">{detailService.long_description}</p>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
+                </DetailBlock>
+                {detailService.image_url ? (
+                  <DetailBlock label="Image">
+                    <img
+                      src={detailService.image_url}
+                      alt=""
+                      className="max-h-40 rounded-lg object-cover border border-border-default"
+                      onError={e => {
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                    <p className="text-xs text-muted mt-1 break-all">{detailService.image_url}</p>
+                  </DetailBlock>
+                ) : null}
+                <DetailBlock label="Estimated duration">
+                  {detailService.estimated_duration || <span className="text-muted">—</span>}
+                </DetailBlock>
+              </div>
+
+              <div className="border-t border-border-default pt-5 space-y-3">
+                <h4 className="text-sm font-bold text-primary">Pricing</h4>
+                <DetailBlock label="Selling price">{formatInr(Number(detailService.price))}</DetailBlock>
+                {detailService.original_price != null &&
+                  detailService.original_price > 0 && (
+                    <DetailBlock label="Original price">{formatInr(Number(detailService.original_price))}</DetailBlock>
+                  )}
+                <p className="text-sm text-secondary">
+                  Recommended (basic):{' '}
+                  <strong className="text-primary">{detailService.is_basic ? 'Yes' : 'No'}</strong>
+                </p>
+              </div>
+
+              {(detailService.inclusions?.length ?? 0) > 0 && (
+                <div className="border-t border-border-default pt-5">
+                  <h4 className="text-sm font-bold text-primary mb-2">Included</h4>
+                  <ul className="list-disc list-inside space-y-1 text-secondary">
+                    {detailService.inclusions!.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {(detailService.exclusions?.length ?? 0) > 0 && (
+                <div className="border-t border-border-default pt-5">
+                  <h4 className="text-sm font-bold text-primary mb-2">Not included</h4>
+                  <ul className="list-disc list-inside space-y-1 text-secondary">
+                    {detailService.exclusions!.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {(detailService.faqs?.length ?? 0) > 0 && (
+                <div className="border-t border-border-default pt-5 space-y-3">
+                  <h4 className="text-sm font-bold text-primary">FAQs</h4>
+                  {detailService.faqs!.map((faq, i) => (
+                    <div key={i} className="glass-card p-3 rounded-lg">
+                      <p className="font-semibold text-primary text-sm">{faq.question}</p>
+                      <p className="text-secondary text-xs mt-1 whitespace-pre-wrap">{faq.answer}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="border-t border-border-default pt-5 space-y-3">
+                <h4 className="text-sm font-bold text-primary">Reviews (overrides)</h4>
+                <DetailBlock label="Rating average">
+                  {detailService.rating_average != null ? String(detailService.rating_average) : '—'}
+                </DetailBlock>
+                <DetailBlock label="Review count">
+                  {detailService.rating_count != null ? String(detailService.rating_count) : '—'}
+                </DetailBlock>
+                {detailService.rating_distribution &&
+                  detailService.rating_distribution.some(n => n > 0) && (
+                    <div>
+                      <p className="text-xs font-semibold text-secondary mb-2">Star distribution (%)</p>
+                      <div className="grid grid-cols-5 gap-2 text-center text-xs">
+                        {(['5', '4', '3', '2', '1'] as const).map((star, i) => (
+                          <div key={star}>
+                            <span className="text-muted">{star}★</span>
+                            <p className="font-medium text-primary tabular-nums mt-0.5">
+                              {detailService.rating_distribution![i] ?? 0}%
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+              </div>
+
+              <div className="border-t border-border-default pt-5 space-y-3">
+                <h4 className="text-sm font-bold text-primary">Publishing</h4>
+                <DetailBlock label="Sort order">
+                  {detailService.sort_order != null ? String(detailService.sort_order) : '—'}
+                </DetailBlock>
+                <p className="text-sm text-secondary">
+                  Status:{' '}
+                  {detailService.is_active ? (
+                    <span className="badge badge-success">Active</span>
+                  ) : (
+                    <span className="badge bg-muted text-secondary">Disabled</span>
+                  )}
+                </p>
+                <DetailBlock label="Service ID">#{detailService.id}</DetailBlock>
+                {(detailService.created_at || detailService.updated_at) && (
+                  <div className="text-xs text-muted space-y-1">
+                    {detailService.created_at && (
+                      <p>Created: {detailService.created_at}</p>
+                    )}
+                    {detailService.updated_at && (
+                      <p>Updated: {detailService.updated_at}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </Modal>
 
       <Modal
