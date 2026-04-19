@@ -1,8 +1,9 @@
 /* eslint-disable react-refresh/only-export-components -- router module exports lazy page refs and small route helpers */
 import { lazy, Suspense } from 'react'
-import { createBrowserRouter, Navigate, useParams } from 'react-router-dom'
+import { createBrowserRouter, Navigate, Outlet, useParams } from 'react-router-dom'
 import CustomerLayout from '../layouts/CustomerLayout'
 import ProtectedRoute from '../components/common/ProtectedRoute'
+import RouteSeo from '../components/common/RouteSeo'
 import { useAuthStore } from '../store/useAuthStore'
 import { DASHBOARD_ROUTES } from '../lib/auth'
 
@@ -105,7 +106,19 @@ function RootRedirect() {
   return <Navigate to="/app" replace />
 }
 
+function RootShell() {
+  return (
+    <>
+      <RouteSeo />
+      <Outlet />
+    </>
+  )
+}
+
 export const router = createBrowserRouter([
+  {
+    element: <RootShell />,
+    children: [
   // ----- Root redirect (role-aware) -----
   { path: '/', element: <RootRedirect /> },
 
@@ -231,4 +244,6 @@ export const router = createBrowserRouter([
   // ----- Legacy redirects -----
   { path: '/services', element: <Navigate to="/app" replace /> },
   { path: '/services/:categoryId', element: <LegacyServiceRedirect /> },
+    ],
+  },
 ])
