@@ -68,6 +68,7 @@ describe('bookingService.listForAdmin', () => {
     await bookingService.listForAdmin({
       status: 'pending',
       category: 'ac',
+      vendor_id: '550e8400-e29b-41d4-a716-446655440000',
       search: 'Demo',
       page: 2,
       limit: 10,
@@ -77,6 +78,9 @@ describe('bookingService.listForAdmin', () => {
     expect(calledWith).toContain('status=pending')
     expect(calledWith).toContain('category=ac')
     expect(calledWith).toContain('search=Demo')
+    expect(calledWith).toContain(
+      'vendor_id=550e8400-e29b-41d4-a716-446655440000',
+    )
     expect(calledWith).toContain('page=2')
     expect(calledWith).toContain('limit=10')
   })

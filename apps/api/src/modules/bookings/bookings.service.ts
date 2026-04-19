@@ -247,6 +247,14 @@ export class BookingsService {
       qb.andWhere('b.customer_id = :cid', { cid: filters.customer_id });
     }
 
+    const searchTerm = filters.search?.trim();
+    if (searchTerm) {
+      qb.andWhere(
+        '(CAST(b.booking_id AS TEXT) ILIKE :searchLike OR b.customer_name ILIKE :searchLike OR b.service_name ILIKE :searchLike OR b.phone ILIKE :searchLike)',
+        { searchLike: `%${searchTerm}%` },
+      );
+    }
+
     qb.skip((page - 1) * limit).take(limit);
     const [items, total] = await qb.getManyAndCount();
     return { items, total, page, limit };

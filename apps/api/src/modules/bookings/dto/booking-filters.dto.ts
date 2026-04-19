@@ -6,8 +6,10 @@ import {
   Min,
   Max,
   IsIn,
+  IsString,
+  MaxLength,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BookingStatus } from '@/database/entities';
 
@@ -41,6 +43,18 @@ export class BookingFiltersDto {
   @IsOptional()
   @IsUUID()
   customer_id?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Partial match on booking id, customer name, service name, or phone',
+  })
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim() || undefined : value,
+  )
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

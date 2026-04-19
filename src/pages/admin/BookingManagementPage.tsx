@@ -82,20 +82,11 @@ export default function BookingManagementPage() {
       const result = await bookingService.listForAdmin({
         status: statusFilter || undefined,
         category: categoryFilter || undefined,
-        search: search || undefined,
+        search: search.trim() || undefined,
         page,
         limit: PAGE_LIMIT,
       })
-      const term = search.trim().toLowerCase()
-      const filtered = term
-        ? result.items.filter(
-            b =>
-              b.booking_id.toLowerCase().includes(term) ||
-              b.customer_name.toLowerCase().includes(term) ||
-              b.service_name.toLowerCase().includes(term),
-          )
-        : result.items
-      setBookings(filtered)
+      setBookings(result.items)
       setTotal(result.total)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load bookings')
