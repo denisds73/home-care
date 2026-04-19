@@ -63,6 +63,7 @@ export default function CatalogPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<CategoryId | ''>('')
   const [modalMode, setModalMode] = useState<'add' | 'edit' | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -79,14 +80,17 @@ export default function CatalogPage() {
     try {
       setIsLoading(true)
       setError(null)
-      const result = await serviceService.getServices(categoryFilter || undefined)
+      const result = await serviceService.getServices({
+        category: categoryFilter || undefined,
+        search: search.trim() || undefined,
+      })
       setServices(result.data ?? [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load services')
     } finally {
       setIsLoading(false)
     }
-  }, [categoryFilter])
+  }, [categoryFilter, search])
 
   useEffect(() => {
     loadServices()
@@ -94,7 +98,7 @@ export default function CatalogPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [categoryFilter])
+  }, [categoryFilter, search])
 
   useEffect(() => {
     const tp = Math.max(1, Math.ceil(services.length / PAGE_SIZE))
@@ -262,6 +266,15 @@ export default function CatalogPage() {
     <div className="fade-in space-y-6">
       <div className="glass-card p-4">
         <div className="flex flex-wrap items-center gap-3">
+          <input
+            type="search"
+            className="input-base py-2 px-3 text-sm flex-1 min-w-[200px]"
+            placeholder="Search by name or description..."
+            aria-label="Search catalog"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            autoComplete="off"
+          />
           <Dropdown
             options={[
               { value: '', label: 'All Categories' },
@@ -298,11 +311,19 @@ export default function CatalogPage() {
       ) : services.length === 0 ? (
         <ListEmptyState
           icon={<GridIcon className="w-12 h-12" />}
-          title={categoryFilter ? 'No services in this category' : 'No services in the catalog'}
+          title={
+            search.trim()
+              ? 'No matching services'
+              : categoryFilter
+                ? 'No services in this category'
+                : 'No services in the catalog'
+          }
           description={
-            categoryFilter
-              ? 'Try choosing “All Categories” or add a new service for this category.'
-              : 'Add your first service so customers can book it on the platform.'
+            search.trim()
+              ? 'Try another search phrase, pick a different category, or clear the search box.'
+              : categoryFilter
+                ? 'Try choosing “All Categories” or add a new service for this category.'
+                : 'Add your first service so customers can book it on the platform.'
           }
           action={
             <button

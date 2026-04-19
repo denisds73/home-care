@@ -10,13 +10,24 @@ export class ServicesService {
     private readonly serviceRepo: Repository<ServiceEntity>,
   ) {}
 
-  async findAll(category?: string): Promise<ServiceEntity[]> {
+  async findAll(filters?: {
+    category?: string;
+    search?: string;
+  }): Promise<ServiceEntity[]> {
     const qb = this.serviceRepo
       .createQueryBuilder('service')
       .where('service.is_active = :isActive', { isActive: true });
 
-    if (category) {
-      qb.andWhere('service.category = :category', { category });
+    if (filters?.category) {
+      qb.andWhere('service.category = :category', { category: filters.category });
+    }
+
+    const term = filters?.search?.trim();
+    if (term) {
+      qb.andWhere(
+        '(service.service_name ILIKE :searchLike OR service.description ILIKE :searchLike)',
+        { searchLike: `%${term}%` },
+      );
     }
 
     qb.orderBy('service.service_name', 'ASC');

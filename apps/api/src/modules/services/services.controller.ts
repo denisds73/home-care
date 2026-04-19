@@ -11,10 +11,17 @@ export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all active services, optionally filtered by category' })
+  @ApiOperation({
+    summary:
+      'Get all active services, optionally filtered by category and/or search text',
+  })
   @ApiQuery({ name: 'category', required: false, type: String })
+  @ApiQuery({ name: 'search', required: false, type: String })
   async findAll(@Query() query: QueryServicesDto): Promise<ServiceEntity[]> {
-    return this.servicesService.findAll(query.category);
+    return this.servicesService.findAll({
+      category: query.category,
+      search: query.search,
+    });
   }
 
   @Get('search')
