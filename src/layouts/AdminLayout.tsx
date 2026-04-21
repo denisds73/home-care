@@ -73,7 +73,7 @@ const logo = (
       />
     </svg>
     <span className="sidebar-label text-white text-sm font-bold">
-      HomeCare <span className="text-xs font-normal opacity-60">Admin</span>
+      WeSorters <span className="text-xs font-normal opacity-60">Admin</span>
     </span>
   </>
 )

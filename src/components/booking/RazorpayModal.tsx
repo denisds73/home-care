@@ -33,7 +33,7 @@ export default function RazorpayModal({ amount, onSuccess, onClose, onPayAfter }
         <div className="px-5 py-4 text-white rzp-header">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs opacity-80">HomeCare Services</p>
+              <p className="text-xs opacity-80">WeSorters</p>
               <h3 className="text-lg font-bold">Payment</h3>
               <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-white/20 text-[.6rem] font-medium tracking-wide uppercase">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />

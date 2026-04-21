@@ -219,7 +219,7 @@ export default function WhyChooseUs() {
   return (
     <section aria-labelledby="why-choose-heading" className="py-12 sm:py-16 bg-surface">
       <div className="max-w-7xl mx-auto px-4">
-        <Reveal><h2 id="why-choose-heading" className="text-xl sm:text-2xl font-bold font-brand text-center mb-2" style={{ color: 'var(--color-secondary)' }}>Why Choose HomeCare?</h2></Reveal>
+        <Reveal><h2 id="why-choose-heading" className="text-xl sm:text-2xl font-bold font-brand text-center mb-2" style={{ color: 'var(--color-secondary)' }}>Why Choose WeSorters?</h2></Reveal>
         <Reveal><div className="flex justify-center mb-2"><div style={{ width: 40, height: 3, borderRadius: 2, background: 'var(--color-primary)' }} /></div></Reveal>
         <Reveal><p className="text-muted text-sm text-center mb-10">We go the extra mile to make home services hassle-free</p></Reveal>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">

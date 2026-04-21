@@ -9,7 +9,7 @@ const reviews = [
   { stars: 5, text: '"Booked a water purifier filter change and the whole process was seamless. From booking to payment, everything was smooth. The app is very easy to use!"', name: 'Rahul S.', loc: 'Hyderabad · Purifier Service', img: avatar2 },
   { stars: 4, text: '"Got my TV wall-mounted beautifully. The technician even helped with cable management. Great value for money and very courteous staff. Will use again!"', name: 'Deepa K.', loc: 'Chennai · TV Installation', img: avatar3 },
   { stars: 5, text: '"The fridge wasn\'t cooling at all. The technician diagnosed the issue within minutes and had it running perfectly. Transparent pricing, no hidden charges. Five stars!"', name: 'Suresh P.', loc: 'Pune · Refrigerator Repair', img: avatar1 },
-  { stars: 5, text: '"Used HomeCare for microwave repair and water purifier service on the same day. Both technicians were punctual and skilled. The cart feature made booking so convenient!"', name: 'Kavitha R.', loc: 'Delhi · Multiple Services', img: avatar2 },
+  { stars: 5, text: '"Used WeSorters for microwave repair and water purifier service on the same day. Both technicians were punctual and skilled. The cart feature made booking so convenient!"', name: 'Kavitha R.', loc: 'Delhi · Multiple Services', img: avatar2 },
 ]
 
 function usePerView() {

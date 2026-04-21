@@ -303,7 +303,7 @@ export function Navbar() {
             <Link
               to="/app"
               className="flex items-center gap-2 shrink-0 group"
-              aria-label="HomeCare home"
+              aria-label="WeSorters home"
             >
               <div className="w-8 h-8 rounded-xl bg-brand flex items-center justify-center transition-transform duration-150 group-hover:scale-105">
                 <svg className="w-[18px] h-[18px] text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-hidden>
@@ -311,7 +311,7 @@ export function Navbar() {
                 </svg>
               </div>
               <span className="hidden sm:inline text-[1.05rem] font-bold font-brand text-primary tracking-tight">
-                Home<span className="text-brand">Care</span>
+                We<span className="text-brand">Sorters</span>
               </span>
             </Link>
 

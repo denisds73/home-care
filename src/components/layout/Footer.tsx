@@ -7,9 +7,9 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-10">
           <div className="col-span-2 sm:col-span-1">
-            <Link to="/app" className="flex items-center gap-2 mb-3" aria-label="HomeCare home">
+            <Link to="/app" className="flex items-center gap-2 mb-3" aria-label="WeSorters home">
               <svg className="w-7 h-7 shrink-0" fill="none" viewBox="0 0 24 24" stroke="#7C3AED" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/></svg>
-              <span className="text-lg font-bold font-brand text-white">Home<span style={{ color: '#7C3AED' }}>Care</span></span>
+              <span className="text-lg font-bold font-brand text-white">We<span style={{ color: '#7C3AED' }}>Sorters</span></span>
             </Link>
             <p className="text-xs leading-relaxed text-gray-400">Premium home appliance services. Expert technicians for AC, TV, Fridge & more.</p>
             <div className="flex gap-3 mt-4">
@@ -67,7 +67,7 @@ export default function Footer() {
             </ul>
             <div className="mt-5">
               <h4 className="text-sm font-bold text-white mb-2 font-brand">Contact</h4>
-              <p className="text-xs">support@homecare.in</p>
+              <p className="text-xs">support@wesorters.com</p>
               <p className="text-xs mt-1">+91 80-1234-5678</p>
             </div>
           </div>
@@ -88,7 +88,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-700/50 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-gray-500">© {new Date().getFullYear()} HomeCare Services. All rights reserved.</p>
+          <p className="text-xs text-gray-500">© {new Date().getFullYear()} WeSorters. All rights reserved.</p>
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
             <span>100% Secure Payments</span>

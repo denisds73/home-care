@@ -491,7 +491,7 @@ export default function LoginPage() {
             </svg>
           </div>
           <span className="font-brand text-2xl font-bold text-white tracking-tight">
-            HomeCare
+            WeSorters
           </span>
         </div>
         <p className="text-white/70 text-sm mb-4 md:mb-6">
@@ -552,7 +552,7 @@ export default function LoginPage() {
             <p className="text-sm text-muted mt-1">
               {tab === 'login'
                 ? 'Sign in to manage your home services'
-                : 'Join thousands of homeowners on HomeCare'}
+                : 'Join thousands of homeowners on WeSorters'}
             </p>
           </div>
 

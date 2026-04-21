@@ -9,7 +9,7 @@ export const mockNotifications: Notification[] = [
   { id: 'n-6', type: 'payment', title: 'Refund Processed', description: 'Refund of ₹499 for cancelled booking HC-1005 has been initiated', timestamp: '2026-04-02T09:00:00Z', read: true },
   { id: 'n-7', type: 'system', title: 'New Offer Available', description: '20% off on all washing machine services this week!', timestamp: '2026-04-01T08:00:00Z', read: true },
   { id: 'n-8', type: 'booking', title: 'Booking Reminder', description: 'Your refrigerator service is scheduled for tomorrow at 12PM', timestamp: '2026-03-31T18:00:00Z', read: true },
-  { id: 'n-10', type: 'system', title: 'Welcome to HomeCare!', description: 'Your account has been created successfully. Browse our services to get started.', timestamp: '2026-03-25T10:00:00Z', read: true },
+  { id: 'n-10', type: 'system', title: 'Welcome to WeSorters!', description: 'Your account has been created successfully. Browse our services to get started.', timestamp: '2026-03-25T10:00:00Z', read: true },
 ]
 
 export const mockTransactions: Transaction[] = [

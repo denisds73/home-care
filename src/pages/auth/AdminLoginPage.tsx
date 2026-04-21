@@ -110,7 +110,7 @@ export default function AdminLoginPage() {
             />
           </svg>
           <span className="text-xl font-extrabold font-brand text-white">
-            HomeCare{' '}
+            WeSorters{' '}
             <span className="text-sm font-normal opacity-70">Admin</span>
           </span>
         </div>

@@ -145,7 +145,7 @@ export default function VendorLoginPage() {
           </div>
           <div className="flex flex-col">
             <span className="font-brand text-2xl font-bold text-white tracking-tight leading-tight">
-              HomeCare
+              WeSorters
             </span>
             <span className="text-white/70 text-xs font-semibold tracking-widest uppercase -mt-0.5">
               Vendor Portal
