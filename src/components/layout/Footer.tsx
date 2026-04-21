@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { STATES, getCitiesByState } from '../../data/cities'
 
 export default function Footer() {
   return (
@@ -69,6 +70,20 @@ export default function Footer() {
               <p className="text-xs">support@homecare.in</p>
               <p className="text-xs mt-1">+91 80-1234-5678</p>
             </div>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-700/50 pt-6 pb-6">
+          <h4 className="text-sm font-bold text-white mb-4 font-brand">Cities We Serve</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {STATES.map((state) => (
+              <div key={state.id}>
+                <p className="text-xs font-semibold text-gray-400 mb-2">{state.name}</p>
+                <p className="text-xs leading-relaxed">
+                  {getCitiesByState(state.id).map((c) => c.name).join(' · ')}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
 

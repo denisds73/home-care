@@ -1,6 +1,7 @@
 import { create } from 'zustand'
-import type { LocationData, LocationStatus } from '../types/domain'
+import type { LocationData, LocationStatus, CityData } from '../types/domain'
 import { locationService } from '../services/locationService'
+import { checkServiceability } from '../data/cities'
 
 const STORAGE_KEY = 'hc_location'
 
@@ -10,6 +11,7 @@ const DEFAULT_LOCATION: LocationData = {
   lat: 12.9716,
   lng: 77.5946,
   placeId: null,
+  city: 'Bangalore',
 }
 
 function readPersistedLocation(): LocationData | null {
@@ -30,24 +32,44 @@ function persistLocation(location: LocationData) {
   }
 }
 
+// Compute serviceability from persisted location on init
+const initialLocation = readPersistedLocation()
+const initialCheck = checkServiceability(initialLocation)
+
 interface LocationStore {
   location: LocationData | null
   status: LocationStatus
+  serviceable: boolean
+  serviceableCity: CityData | null
+  bannerDismissed: boolean
   setLocation: (location: LocationData) => void
   setStatus: (status: LocationStatus) => void
   detectCurrentLocation: () => Promise<void>
+  dismissBanner: () => void
 }
 
 export const useLocationStore = create<LocationStore>((set, get) => ({
-  location: readPersistedLocation(),
+  location: initialLocation,
   status: 'idle',
+  serviceable: initialCheck.serviceable,
+  serviceableCity: initialCheck.matchedCity ?? null,
+  bannerDismissed: false,
 
   setLocation: (location) => {
     persistLocation(location)
-    set({ location, status: 'resolved' })
+    const result = checkServiceability(location)
+    set({
+      location,
+      status: 'resolved',
+      serviceable: result.serviceable,
+      serviceableCity: result.matchedCity ?? null,
+      bannerDismissed: false, // Reset on location change
+    })
   },
 
   setStatus: (status) => set({ status }),
+
+  dismissBanner: () => set({ bannerDismissed: true }),
 
   detectCurrentLocation: async () => {
     if (get().status === 'detecting') return
@@ -58,14 +80,27 @@ export const useLocationStore = create<LocationStore>((set, get) => ({
       const { latitude, longitude } = pos.coords
       const locationData = await locationService.reverseGeocode(latitude, longitude)
       persistLocation(locationData)
-      set({ location: locationData, status: 'resolved' })
+      const result = checkServiceability(locationData)
+      set({
+        location: locationData,
+        status: 'resolved',
+        serviceable: result.serviceable,
+        serviceableCity: result.matchedCity ?? null,
+        bannerDismissed: false,
+      })
     } catch (err: unknown) {
       const isDenied =
         err instanceof GeolocationPositionError && err.code === err.PERMISSION_DENIED
       if (isDenied) {
         const fallback = get().location ?? DEFAULT_LOCATION
         persistLocation(fallback)
-        set({ location: fallback, status: 'denied' })
+        const result = checkServiceability(fallback)
+        set({
+          location: fallback,
+          status: 'denied',
+          serviceable: result.serviceable,
+          serviceableCity: result.matchedCity ?? null,
+        })
       } else {
         set({ status: 'error' })
       }

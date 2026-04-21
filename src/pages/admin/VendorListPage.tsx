@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { vendorService } from '../../services/vendorService'
+import Dropdown from '../../components/common/Dropdown'
+import { getCityDropdownOptions } from '../../data/cities'
 import useStore from '../../store/useStore'
 import type { Vendor, VendorStatus } from '../../types/domain'
 import { vendorStatusBadgeClass } from '../../utils/vendorStatus'
@@ -32,8 +34,11 @@ export default function VendorListPage() {
     parseVendorStatusQuery(searchParams.get('status')),
   )
   const [search, setSearch] = useState('')
+  const [cityFilter, setCityFilter] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const cityOptions = useMemo(() => [{ value: '', label: 'All Cities' }, ...getCityDropdownOptions()], [])
 
   const load = useCallback(async () => {
     try {
@@ -41,6 +46,7 @@ export default function VendorListPage() {
       setError(null)
       const res = await vendorService.list({
         status: statusFilter || undefined,
+        city: cityFilter || undefined,
         search: search.trim() || undefined,
         page,
         limit: PAGE_SIZE,
@@ -52,7 +58,7 @@ export default function VendorListPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [statusFilter, search, page])
+  }, [statusFilter, cityFilter, search, page])
 
   useEffect(() => {
     load()
@@ -131,7 +137,7 @@ export default function VendorListPage() {
         })}
       </div>
 
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 flex-wrap items-end">
         <input
           type="search"
           value={search}
@@ -143,6 +149,19 @@ export default function VendorListPage() {
           className="input-base py-2 px-3 text-sm flex-1 min-w-[240px]"
           aria-label="Search vendors"
         />
+        <div className="min-w-[200px]">
+          <Dropdown
+            options={cityOptions}
+            value={cityFilter}
+            onChange={(v) => {
+              setCityFilter(v)
+              setPage(1)
+            }}
+            placeholder="All Cities"
+            searchable
+            searchPlaceholder="Filter by city…"
+          />
+        </div>
       </div>
 
       {error && vendors.length === 0 ? (

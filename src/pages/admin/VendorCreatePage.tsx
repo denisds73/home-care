@@ -1,7 +1,9 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useMemo, type FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { vendorService } from '../../services/vendorService'
 import { CATEGORIES } from '../../data/categories'
+import { getCityDropdownOptions, getStateDropdownOptions } from '../../data/cities'
+import Dropdown from '../../components/common/Dropdown'
 import useStore from '../../store/useStore'
 import type { CreateVendorPayload } from '../../types/domain'
 
@@ -33,11 +35,18 @@ export default function VendorCreatePage() {
   const showToast = useStore((s) => s.showToast)
 
   const [form, setForm] = useState<FormState>(INITIAL)
+  const [stateFilter, setStateFilter] = useState('')
   const [pinCodes, setPinCodes] = useState<string[]>([])
   const [pinDraft, setPinDraft] = useState('')
   const [categoryIds, setCategoryIds] = useState<string[]>([])
   const [isSaving, setIsSaving] = useState(false)
   const [errors, setErrors] = useState<Partial<Record<keyof FormState | 'pin_codes' | 'category_ids', string>>>({})
+
+  const stateOptions = useMemo(() => getStateDropdownOptions(), [])
+  const cityOptions = useMemo(
+    () => getCityDropdownOptions(stateFilter ? (stateFilter as 'KL' | 'TN' | 'KA') : undefined),
+    [stateFilter],
+  )
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((f) => ({ ...f, [key]: value }))
@@ -214,21 +223,28 @@ export default function VendorCreatePage() {
             Service Coverage
           </h2>
 
-          <div className="flex flex-col gap-1">
-            <label className="label-base" htmlFor="city">
-              City
-            </label>
-            <input
-              id="city"
-              className={`input-base px-3 py-2 ${errors.city ? 'input-error' : ''}`}
-              maxLength={100}
-              value={form.city}
-              onChange={(e) => setField('city', e.target.value)}
-              required
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Dropdown
+              label="State"
+              options={[{ value: '', label: 'All States' }, ...stateOptions]}
+              value={stateFilter}
+              onChange={(v) => {
+                setStateFilter(v)
+                setField('city', '')
+              }}
+              placeholder="All States"
             />
-            {errors.city && (
-              <span className="text-xs text-error">{errors.city}</span>
-            )}
+            <Dropdown
+              label="City"
+              options={cityOptions}
+              value={form.city}
+              onChange={(v) => setField('city', v)}
+              placeholder="Select city…"
+              searchable
+              searchPlaceholder="Search city or alias…"
+              error={errors.city}
+              id="city"
+            />
           </div>
 
           <div className="flex flex-col gap-2">

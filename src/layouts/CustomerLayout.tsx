@@ -7,6 +7,7 @@ import DetailSheet from '../components/services/DetailSheet'
 import AccountSheet from '../components/layout/AccountSheet'
 import Toast from '../components/common/Toast'
 import DelayAlertBanner from '../components/home/DelayAlertBanner'
+import { ServiceabilityBanner } from '../components/common/ServiceabilityBanner'
 import ScrollToTop from '../components/common/ScrollToTop'
 import { GoogleMapsProvider } from '../components/maps'
 
@@ -26,6 +27,7 @@ export default function CustomerLayout() {
           Skip to main content
         </a>
         <Navbar />
+        <ServiceabilityBanner />
         <main id="mainContent">
           <Outlet />
         </main>

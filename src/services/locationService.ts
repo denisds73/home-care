@@ -40,7 +40,7 @@ class BasicLocationProvider implements LocationProvider {
       const state = addr.state || ''
       const fullAddress = [label, city, state].filter(Boolean).join(', ')
 
-      return { label, fullAddress, lat, lng, placeId: null }
+      return { label, fullAddress, lat, lng, placeId: null, city: city || undefined }
     } catch {
       return {
         label: `Location (${lat.toFixed(2)}, ${lng.toFixed(2)})`,
@@ -71,12 +71,14 @@ class BasicLocationProvider implements LocationProvider {
         const addr = item.address
         const label =
           addr.suburb || addr.neighbourhood || addr.city_district || addr.city || addr.town || item.display_name.split(',')[0] || 'Location'
+        const itemCity = addr.city || addr.town || ''
         return {
           label,
           fullAddress: item.display_name,
           lat: parseFloat(item.lat),
           lng: parseFloat(item.lon),
           placeId: null,
+          city: itemCity || undefined,
         }
       })
     } catch {
@@ -151,6 +153,7 @@ class GoogleLocationProvider implements LocationProvider {
         lat,
         lng,
         placeId: first.place_id,
+        city: locality?.long_name || undefined,
       }
     } catch {
       return {

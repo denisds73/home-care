@@ -1,6 +1,7 @@
-import { memo, useState, useCallback, useRef, useEffect } from 'react'
+import { memo, useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useLocationStore } from '../../store/useLocationStore'
 import { locationService } from '../../services/locationService'
+import { checkServiceability } from '../../data/cities'
 import { PlacesAutocomplete } from '../maps'
 import { ImmersiveLocationMap } from '../maps/ImmersiveLocationMap'
 import { ENV } from '../../config/env'
@@ -149,6 +150,11 @@ export const LocationPickerContent = memo(({ onClose }: LocationPickerContentPro
   // Resolve the current address label to display
   const displayLabel = selectedPlace?.label ?? location?.label ?? 'Your Location'
   const displayAddress = selectedPlace?.fullAddress ?? location?.fullAddress ?? ''
+
+  // Check serviceability for the currently selected/displayed place
+  const placeToCheck = selectedPlace ?? location
+  const serviceabilityResult = useMemo(() => checkServiceability(placeToCheck), [placeToCheck])
+  const isUnserviceable = placeToCheck !== null && !serviceabilityResult.serviceable
 
   return (
     <div className="flex flex-col h-full">
@@ -317,6 +323,21 @@ export const LocationPickerContent = memo(({ onClose }: LocationPickerContentPro
             )}
           </div>
         </div>
+
+        {/* Unserviceable notice */}
+        {isUnserviceable && !isReverseGeocoding && (
+          <div
+            className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl fade-in"
+            style={{ background: '#EDE9FE', border: '1px solid #C4B5FD' }}
+          >
+            <svg className="w-4 h-4 shrink-0 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-xs font-medium" style={{ color: '#4C1D95' }}>
+              We&apos;re not in this area yet — but we&apos;re expanding! Booking requires a covered city.
+            </p>
+          </div>
+        )}
 
         {/* Confirm button */}
         <button

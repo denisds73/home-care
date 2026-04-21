@@ -350,6 +350,8 @@ export interface LocationData {
   lat: number
   lng: number
   placeId: string | null
+  /** City name extracted from geocoding (optional — missing for manual entries) */
+  city?: string
 }
 
 export type LocationStatus = 'idle' | 'detecting' | 'resolved' | 'denied' | 'error'
@@ -408,6 +410,24 @@ export interface PaginatedVendors {
   total: number
   page: number
   limit: number
+}
+
+// ─── City / State coverage ──────────────────────────────────────────
+
+export type StateId = 'KL' | 'TN' | 'KA'
+
+export interface StateMeta {
+  id: StateId
+  name: string
+}
+
+export interface CityData {
+  /** Canonical city name (e.g. "Thiruvananthapuram") */
+  name: string
+  /** ISO-style state code */
+  state: StateId
+  /** Alternate spellings / old colonial names (e.g. ["Trivandrum"]) */
+  aliases: string[]
 }
 
 // Delay communication types

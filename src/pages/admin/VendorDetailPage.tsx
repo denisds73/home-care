@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Modal from '../../components/common/Modal'
+import Dropdown from '../../components/common/Dropdown'
 import { vendorService } from '../../services/vendorService'
 import { CATEGORIES } from '../../data/categories'
+import { getCityDropdownOptions, getStateDropdownOptions, findCityByName } from '../../data/cities'
 import useStore from '../../store/useStore'
 import type {
   UpdateVendorPayload,
@@ -41,13 +43,22 @@ export default function VendorDetailPage() {
   const [pinDraft, setPinDraft] = useState('')
   const [categoryIds, setCategoryIds] = useState<string[]>([])
   const [notes, setNotes] = useState('')
+  const [stateFilter, setStateFilter] = useState('')
+
+  const stateOptions = useMemo(() => getStateDropdownOptions(), [])
+  const cityOptions = useMemo(
+    () => getCityDropdownOptions(stateFilter ? (stateFilter as 'KL' | 'TN' | 'KA') : undefined),
+    [stateFilter],
+  )
 
   const hydrate = (v: Vendor) => {
     setVendor(v)
     setCompanyName(v.company_name)
     setContactNumber(v.contact_number)
     setEmail(v.email)
-    setCity(v.city)
+    const resolved = findCityByName(v.city)
+    setCity(resolved?.name ?? v.city)
+    if (resolved) setStateFilter(resolved.state)
     setGstNumber(v.gst_number)
     setGstVerified(v.gst_verified)
     setPinCodes(v.pin_codes ?? [])
@@ -374,16 +385,26 @@ export default function VendorDetailPage() {
           <h2 className="text-sm font-semibold text-primary">
             Service Coverage
           </h2>
-          <div className="flex flex-col gap-1">
-            <label className="label-base" htmlFor="d_city">
-              City
-            </label>
-            <input
-              id="d_city"
-              className="input-base px-3 py-2"
-              maxLength={100}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Dropdown
+              label="State"
+              options={[{ value: '', label: 'All States' }, ...stateOptions]}
+              value={stateFilter}
+              onChange={(v) => {
+                setStateFilter(v)
+                setCity('')
+              }}
+              placeholder="All States"
+            />
+            <Dropdown
+              label="City"
+              options={cityOptions}
               value={city}
-              onChange={(e) => setCity(e.target.value)}
+              onChange={setCity}
+              placeholder="Select city…"
+              searchable
+              searchPlaceholder="Search city or alias…"
+              id="d_city"
             />
           </div>
           <div className="flex flex-col gap-2">

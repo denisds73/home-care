@@ -5,6 +5,7 @@ import { useAuthStore } from '../../store/useAuthStore'
 import { bookingService } from '../../services/bookingService'
 import { useLocationStore } from '../../store/useLocationStore'
 import { CATEGORIES } from '../../data/categories'
+import { STATES, getCitiesByState } from '../../data/cities'
 import { calculatePricing } from '../../utils/pricing'
 import type { PaymentMode, LocationData } from '../../types/domain'
 import RazorpayModal from './RazorpayModal'
@@ -174,7 +175,9 @@ function DetailsStep({
   const cart = useStore(s => s.cart)
   const getCartTotal = useStore(s => s.getCartTotal)
   const getCartCount = useStore(s => s.getCartCount)
+  const setLocationPickerOpen = useStore(s => s.setLocationPickerOpen)
   const savedLocation = useLocationStore(s => s.location)
+  const serviceable = useLocationStore(s => s.serviceable)
   const [errors, setErrors] = useState<Record<string, string | undefined>>({})
 
   const validate = () => {
@@ -273,7 +276,57 @@ function DetailsStep({
         </div>
       </div>
 
-      {duplicateConflict ? (
+      {!serviceable ? (
+        <div className="mt-6 rounded-2xl overflow-hidden fade-in" style={{ background: 'linear-gradient(135deg, #4C1D95 0%, #6D28D9 50%, #7C3AED 100%)' }}>
+          <div className="px-5 py-5 flex items-start gap-3.5">
+            {/* Icon */}
+            <div
+              className="flex items-center justify-center w-10 h-10 rounded-xl shrink-0 mt-0.5"
+              style={{ background: 'rgba(255,255,255,.15)', backdropFilter: 'blur(8px)' }}
+            >
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-white font-brand">
+                We&apos;re not in this area yet
+              </p>
+              <p className="text-xs mt-1 leading-relaxed text-white/70">
+                Select a city where we operate to continue booking. We&apos;re expanding fast!
+              </p>
+              <div
+                className="mt-3 rounded-xl p-3 space-y-2"
+                style={{ background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.12)' }}
+              >
+                {STATES.map((state) => (
+                  <div key={state.id} className="flex items-baseline gap-2">
+                    <span className="text-[11px] font-bold text-white/90 shrink-0 w-[72px]">{state.name}</span>
+                    <span className="text-[11px] text-white/60 leading-relaxed">
+                      {getCitiesByState(state.id).map((c) => c.name).join(' \u00B7 ')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setLocationPickerOpen(true)}
+                className="mt-3 inline-flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl min-h-[36px] transition-all"
+                style={{ background: 'rgba(255,255,255,.2)', color: '#fff', border: '1px solid rgba(255,255,255,.25)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,.3)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,.2)' }}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Change location
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : duplicateConflict ? (
         <div className="mt-6">
           <DuplicateBookingNotice
             booking={booking}
