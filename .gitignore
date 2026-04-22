@@ -32,3 +32,18 @@ coverage/
 venv/
 
 CLAUDE.md
+AGENTS.md
+GEMINI.md
+
+# Local AI tool configs
+.claude/
+.cursor/
+.cursorrules
+.windsurfrules
+.opencode.json
+.mcp.json
+.superpowers/
+
+# Local-only dev artefacts
+docs/superpowers/
+scripts/code-review-graph/

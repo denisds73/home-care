@@ -7,6 +7,7 @@ import { NavbarCategoryChips } from './NavbarCategoryChips'
 import { LocationPicker } from '../location/LocationPicker'
 import { useServiceSearch, type SearchResult } from '../../hooks/useServiceSearch'
 import { CustomerNotificationsDropdown } from '../customer/CustomerNotificationsDropdown'
+import { Logo, LogoMark } from '../brand/Logo'
 
 function getInitials(name: string): string {
   return name
@@ -305,14 +306,8 @@ export function Navbar() {
               className="flex items-center gap-2 shrink-0 group"
               aria-label="WeSorters home"
             >
-              <div className="w-8 h-8 rounded-xl bg-brand flex items-center justify-center transition-transform duration-150 group-hover:scale-105">
-                <svg className="w-[18px] h-[18px] text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z" />
-                </svg>
-              </div>
-              <span className="hidden sm:inline text-[1.05rem] font-bold font-brand text-primary tracking-tight">
-                We<span className="text-brand">Sorters</span>
-              </span>
+              <LogoMark className="sm:hidden w-9 h-9 transition-transform duration-150 group-hover:scale-105" />
+              <Logo className="hidden sm:block h-9 w-auto transition-transform duration-150 group-hover:scale-105" />
             </Link>
 
             {/* Divider — desktop only */}
