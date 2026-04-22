@@ -7,6 +7,8 @@ import Dropdown from '../../components/common/Dropdown'
 import { StatusBadge } from '../../components/bookings/StatusBadge'
 import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
+import { ClipboardIcon } from '../../components/common/Icons'
 import { formatDate } from '../../data/helpers'
 import type { BookingStatus, CategoryId, Booking, Vendor } from '../../types/domain'
 import { adminBookingDetail, parseBookingStatusQuery } from '../../lib/adminRoutes'
@@ -80,20 +82,11 @@ export default function BookingManagementPage() {
       const result = await bookingService.listForAdmin({
         status: statusFilter || undefined,
         category: categoryFilter || undefined,
-        search: search || undefined,
+        search: search.trim() || undefined,
         page,
         limit: PAGE_LIMIT,
       })
-      const term = search.trim().toLowerCase()
-      const filtered = term
-        ? result.items.filter(
-            b =>
-              b.booking_id.toLowerCase().includes(term) ||
-              b.customer_name.toLowerCase().includes(term) ||
-              b.service_name.toLowerCase().includes(term),
-          )
-        : result.items
-      setBookings(filtered)
+      setBookings(result.items)
       setTotal(result.total)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load bookings')
@@ -186,75 +179,81 @@ export default function BookingManagementPage() {
                 </div>
               ))}
             </div>
+          ) : bookings.length === 0 ? (
+            <ListEmptyState
+              icon={<ClipboardIcon className="w-12 h-12" />}
+              title="No bookings to show"
+              description={
+                search.trim()
+                  ? 'Nothing matches your search on this page. Clear the search or adjust filters.'
+                  : 'No bookings match your filters yet. Adjust status or category, or wait for new customer bookings.'
+              }
+              variant="embedded"
+            />
           ) : (
-            <>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs text-muted bg-surface">
-                    <th className="p-3">ID</th>
-                    <th className="p-3">Customer</th>
-                    <th className="p-3">Service</th>
-                    <th className="p-3">Date</th>
-                    <th className="p-3">Amount</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3">Assign vendor</th>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-muted bg-surface">
+                  <th className="p-3">ID</th>
+                  <th className="p-3">Customer</th>
+                  <th className="p-3">Service</th>
+                  <th className="p-3">Date</th>
+                  <th className="p-3">Amount</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3">Assign vendor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bookings.map((b: Booking) => (
+                  <tr key={b.booking_id} className="border-t border-gray-50 hover:bg-surface/50">
+                    <td className="p-3 font-medium">
+                      <Link
+                        to={adminBookingDetail(b.booking_id)}
+                        className="text-brand hover:underline"
+                      >
+                        {b.booking_id.slice(0, 8)}…
+                      </Link>
+                    </td>
+                    <td className="p-3">{b.customer_name}</td>
+                    <td className="p-3">{b.service_name}</td>
+                    <td className="p-3 text-muted">{formatDate(b.preferred_date)}</td>
+                    <td className="p-3">₹{b.price.toLocaleString()}</td>
+                    <td className="p-3">
+                      <StatusBadge status={b.booking_status} />
+                    </td>
+                    <td className="p-3">
+                      {(b.booking_status === 'pending' || b.booking_status === 'rejected') && (
+                        <Dropdown
+                          key={`${b.booking_id}-assign`}
+                          id={`assign-vendor-${b.booking_id}`}
+                          options={[
+                            { value: '', label: 'Assign vendor…' },
+                            ...activeVendors.map(v => ({
+                              value: v.id,
+                              label: v.company_name,
+                            })),
+                          ]}
+                          value=""
+                          onChange={v => {
+                            if (v) void handleAssign(b.booking_id, v)
+                          }}
+                          placeholder="Assign vendor…"
+                          disabled={activeVendors.length === 0}
+                          className="max-w-[180px] [&_button]:py-1.5 [&_button]:px-2 [&_button]:text-xs"
+                        />
+                      )}
+                      {b.booking_status !== 'pending' && b.booking_status !== 'rejected' && (
+                        <span className="text-xs text-secondary">
+                          {b.vendor_id
+                            ? activeVendorNameById[b.vendor_id] ?? 'Assigned'
+                            : 'Unassigned'}
+                        </span>
+                      )}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {bookings.map((b: Booking) => (
-                    <tr key={b.booking_id} className="border-t border-gray-50 hover:bg-surface/50">
-                      <td className="p-3 font-medium">
-                        <Link
-                          to={adminBookingDetail(b.booking_id)}
-                          className="text-brand hover:underline"
-                        >
-                          {b.booking_id.slice(0, 8)}…
-                        </Link>
-                      </td>
-                      <td className="p-3">{b.customer_name}</td>
-                      <td className="p-3">{b.service_name}</td>
-                      <td className="p-3 text-muted">{formatDate(b.preferred_date)}</td>
-                      <td className="p-3">₹{b.price.toLocaleString()}</td>
-                      <td className="p-3">
-                        <StatusBadge status={b.booking_status} />
-                      </td>
-                      <td className="p-3">
-                        {(b.booking_status === 'pending' || b.booking_status === 'rejected') && (
-                          <Dropdown
-                            key={`${b.booking_id}-assign`}
-                            id={`assign-vendor-${b.booking_id}`}
-                            options={[
-                              { value: '', label: 'Assign vendor…' },
-                              ...activeVendors.map(v => ({
-                                value: v.id,
-                                label: v.company_name,
-                              })),
-                            ]}
-                            value=""
-                            onChange={v => {
-                              if (v) void handleAssign(b.booking_id, v)
-                            }}
-                            placeholder="Assign vendor…"
-                            disabled={activeVendors.length === 0}
-                            className="max-w-[180px] [&_button]:py-1.5 [&_button]:px-2 [&_button]:text-xs"
-                          />
-                        )}
-                        {b.booking_status !== 'pending' && b.booking_status !== 'rejected' && (
-                          <span className="text-xs text-secondary">
-                            {b.vendor_id
-                              ? activeVendorNameById[b.vendor_id] ?? 'Assigned'
-                              : 'Unassigned'}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {bookings.length === 0 && (
-                <p className="text-center py-8 text-sm text-muted">No bookings found</p>
-              )}
-            </>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       )}

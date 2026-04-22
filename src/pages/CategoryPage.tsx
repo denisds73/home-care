@@ -1,8 +1,10 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useEffect } from 'react'
 import useStore from '../store/useStore'
 import { CATEGORIES } from '../data/categories'
 import ServiceCard from '../components/services/ServiceCard'
+import { ListEmptyState } from '../components/common/ListEmptyState'
+import { GridIcon } from '../components/common/Icons'
 import type { CategoryId } from '../types/domain'
 
 export default function CategoryPage() {
@@ -85,12 +87,16 @@ export default function CategoryPage() {
             </button>
           </div>
         ) : list.length === 0 ? (
-          <div className="text-center py-16">
-            <svg className="w-12 h-12 mx-auto mb-3 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-            </svg>
-            <p className="text-muted font-medium">No active services in this category.</p>
-          </div>
+          <ListEmptyState
+            icon={<GridIcon className="w-12 h-12" />}
+            title="No active services here"
+            description={`We don't have live ${cat.name.toLowerCase()} services listed right now.`}
+            action={
+              <Link to="/app" className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px] inline-flex">
+                Browse other categories
+              </Link>
+            }
+          />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
             {list.map(s => <ServiceCard key={s.id} service={s} />)}

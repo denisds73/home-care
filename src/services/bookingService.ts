@@ -22,6 +22,7 @@ export interface AdminBookingFilters {
   status?: BookingStatus
   category?: string
   vendor_id?: string
+  customer_id?: string
   search?: string
   page?: number
   limit?: number

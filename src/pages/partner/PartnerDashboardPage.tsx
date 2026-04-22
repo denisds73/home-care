@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { useAuthStore } from '../../store/useAuthStore'
 import { partnerService } from '../../services/partnerService'
 import type { Job, Partner } from '../../types/domain'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
+import { BriefcaseIcon } from '../../components/common/Icons'
 
 function formatCurrency(amount: number): string {
   return '\u20B9' + amount.toLocaleString('en-IN')
@@ -203,9 +205,12 @@ export default function PartnerDashboardPage() {
             ))}
           </div>
         ) : upcomingJobs.length === 0 ? (
-          <p className="text-muted text-sm text-center py-6">
-            No upcoming jobs right now.
-          </p>
+          <ListEmptyState
+            icon={<BriefcaseIcon className="w-12 h-12" />}
+            title="No upcoming jobs"
+            description="New and in-progress requests will appear here once customers book you."
+            variant="embedded"
+          />
         ) : (
           <div className="space-y-3">
             {upcomingJobs.map((job) => (

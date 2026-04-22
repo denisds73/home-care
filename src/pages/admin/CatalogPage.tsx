@@ -1,11 +1,23 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 import { adminService } from '../../services/adminService'
 import { serviceService } from '../../services/serviceService'
 import useStore from '../../store/useStore'
 import { CATEGORIES } from '../../data/categories'
 import Modal from '../../components/common/Modal'
+import { Pagination } from '../../components/common/Pagination'
 import type { CategoryId, Service } from '../../types/domain'
 import Dropdown from '../../components/common/Dropdown'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
+import Tooltip from '../../components/common/Tooltip'
+import {
+  BanIcon,
+  CheckCircleIcon,
+  EyeIcon,
+  GridIcon,
+  PencilIcon,
+  TrashIcon,
+} from '../../components/common/Icons'
+import { adminRowIconAction } from '../../lib/adminRowIconActionStyles'
 
 interface SvcForm {
   category: CategoryId | ''
@@ -47,6 +59,34 @@ const EMPTY_FORM: SvcForm = {
   sort_order: '',
 }
 
+const PAGE_SIZE = 10
+
+function categoryLabel(id: CategoryId) {
+  return CATEGORIES.find(c => c.id === id)?.name ?? id.replace(/_/g, ' ')
+}
+
+function formatInr(n: number) {
+  return `₹${Number(n).toLocaleString('en-IN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`
+}
+
+function DetailBlock({
+  label,
+  children,
+}: {
+  label: string
+  children: ReactNode
+}) {
+  return (
+    <div>
+      <p className="text-xs font-semibold text-secondary mb-1">{label}</p>
+      <div className="text-sm text-primary">{children}</div>
+    </div>
+  )
+}
+
 export default function CatalogPage() {
   const showToast = useStore(s => s.showToast)
 
@@ -54,33 +94,55 @@ export default function CatalogPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<CategoryId | ''>('')
   const [modalMode, setModalMode] = useState<'add' | 'edit' | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [detailService, setDetailService] = useState<Service | null>(null)
   const [form, setForm] = useState<SvcForm>(EMPTY_FORM)
   const [isSaving, setIsSaving] = useState(false)
   const [newInclusion, setNewInclusion] = useState('')
   const [newExclusion, setNewExclusion] = useState('')
   const [newFaqQ, setNewFaqQ] = useState('')
   const [newFaqA, setNewFaqA] = useState('')
+  const [page, setPage] = useState(1)
 
   const loadServices = useCallback(async () => {
     try {
       setIsLoading(true)
       setError(null)
-      const result = await serviceService.getServices(categoryFilter || undefined)
+      const result = await serviceService.getServices({
+        category: categoryFilter || undefined,
+        search: search.trim() || undefined,
+      })
       setServices(result.data ?? [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load services')
     } finally {
       setIsLoading(false)
     }
-  }, [categoryFilter])
+  }, [categoryFilter, search])
 
   useEffect(() => {
     loadServices()
   }, [loadServices])
+
+  useEffect(() => {
+    setPage(1)
+  }, [categoryFilter, search])
+
+  useEffect(() => {
+    const tp = Math.max(1, Math.ceil(services.length / PAGE_SIZE))
+    setPage(p => Math.min(p, tp))
+  }, [services.length])
+
+  const paginatedServices = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE
+    return services.slice(start, start + PAGE_SIZE)
+  }, [services, page])
 
   const resetRepeaterInputs = () => {
     setNewInclusion('')
@@ -129,6 +191,27 @@ export default function CatalogPage() {
     setEditingId(null)
     resetRepeaterInputs()
     setModalMode('add')
+  }
+
+  const closeDetail = () => {
+    setDetailOpen(false)
+    setDetailService(null)
+    setDetailLoading(false)
+  }
+
+  const openViewDetail = async (svc: Service) => {
+    setDetailOpen(true)
+    setDetailLoading(true)
+    setDetailService(null)
+    try {
+      const res = await serviceService.getServiceById(svc.id)
+      setDetailService(res.data ?? svc)
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to load service', 'danger')
+      closeDetail()
+    } finally {
+      setDetailLoading(false)
+    }
   }
 
   const openEdit = (svc: Service) => {
@@ -236,78 +319,217 @@ export default function CatalogPage() {
 
   return (
     <div className="fade-in space-y-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <Dropdown
-          options={[
-            { value: '', label: 'All Categories' },
-            ...CATEGORIES.map(c => ({ value: c.id, label: c.name })),
-          ]}
-          value={categoryFilter}
-          onChange={v => setCategoryFilter(v as CategoryId | '')}
-          placeholder="All Categories"
-          searchable
-          searchPlaceholder="Search category..."
-          className="min-w-[170px]"
-        />
-        <button type="button" onClick={openAdd} className="btn-base btn-primary text-sm px-4 py-2 ml-auto min-h-[44px]">
-          + Add Service
-        </button>
+      <div className="glass-card p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            type="search"
+            className="input-base py-2 px-3 text-sm flex-1 min-w-[200px]"
+            placeholder="Search by name or description..."
+            aria-label="Search catalog"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            autoComplete="off"
+          />
+          <Dropdown
+            options={[
+              { value: '', label: 'All Categories' },
+              ...CATEGORIES.map(c => ({ value: c.id, label: c.name })),
+            ]}
+            value={categoryFilter}
+            onChange={v => setCategoryFilter(v as CategoryId | '')}
+            placeholder="All Categories"
+            searchable
+            searchPlaceholder="Search category..."
+            className="min-w-[170px]"
+          />
+          <button type="button" onClick={openAdd} className="btn-base btn-primary text-sm px-4 py-2 ml-auto min-h-[44px]">
+            + Add Service
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="glass-card p-4 animate-pulse">
-              <div className="h-4 w-32 bg-surface rounded mb-2" />
-              <div className="h-3 w-16 bg-surface rounded mb-3" />
-              <div className="h-3 w-full bg-surface rounded mb-1" />
-              <div className="h-3 w-3/4 bg-surface rounded" />
-            </div>
-          ))}
+        <div className="glass-card overflow-x-auto">
+          <div className="p-6 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="animate-pulse flex gap-4 flex-wrap">
+                <div className="h-4 w-40 bg-surface rounded" />
+                <div className="h-4 w-24 bg-surface rounded" />
+                <div className="h-4 flex-1 min-w-[120px] max-w-md bg-surface rounded" />
+                <div className="h-4 w-16 bg-surface rounded" />
+                <div className="h-4 w-16 bg-surface rounded" />
+                <div className="h-4 w-28 bg-surface rounded" />
+              </div>
+            ))}
+          </div>
         </div>
+      ) : services.length === 0 ? (
+        <ListEmptyState
+          icon={<GridIcon className="w-12 h-12" />}
+          title={
+            search.trim()
+              ? 'No matching services'
+              : categoryFilter
+                ? 'No services in this category'
+                : 'No services in the catalog'
+          }
+          description={
+            search.trim()
+              ? 'Try another search phrase, pick a different category, or clear the search box.'
+              : categoryFilter
+                ? 'Try choosing “All Categories” or add a new service for this category.'
+                : 'Add your first service so customers can book it on the platform.'
+          }
+          action={
+            <button
+              type="button"
+              onClick={openAdd}
+              className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px] inline-flex"
+            >
+              + Add Service
+            </button>
+          }
+        />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {services.map(svc => (
-            <div key={svc.id} className={`glass-card p-4 ${!svc.is_active ? 'opacity-50' : ''}`}>
-              <div className="flex items-start justify-between mb-2 gap-2">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-primary">{svc.service_name}</p>
-                  <p className="text-xs text-muted">{svc.category.toUpperCase()}</p>
-                </div>
-                <span className="text-sm font-bold text-brand shrink-0">₹{svc.price}</span>
-              </div>
-              <p className="text-xs text-secondary mb-3 line-clamp-2">{svc.description}</p>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button type="button" onClick={() => openEdit(svc)} className="text-xs text-brand font-semibold min-h-[44px] px-1">
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleToggleActive(svc)}
-                  className="text-xs text-secondary font-semibold min-h-[44px] px-1"
-                >
-                  {svc.is_active ? 'Disable' : 'Enable'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeleteId(svc.id)}
-                  className="text-xs text-error font-semibold ml-auto min-h-[44px] px-1"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-          {services.length === 0 && (
-            <p className="text-sm text-muted col-span-full text-center py-8">No services found</p>
-          )}
-        </div>
+        <>
+          <div className="glass-card overflow-x-auto">
+            <table className="w-full text-sm [&_th]:align-top [&_td]:align-top">
+              <thead>
+                <tr className="text-left text-xs text-muted bg-surface">
+                  <th className="p-3">Service</th>
+                  <th className="p-3">Category</th>
+                  <th className="p-3 min-w-[200px] max-w-md">Description</th>
+                  <th className="p-3">Price</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedServices.map(svc => (
+                  <tr
+                    key={svc.id}
+                    className={`border-t border-gray-50 hover:bg-surface/50 ${!svc.is_active ? 'opacity-70' : ''}`}
+                  >
+                    <td className="p-3 align-top">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <p className="font-medium text-primary">{svc.service_name}</p>
+                        {svc.is_basic && (
+                          <span className="inline-flex shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-brand">
+                            Basic
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-3 text-muted align-top">{categoryLabel(svc.category)}</td>
+                    <td className="p-3 text-muted max-w-md align-top">
+                      <p className="line-clamp-2" title={svc.description}>
+                        {svc.description || '—'}
+                      </p>
+                    </td>
+                    <td className="p-3 align-top">
+                      <div className="flex flex-col gap-0.5 items-start tabular-nums">
+                        <span className="font-medium text-primary">
+                          ₹
+                          {Number(svc.price).toLocaleString('en-IN', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                        {svc.original_price != null &&
+                          svc.original_price > 0 &&
+                          svc.original_price > svc.price && (
+                            <span className="text-xs text-muted line-through">
+                              ₹
+                              {Number(svc.original_price).toLocaleString('en-IN', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                          )}
+                      </div>
+                    </td>
+                    <td className="p-3 align-top">
+                      {svc.is_active ? (
+                        <span className="badge badge-success">Active</span>
+                      ) : (
+                        <span className="badge bg-muted text-secondary">Disabled</span>
+                      )}
+                    </td>
+                    <td className="p-3 text-right align-top">
+                      <div
+                        className="flex items-center justify-end gap-1 flex-wrap"
+                        role="group"
+                        aria-label={`Actions for ${svc.service_name}`}
+                      >
+                        <Tooltip label="View full details">
+                          <button
+                            type="button"
+                            onClick={() => void openViewDetail(svc)}
+                            className={adminRowIconAction.view}
+                            aria-label={`View ${svc.service_name}`}
+                          >
+                            <EyeIcon className="w-5 h-5 shrink-0" aria-hidden />
+                          </button>
+                        </Tooltip>
+                        <Tooltip label="Edit service">
+                          <button
+                            type="button"
+                            onClick={() => openEdit(svc)}
+                            className={adminRowIconAction.edit}
+                            aria-label={`Edit ${svc.service_name}`}
+                          >
+                            <PencilIcon className="w-5 h-5 shrink-0" aria-hidden />
+                          </button>
+                        </Tooltip>
+                        <Tooltip
+                          label={svc.is_active ? 'Disable service (hide from customers)' : 'Enable service'}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleToggleActive(svc)}
+                            className={
+                              svc.is_active ? adminRowIconAction.restrict : adminRowIconAction.allow
+                            }
+                            aria-label={
+                              svc.is_active ? `Disable ${svc.service_name}` : `Enable ${svc.service_name}`
+                            }
+                          >
+                            {svc.is_active ? (
+                              <BanIcon className="w-5 h-5 shrink-0" aria-hidden />
+                            ) : (
+                              <CheckCircleIcon className="w-5 h-5 shrink-0" aria-hidden />
+                            )}
+                          </button>
+                        </Tooltip>
+                        <Tooltip label="Delete service permanently">
+                          <button
+                            type="button"
+                            onClick={() => setDeleteId(svc.id)}
+                            className={adminRowIconAction.delete}
+                            aria-label={`Delete ${svc.service_name}`}
+                          >
+                            <TrashIcon className="w-5 h-5 shrink-0" aria-hidden />
+                          </button>
+                        </Tooltip>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pagination page={page} limit={PAGE_SIZE} total={services.length} onPageChange={setPage} />
+        </>
       )}
 
-      <Modal isOpen={modalMode !== null} onClose={() => setModalMode(null)} maxWidth="max-w-2xl">
-        <div className="p-6">
-          <h3 className="text-lg font-bold text-primary mb-4">{modalMode === 'add' ? 'Add Service' : 'Edit Service'}</h3>
-
+      <Modal
+        isOpen={modalMode !== null}
+        onClose={() => setModalMode(null)}
+        maxWidth="max-w-2xl"
+        overlay="layout"
+        title={modalMode === 'add' ? 'Add Service' : modalMode === 'edit' ? 'Edit Service' : undefined}
+      >
+        <>
           {/* Section 1: Basic Info */}
           <h4 className="text-sm font-bold text-primary mb-3">Basic Info</h4>
           <div className="space-y-3">
@@ -607,12 +829,174 @@ export default function CatalogPage() {
               Cancel
             </button>
           </div>
+        </>
+      </Modal>
+
+      <Modal
+        isOpen={detailOpen}
+        onClose={closeDetail}
+        maxWidth="max-w-2xl"
+        overlay="layout"
+        title={
+          detailLoading
+            ? 'Service details'
+            : detailService?.service_name ?? 'Service details'
+        }
+      >
+        <div className="max-h-[min(70vh,640px)] overflow-y-auto pr-1 space-y-5 text-sm">
+          {detailLoading && (
+            <div className="py-12 text-center text-muted text-sm" role="status">
+              Loading full details…
+            </div>
+          )}
+          {!detailLoading && detailService && (
+            <>
+              <div className="space-y-3">
+                <h4 className="text-sm font-bold text-primary">Basic info</h4>
+                <DetailBlock label="Category">{categoryLabel(detailService.category)}</DetailBlock>
+                <DetailBlock label="Short description">
+                  {detailService.description ? (
+                    <p className="whitespace-pre-wrap">{detailService.description}</p>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
+                </DetailBlock>
+                <DetailBlock label="Long description">
+                  {detailService.long_description ? (
+                    <p className="whitespace-pre-wrap text-secondary">{detailService.long_description}</p>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
+                </DetailBlock>
+                {detailService.image_url ? (
+                  <DetailBlock label="Image">
+                    <img
+                      src={detailService.image_url}
+                      alt=""
+                      className="max-h-40 rounded-lg object-cover border border-border-default"
+                      onError={e => {
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                    <p className="text-xs text-muted mt-1 break-all">{detailService.image_url}</p>
+                  </DetailBlock>
+                ) : null}
+                <DetailBlock label="Estimated duration">
+                  {detailService.estimated_duration || <span className="text-muted">—</span>}
+                </DetailBlock>
+              </div>
+
+              <div className="border-t border-border-default pt-5 space-y-3">
+                <h4 className="text-sm font-bold text-primary">Pricing</h4>
+                <DetailBlock label="Selling price">{formatInr(Number(detailService.price))}</DetailBlock>
+                {detailService.original_price != null &&
+                  detailService.original_price > 0 && (
+                    <DetailBlock label="Original price">{formatInr(Number(detailService.original_price))}</DetailBlock>
+                  )}
+                <p className="text-sm text-secondary">
+                  Recommended (basic):{' '}
+                  <strong className="text-primary">{detailService.is_basic ? 'Yes' : 'No'}</strong>
+                </p>
+              </div>
+
+              {(detailService.inclusions?.length ?? 0) > 0 && (
+                <div className="border-t border-border-default pt-5">
+                  <h4 className="text-sm font-bold text-primary mb-2">Included</h4>
+                  <ul className="list-disc list-inside space-y-1 text-secondary">
+                    {detailService.inclusions!.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {(detailService.exclusions?.length ?? 0) > 0 && (
+                <div className="border-t border-border-default pt-5">
+                  <h4 className="text-sm font-bold text-primary mb-2">Not included</h4>
+                  <ul className="list-disc list-inside space-y-1 text-secondary">
+                    {detailService.exclusions!.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {(detailService.faqs?.length ?? 0) > 0 && (
+                <div className="border-t border-border-default pt-5 space-y-3">
+                  <h4 className="text-sm font-bold text-primary">FAQs</h4>
+                  {detailService.faqs!.map((faq, i) => (
+                    <div key={i} className="glass-card p-3 rounded-lg">
+                      <p className="font-semibold text-primary text-sm">{faq.question}</p>
+                      <p className="text-secondary text-xs mt-1 whitespace-pre-wrap">{faq.answer}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="border-t border-border-default pt-5 space-y-3">
+                <h4 className="text-sm font-bold text-primary">Reviews (overrides)</h4>
+                <DetailBlock label="Rating average">
+                  {detailService.rating_average != null ? String(detailService.rating_average) : '—'}
+                </DetailBlock>
+                <DetailBlock label="Review count">
+                  {detailService.rating_count != null ? String(detailService.rating_count) : '—'}
+                </DetailBlock>
+                {detailService.rating_distribution &&
+                  detailService.rating_distribution.some(n => n > 0) && (
+                    <div>
+                      <p className="text-xs font-semibold text-secondary mb-2">Star distribution (%)</p>
+                      <div className="grid grid-cols-5 gap-2 text-center text-xs">
+                        {(['5', '4', '3', '2', '1'] as const).map((star, i) => (
+                          <div key={star}>
+                            <span className="text-muted">{star}★</span>
+                            <p className="font-medium text-primary tabular-nums mt-0.5">
+                              {detailService.rating_distribution![i] ?? 0}%
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+              </div>
+
+              <div className="border-t border-border-default pt-5 space-y-3">
+                <h4 className="text-sm font-bold text-primary">Publishing</h4>
+                <DetailBlock label="Sort order">
+                  {detailService.sort_order != null ? String(detailService.sort_order) : '—'}
+                </DetailBlock>
+                <p className="text-sm text-secondary">
+                  Status:{' '}
+                  {detailService.is_active ? (
+                    <span className="badge badge-success">Active</span>
+                  ) : (
+                    <span className="badge bg-muted text-secondary">Disabled</span>
+                  )}
+                </p>
+                <DetailBlock label="Service ID">#{detailService.id}</DetailBlock>
+                {(detailService.created_at || detailService.updated_at) && (
+                  <div className="text-xs text-muted space-y-1">
+                    {detailService.created_at && (
+                      <p>Created: {detailService.created_at}</p>
+                    )}
+                    {detailService.updated_at && (
+                      <p>Updated: {detailService.updated_at}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </Modal>
 
-      <Modal isOpen={deleteId !== null} onClose={() => setDeleteId(null)} maxWidth="max-w-sm">
-        <div className="p-6 text-center">
-          <h3 className="text-lg font-bold text-primary mb-2">Delete Service?</h3>
+      <Modal
+        isOpen={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        maxWidth="max-w-sm"
+        overlay="layout"
+        title="Delete service?"
+      >
+        <div className="text-center">
           <p className="text-sm text-secondary mb-4">This action cannot be undone.</p>
           <div className="flex gap-2 justify-center flex-wrap">
             <button type="button" onClick={handleDelete} className="btn-base btn-danger text-sm px-5 py-2 min-h-[44px]">

@@ -237,11 +237,22 @@ export class BookingsService {
     if (filters.status) {
       qb.andWhere('b.booking_status = :status', { status: filters.status });
     }
+    if (filters.category) {
+      qb.andWhere('b.category = :category', { category: filters.category });
+    }
     if (filters.vendor_id) {
       qb.andWhere('b.vendor_id = :vid', { vid: filters.vendor_id });
     }
     if (filters.customer_id) {
       qb.andWhere('b.customer_id = :cid', { cid: filters.customer_id });
+    }
+
+    const searchTerm = filters.search?.trim();
+    if (searchTerm) {
+      qb.andWhere(
+        '(CAST(b.booking_id AS TEXT) ILIKE :searchLike OR b.customer_name ILIKE :searchLike OR b.service_name ILIKE :searchLike OR b.phone ILIKE :searchLike)',
+        { searchLike: `%${searchTerm}%` },
+      );
     }
 
     qb.skip((page - 1) * limit).take(limit);

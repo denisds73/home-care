@@ -3,6 +3,8 @@ import useStore from '../../store/useStore'
 import { walletService } from '../../services/walletService'
 import { formatDate } from '../../data/helpers'
 import type { Transaction, TransactionType } from '../../types/domain'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
+import { WalletIcon } from '../../components/common/Icons'
 
 type Filter = 'all' | TransactionType
 
@@ -177,7 +179,20 @@ export default function WalletPage() {
         {/* Transaction list */}
         <section className="glass-card px-4 py-1" aria-label="Transactions">
           {filtered.length === 0 ? (
-            <div className="py-12 text-center text-muted text-sm">No transactions found.</div>
+            <ListEmptyState
+              icon={<WalletIcon className="w-12 h-12" />}
+              title={
+                transactions.length === 0
+                  ? 'No transactions yet'
+                  : 'No transactions in this view'
+              }
+              description={
+                transactions.length === 0
+                  ? 'Credits and debits from bookings will appear here.'
+                  : 'Try switching to All, Credits, or Debits.'
+              }
+              variant="embedded"
+            />
           ) : (
             filtered.map(t => <TransactionRow key={t.id} transaction={t} />)
           )}

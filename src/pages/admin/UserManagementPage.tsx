@@ -3,6 +3,10 @@ import { adminService } from '../../services/adminService'
 import type { AdminUser } from '../../services/adminService'
 import useStore from '../../store/useStore'
 import { formatDate } from '../../data/helpers'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
+import Tooltip from '../../components/common/Tooltip'
+import { BanIcon, CheckCircleIcon, UsersIcon } from '../../components/common/Icons'
+import { adminRowIconAction } from '../../lib/adminRowIconActionStyles'
 
 export default function UserManagementPage() {
   const showToast = useStore(s => s.showToast)
@@ -86,6 +90,13 @@ export default function UserManagementPage() {
                 </div>
               ))}
             </div>
+          ) : users.length === 0 ? (
+            <ListEmptyState
+              icon={<UsersIcon className="w-12 h-12" />}
+              title="No customers yet"
+              description="Registered customers will appear here once they sign up and book services."
+              variant="embedded"
+            />
           ) : (
             <table className="w-full text-sm">
               <thead>
@@ -111,20 +122,46 @@ export default function UserManagementPage() {
                       </span>
                     </td>
                     <td className="p-3">
-                      <button
-                        type="button"
-                        onClick={() => toggleActive(u.id, u.status)}
-                        className={`text-xs font-semibold min-h-[44px] ${u.status === 'active' ? 'text-error' : 'text-success'}`}
+                      <Tooltip
+                        label={
+                          u.status === 'active'
+                            ? 'Suspend customer account'
+                            : 'Activate customer account'
+                        }
                       >
-                        {u.status === 'active' ? 'Suspend' : 'Activate'}
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => toggleActive(u.id, u.status)}
+                          className={
+                            u.status === 'active'
+                              ? adminRowIconAction.restrict
+                              : adminRowIconAction.allow
+                          }
+                          aria-label={
+                            u.status === 'active'
+                              ? `Suspend ${u.name}`
+                              : `Activate ${u.name}`
+                          }
+                        >
+                          {u.status === 'active' ? (
+                            <BanIcon className="w-5 h-5 shrink-0" aria-hidden />
+                          ) : (
+                            <CheckCircleIcon className="w-5 h-5 shrink-0" aria-hidden />
+                          )}
+                        </button>
+                      </Tooltip>
                     </td>
                   </tr>
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-sm text-muted">
-                      No users found
+                    <td colSpan={6}>
+                      <ListEmptyState
+                        icon={<UsersIcon className="w-12 h-12" />}
+                        title="No matching users"
+                        description="Try another search term."
+                        variant="embedded"
+                      />
                     </td>
                   </tr>
                 )}

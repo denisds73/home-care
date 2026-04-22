@@ -2,6 +2,8 @@ import { memo, useState, useEffect, useMemo, useCallback } from 'react'
 import { partnerService } from '../../services/partnerService'
 import useStore from '../../store/useStore'
 import type { Job, JobStatus } from '../../types/domain'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
+import { BriefcaseIcon } from '../../components/common/Icons'
 
 type Tab = 'new' | 'active' | 'completed'
 
@@ -190,6 +192,21 @@ export default function JobsPage() {
     [jobs, activeTab],
   )
 
+  const emptyForTab = {
+    new: {
+      title: 'No new requests',
+      description: 'Incoming job requests will appear here for you to accept or decline.',
+    },
+    active: {
+      title: 'No active jobs',
+      description: 'Accepted and in-progress work shows here while you are on site.',
+    },
+    completed: {
+      title: 'Nothing in this tab yet',
+      description: 'Completed and declined jobs will appear under Completed.',
+    },
+  } as const
+
   const tabs: { key: Tab; label: string }[] = [
     { key: 'new', label: 'New Requests' },
     { key: 'active', label: 'Active' },
@@ -270,9 +287,11 @@ export default function JobsPage() {
           ))}
         </div>
       ) : filteredJobs.length === 0 ? (
-        <div className="glass-card p-10 text-center">
-          <p className="text-muted text-sm">No jobs in this category.</p>
-        </div>
+        <ListEmptyState
+          icon={<BriefcaseIcon className="w-12 h-12" />}
+          title={emptyForTab[activeTab].title}
+          description={emptyForTab[activeTab].description}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredJobs.map((job) => (

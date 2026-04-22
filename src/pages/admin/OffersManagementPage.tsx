@@ -5,6 +5,16 @@ import { CATEGORIES } from '../../data/categories'
 import Modal from '../../components/common/Modal'
 import Dropdown from '../../components/common/Dropdown'
 import type { CategoryId, Offer } from '../../types/domain'
+import { ListEmptyState } from '../../components/common/ListEmptyState'
+import Tooltip from '../../components/common/Tooltip'
+import {
+  BanIcon,
+  CheckCircleIcon,
+  PencilIcon,
+  TagIcon,
+  TrashIcon,
+} from '../../components/common/Icons'
+import { adminRowIconAction } from '../../lib/adminRowIconActionStyles'
 
 const GRADIENT_PRESETS = [
   { label: 'Purple', value: 'linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%)' },
@@ -186,9 +196,20 @@ export default function OffersManagementPage() {
           ))}
         </div>
       ) : sorted.length === 0 ? (
-        <div className="glass-card p-8 text-center">
-          <p className="text-sm text-muted">No offers yet. Add your first offer to display on the home page.</p>
-        </div>
+        <ListEmptyState
+          icon={<TagIcon className="w-12 h-12" />}
+          title="No promotional offers yet"
+          description="Create an offer to highlight deals on the home page carousel."
+          action={
+            <button
+              type="button"
+              onClick={openAdd}
+              className="btn-base btn-primary text-sm px-5 py-2 min-h-[44px] inline-flex"
+            >
+              + Add Offer
+            </button>
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {sorted.map(offer => (
@@ -222,16 +243,55 @@ export default function OffersManagementPage() {
                 </span>
                 <span className="text-xs text-muted">·</span>
                 <span className="text-xs text-muted">Order: {offer.sort_order}</span>
-                <div className="ml-auto flex items-center gap-1">
-                  <button type="button" onClick={() => openEdit(offer)} className="text-xs text-brand font-semibold min-h-[44px] px-2">
-                    Edit
-                  </button>
-                  <button type="button" onClick={() => handleToggleActive(offer)} className="text-xs text-secondary font-semibold min-h-[44px] px-2">
-                    {offer.is_active ? 'Disable' : 'Enable'}
-                  </button>
-                  <button type="button" onClick={() => setDeleteId(offer.id)} className="text-xs text-error font-semibold min-h-[44px] px-2">
-                    Delete
-                  </button>
+                <div
+                  className="ml-auto flex items-center gap-1 flex-wrap justify-end"
+                  role="group"
+                  aria-label={`Actions for ${offer.title}`}
+                >
+                  <Tooltip label="Edit offer">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(offer)}
+                      className={adminRowIconAction.edit}
+                      aria-label={`Edit ${offer.title}`}
+                    >
+                      <PencilIcon className="w-5 h-5 shrink-0" aria-hidden />
+                    </button>
+                  </Tooltip>
+                  <Tooltip
+                    label={
+                      offer.is_active
+                        ? 'Disable offer (hide from customers)'
+                        : 'Enable offer'
+                    }
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleToggleActive(offer)}
+                      className={
+                        offer.is_active ? adminRowIconAction.restrict : adminRowIconAction.allow
+                      }
+                      aria-label={
+                        offer.is_active ? `Disable ${offer.title}` : `Enable ${offer.title}`
+                      }
+                    >
+                      {offer.is_active ? (
+                        <BanIcon className="w-5 h-5 shrink-0" aria-hidden />
+                      ) : (
+                        <CheckCircleIcon className="w-5 h-5 shrink-0" aria-hidden />
+                      )}
+                    </button>
+                  </Tooltip>
+                  <Tooltip label="Delete offer permanently">
+                    <button
+                      type="button"
+                      onClick={() => setDeleteId(offer.id)}
+                      className={adminRowIconAction.delete}
+                      aria-label={`Delete ${offer.title}`}
+                    >
+                      <TrashIcon className="w-5 h-5 shrink-0" aria-hidden />
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
             </div>
