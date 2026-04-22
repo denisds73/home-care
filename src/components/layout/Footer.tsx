@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { STATES, getCitiesByState } from '../../data/cities'
+import { Logo } from '../brand/Logo'
 
 export default function Footer() {
   return (
@@ -7,9 +8,8 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-10">
           <div className="col-span-2 sm:col-span-1">
-            <Link to="/app" className="flex items-center gap-2 mb-3" aria-label="WeSorters home">
-              <svg className="w-7 h-7 shrink-0" fill="none" viewBox="0 0 24 24" stroke="#7C3AED" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/></svg>
-              <span className="text-lg font-bold font-brand text-white">We<span style={{ color: '#7C3AED' }}>Sorters</span></span>
+            <Link to="/app" className="inline-flex items-center mb-3 text-white" aria-label="WeSorters home">
+              <Logo adaptive className="h-9 w-auto" />
             </Link>
             <p className="text-xs leading-relaxed text-gray-400">Premium home appliance services. Expert technicians for AC, TV, Fridge & more.</p>
             <div className="flex gap-3 mt-4">
